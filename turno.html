@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CTT - Diário de Turno PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+:root{--bg:#070b18;--card:#121a32;--card2:#1a2342;--accent:#00e676;--accent2:#00b0ff;--violet:#7c4dff;--text:#fff}
+body{background:radial-gradient(1200px 600px at 50% -10%,#0e2a1e 0%,var(--bg) 60%);color:var(--text);min-height:100vh;padding-bottom:130px}
+.header{background:linear-gradient(135deg,rgba(0,230,118,.15),rgba(0,176,255,.08));backdrop-filter:blur(12px);padding:18px 16px;border-bottom:1px solid rgba(0,230,118,.25);position:sticky;top:0;z-index:10}
+.header h1{font-size:19px;font-weight:900;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+.header h1 i{color:var(--accent);filter:drop-shadow(0 0 8px rgba(0,230,118,.8))}
+.sub{font-size:12px;opacity:.7;margin-top:6px;display:flex;justify-content:space-between;align-items:center}
+.badge-turno{background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:900}
+.badge-keep{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.4);color:var(--accent);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;margin-top:8px}
+.badge-keep.dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.mic-area{display:flex;flex-direction:column;align-items:center;margin:22px 0 10px;position:relative}
+#btnMic{width:130px;height:130px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;font-size:46px;cursor:pointer;box-shadow:0 15px 50px rgba(0,230,118,.45),inset 0 2px 10px rgba(255,255,255,.3);transition:.25s;position:relative;z-index:2}
+#btnMic.gravando{animation:pulse 1.1s infinite;background:linear-gradient(135deg,#ff5252,#d50000);color:#fff;box-shadow:0 15px 50px rgba(255,82,82,.6)}
+#btnMic:active{transform:scale(.95)}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.waves{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.waves span{position:absolute;top:50%;left:50%;width:130px;height:130px;border:2px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);opacity:0}
+.gravando-waves span{animation:waveOut 1.8s infinite}
+.gravando-waves span:nth-child(2){animation-delay:.6s}
+.gravando-waves span:nth-child(3){animation-delay:1.2s}
+@keyframes waveOut{0%{width:130px;height:130px;opacity:.8}100%{width:220px;height:220px;opacity:0}}
+#statusMic{margin-top:14px;font-size:13px;font-weight:600;min-height:20px;text-align:center;padding:0 24px;opacity:.9}
+#timerGrav{font-size:11px;color:var(--accent);font-weight:800;margin-top:4px;letter-spacing:1px}
+.dica{background:linear-gradient(135deg,rgba(0,176,255,.12),rgba(124,77,255,.08));border:1px solid rgba(0,176,255,.25);margin:12px 16px;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.5}
+#transcricaoTemp{background:rgba(0,230,118,.07);border:1px dashed rgba(0,230,118,.5);border-radius:12px;padding:12px;margin:0 16px;font-size:14px;display:none;animation:slideIn.3s}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.timeline{padding:0 16px}
+.timeline h3{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;opacity:.6;margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.btn-limpar{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.4);color:#ff6b6b;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:700}
+.card-ocorrencia{background:linear-gradient(135deg,var(--card),var(--card2));border-radius:16px;padding:13px 14px;margin-bottom:10px;border:1px solid rgba(255,255,255,.06);border-left:4px solid var(--accent2);animation:slideIn.35s ease;display:flex;gap:12px;align-items:flex-start;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.card-ocorrencia.meta{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.hora{font-size:11px;background:rgba(0,176,255,.18);color:#4dd0ff;padding:4px 9px;border-radius:20px;font-weight:800;white-space:nowrap}
+.frente-tag{font-size:10px;background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;padding:4px 9px;border-radius:20px;font-weight:900;letter-spacing:.3px}
+.card-ocorrencia p{font-size:13.5px;margin-top:2px;line-height:1.45}
+.card-ocorrencia.formal{font-size:11px;opacity:.55;margin-top:6px;font-style:italic;border-top:1px solid rgba(255,255,255,.06);padding-top:6px}
+.del{margin-left:auto;color:#ff5252;background:none;border:none;font-size:16px;padding:4px;opacity:.7}
+.filtros{display:flex;gap:8px;overflow-x:auto;padding:0 16px 6px;scrollbar-width:none}
+.filtros button{background:var(--card);border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 15px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;transition:.2s}
+.filtros button.ativo{background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;font-weight:900;transform:scale(1.05)}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(7,11,24,.96);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.1);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:16px;border-radius:14px;border:none;font-weight:900;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;letter-spacing:.3px}
+.btn-org{background:linear-gradient(135deg,var(--violet),var(--accent2));color:#fff;box-shadow:0 8px 25px rgba(124,77,255,.4)}
+.btn-zap{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;box-shadow:0 8px 25px rgba(37,211,102,.35)}
+.btn:active{transform:scale(.96)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;backdrop-filter:blur(8px)}
+.modal.show{display:flex;animation:fadeIn.3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-content{background:linear-gradient(180deg,#182040,#10162e);border-radius:22px;padding:22px;width:100%;max-width:520px;max-height:86vh;overflow:auto;border:1px solid rgba(124,77,255,.35);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-content h3{font-size:16px;font-weight:800;margin-bottom:4px}
+.modal-content pre{white-space:pre-wrap;font-size:13px;line-height:1.65;background:#070b18;padding:16px;border-radius:14px;margin:14px 0;font-family:'Inter',monospace;border:1px solid rgba(255,255,255,.06)}
+.empty{text-align:center;opacity:.35;padding:36px 20px;font-size:13px;line-height:1.6}
+#manualAdd{display:flex;gap:8px;padding:0 16px;margin:10px 0}
+#manualAdd input{flex:1;background:var(--card);border:1px solid rgba(255,255,255,.12);color:#fff;padding:13px;border-radius:12px;font-size:13px}
+#manualAdd button{background:linear-gradient(135deg,var(--accent2),var(--violet));border:none;color:#fff;padding:0 20px;border-radius:12px;font-size:18px}
+.contador-top{display:flex;gap:10px;padding:0 16px;margin-top:10px}
+.mini-stat{flex:1;background:var(--card);border-radius:12px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,.06)}
+.mini-stat b{font-size:18px;color:var(--accent)}
+.mini-stat small{font-size:10px;opacity:.5;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="header">
+<h1><i class="fa-solid fa-tractor"></i> DIÁRIO DE TURNO - CTT PRO</h1>
+<div class="sub"><span id="dataHoje"></span><span class="badge-turno" id="turnoAuto"></span></div>
+<div class="badge-keep"><span class="dot"></span> <span id="wakeStatus">Tela sempre ligada</span></div>
+</div>
+
+<div class="contador-top">
+<div class="mini-stat"><b id="stTotal">0</b><br><small>Ocorrências</small></div>
+<div class="mini-stat"><b id="stFrentes">0</b><br><small>Frentes ativas</small></div>
+<div class="mini-stat"><b id="stTempo">00:00</b><br><small>Gravando</small></div>
+</div>
+
+<div class="mic-area">
+<div class="waves" id="waves"><span></span><span></span><span></span></div>
+<button id="btnMic"><i class="fa-solid fa-microphone"></i></button>
+<div id="statusMic">Toque para começar — fica ligado até você parar</div>
+<div id="timerGrav"></div>
+</div>
+
+<div class="dica"><i class="fa-solid fa-lightbulb" style="color:#ffeb3b"></i> Fale natural: <b>"Frente quinhentos e um, colhedora parada"</b> ou <b>"501 caminhão aguardando"</b> — ele entende e formaliza sozinho.</div>
+<div id="transcricaoTemp"></div>
+
+<div id="manualAdd">
+<input id="textoManual" placeholder="Ou digite: 502 trator em manutenção">
+<button onclick="addManual()"><i class="fa-solid fa-plus"></i></button>
+</div>
+
+<div class="filtros" id="filtros">
+<button class="ativo" onclick="filtrar('TODAS',this)">Todas</button>
+<button onclick="filtrar('FRENTE 501',this)">501</button><button onclick="filtrar('FRENTE 502',this)">502</button><button onclick="filtrar('FRENTE 503',this)">503</button><button onclick="filtrar('FRENTE 504',this)">504</button><button onclick="filtrar('FRENTE 505',this)">505</button><button onclick="filtrar('FRENTE 506',this)">506</button>
+</div>
+
+<div class="timeline">
+<h3>Turno em tempo real <button class="btn-limpar" onclick="limparTudo()"><i class="fa-solid fa-trash"></i> Novo dia</button></h3>
+<div id="lista"></div>
+</div>
+
+<div class="bottom-bar">
+<button class="btn btn-org" onclick="organizar()"><i class="fa-solid fa-wand-magic-sparkles"></i> Organizar IA</button>
+<button class="btn btn-zap" onclick="enviarZap()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+</div>
+
+<div id="modalOrg" class="modal" onclick="if(event.target.id==='modalOrg')this.classList.remove('show')">
+<div class="modal-content">
+<h3><i class="fa-solid fa-clipboard-check" style="color:#7c4dff"></i> Resumo Formal para Gerência</h3>
+<p style="font-size:11px;opacity:.6">Texto já formalizado e pronto para envio</p>
+<pre id="textoOrganizado"></pre>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<button class="btn btn-zap" onclick="enviarZap(true)"><i class="fa-brands fa-whatsapp"></i> Enviar</button>
+<button class="btn" style="background:#2a3555;color:#fff" onclick="copiarTexto()">Copiar</button>
+</div>
+<button class="btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#fff" onclick="document.getElementById('modalOrg').classList.remove('show')">Fechar</button>
+</div>
+</div>
+
+<script>
+let ocorrencias = JSON.parse(localStorage.getItem('ctt_turno_v2')||'[]');
+let filtroAtual='TODAS';
+let recognition=null, gravando=false, restartAutomatico=true;
+let segGrav=0, timerInt=null, wakeLock=null;
+
+// WAKE LOCK - não deixa tela apagar
+async function ativarWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+      document.getElementById('wakeStatus').innerText='Tela sempre ligada • ativo';
+      wakeLock.addEventListener('release',()=>{document.getElementById('wakeStatus').innerText='Tela sempre ligada • pausado';});
+    } else { document.getElementById('wakeStatus').innerText='Tela sempre ligada'; }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && gravando) ativarWakeLock(); });
+ativarWakeLock();
+
+function getTurnoAuto(){ const h=new Date().getHours(); if(h>=6&&h<14) return 'TURNO A'; if(h>=14&&h<22) return 'TURNO B'; return 'TURNO C'; }
+document.getElementById('dataHoje').innerText=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
+document.getElementById('turnoAuto').innerText=getTurnoAuto();
+
+// DETECTA 501-506 FALADO DE QUALQUER JEITO
+function detectarFrente(texto){
+  const t=texto.toLowerCase();
+  const mapaExtenso={'um':'1','dois':'2','tres':'3','três':'3','quatro':'4','cinco':'5','seis':'6','uma':'1','duas':'2'};
+  let m=t.match(/quinhent\w*\s*e?\s*(\w+)/);
+  if(m){ let n=mapaExtenso[m[1]]; if(n) return 'FRENTE 50'+n; }
+  m=t.match(/50\s*([1-6])/); if(m) return 'FRENTE 50'+m[1];
+  m=t.match(/\b50([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
+  m=t.match(/frente\s*([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
+  m=t.match(/\bf\s*50([1-6])/); if(m) return 'FRENTE 50'+m[1];
+  return 'GERAL';
+}
+function limparTextoFrente(texto){
+  return texto.replace(/frente\s*(quinhent\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,'').trim();
+}
+// FORMALIZADOR - deixa apresentável
+function formalizar(texto){
+  let t=texto.trim();
+  t=t.charAt(0).toUpperCase()+t.slice(1);
+  const correcoes=[
+    [/^colhedera/i,'Colhedora'],[/\bquebro\b/gi,'em manutenção corretiva'],[/\bquebrou\b/gi,'em manutenção corretiva'],
+    [/\bparou\b/gi,'parada para manutenção'],[/\btrocando\b/gi,'em processo de troca'],
+    [/\baguaradando\b/gi,'aguardando'],[/\bcaminhao\b/gi,'Caminhão'],[/\btransbordo\b/gi,'transbordo'],
+    [/\bpneu furado\b/gi,'pneu furado - aguardando borracharia'],[/\bsem\b/gi,'sem'],
+  ];
+  correcoes.forEach(([re,rep])=>{t=t.replace(re,rep);});
+  t=t.replace(/\s+/g,' ').trim();
+  if(!/[.!?]$/.test(t)) t+='.';
+  // Deixa mais técnico
+  t=t.replace(/(\d+)\s*min/gi,'$1 min');
+  return t;
+}
+
+function salvar(){ localStorage.setItem('ctt_turno_v2',JSON.stringify(ocorrencias)); render(); }
+function horaAgora(){ return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function addOcorrencia(textoBruto){
+  if(!textoBruto.trim()||textoBruto.trim()==='...') return;
+  const frente=detectarFrente(textoBruto);
+  const textoLimpo=limparTextoFrente(textoBruto);
+  const textoFormal=formalizar(textoLimpo);
+  ocorrencias.unshift({id:Date.now()+Math.random(),hora:horaAgora(),frente,turno:getTurnoAuto(),texto:textoFormal,original:textoBruto.trim()});
+  salvar();
+}
+function addManual(){ const i=document.getElementById('textoManual'); addOcorrencia(i.value); i.value=''; }
+function deletar(id){ ocorrencias=ocorrencias.filter(o=>o.id!==id); salvar(); }
+function limparTudo(){ if(!ocorrencias.length) return; if(confirm('Apagar '+ocorrencias.length+' ocorrências e começar novo dia?')){ocorrencias=[];salvar();} }
+function filtrar(f,btn){ filtroAtual=f; document.querySelectorAll('.filtros button').forEach(b=>b.classList.remove('ativo')); btn.classList.add('ativo'); render(); }
+function render(){
+  const lista=document.getElementById('lista');
+  let f=filtroAtual==='TODAS'?ocorrencias:ocorrencias.filter(o=>o.frente===filtroAtual);
+  document.getElementById('stTotal').innerText=ocorrencias.length;
+  document.getElementById('stFrentes').innerText=new Set(ocorrencias.map(o=>o.frente)).size;
+  if(!f.length){ lista.innerHTML='<div class="empty"><i class="fa-solid fa-microphone" style="font-size:28px;margin-bottom:10px;display:block"></i>Nenhuma ocorrência ainda.<br>Toque no microfone e fale naturally.</div>'; return; }
+  lista.innerHTML=f.map(o=>`<div class="card-ocorrencia"><div class="meta"><span class="hora">${o.hora}</span><span class="frente-tag">${o.frente.replace('FRENTE ','F ')}</span></div><div style="flex:1"><p>${o.texto}</p>${o.original&&o.original.toLowerCase()!==o.texto.toLowerCase()?`<div class="formal">Falado: "${o.original}"</div>`:''}</div><button class="del" onclick="deletar(${o.id})"><i class="fa-solid fa-trash"></i></button></div>`).join('');
+}
+
+// MICROFONE CONTÍNUO - não desliga sozinho
+const btnMic=document.getElementById('btnMic'), statusMic=document.getElementById('statusMic'), tempDiv=document.getElementById('transcricaoTemp'), waves=document.getElementById('waves');
+function iniciarTimer(){ segGrav=0; clearInterval(timerInt); timerInt=setInterval(()=>{ segGrav++; const m=String(Math.floor(segGrav/60)).padStart(2,'0'), s=String(segGrav%60).padStart(2,'0'); document.getElementById('stTempo').innerText=m+':'+s; document.getElementById('timerGrav').innerText='● '+m+':'+s+' gravando'; },1000); }
+function pararTimer(){ clearInterval(timerInt); document.getElementById('timerGrav').innerText=''; }
+
+if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR(); recognition.lang='pt-BR'; recognition.interimResults=true; recognition.continuous=true;
+  recognition.onstart=()=>{ gravando=true; btnMic.classList.add('gravando'); waves.classList.add('gravando-waves'); btnMic.innerHTML='<i class="fa-solid fa-stop"></i>'; statusMic.innerText='Ouvindo direto... pode falar à vontade'; tempDiv.style.display='block'; tempDiv.innerText='...'; iniciarTimer(); ativarWakeLock(); };
+  recognition.onresult=(e)=>{
+    let final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){ const tr=e.results[i][0].transcript; if(e.results[i].isFinal) final+=tr+' '; else tempDiv.innerText=tr; }
+    if(final.trim()){ addOcorrencia(final.trim()); tempDiv.innerText='✔ Salvo: '+final.trim(); setTimeout(()=>{ if(gravando) tempDiv.innerText='Ouvindo...'; },1500); }
+  };
+  recognition.onend=()=>{ if(gravando&&restartAutomatico){ try{recognition.start();}catch(e){} } else { btnMic.classList.remove('gravando'); waves.classList.remove('gravando-waves'); btnMic.innerHTML='<i class="fa-solid fa-microphone"></i>'; statusMic.innerText='Toque para começar — fica ligado até você parar'; pararTimer(); tempDiv.style.display='none'; } };
+  recognition.onerror=(e)=>{ if(e.error==='not-allowed'){ statusMic.innerText='Permita o microfone no navegador'; pararGravacao(); } };
+  function pararGravacao(){ gravando=false; restartAutomatico=false; try{recognition.stop();}catch(e){} setTimeout(()=>restartAutomatico=true,500); }
+  btnMic.onclick=()=>{ if(gravando){ pararGravacao(); } else { restartAutomatico=true; try{recognition.start();}catch(e){} } };
+}else{ statusMic.innerText='Sem suporte a voz. Use digitação.'; btnMic.style.opacity='.4'; }
+
+function organizar(){
+  if(!ocorrencias.length){ alert('Sem ocorrências'); return; }
+  const turno=getTurnoAuto(), data=new Date().toLocaleDateString('pt-BR');
+  let txt=`🚜 *DIÁRIO DE TURNO - CTT*\n📅 ${data} | ${turno}\n━━━━━━━━━━━━━━━\n\n`;
+  ["FRENTE 501","FRENTE 502","FRENTE 503","FRENTE 504","FRENTE 505","FRENTE 506","GERAL"].forEach(fr=>{
+    let ops=ocorrencias.filter(o=>o.frente===fr).slice().reverse();
+    if(ops.length){ const num=fr.replace('FRENTE ',''); txt+=`📍 *FRENTE ${num}* — ${ops.length} ocorrência(s)\n`; ops.forEach(o=>{ txt+=` • ${o.hora} — ${o.texto}\n`; }); txt+=`\n`; }
+  });
+  txt+=`━━━━━━━━━━━━━━━\n✅ Total: ${ocorrencias.length} ocorrências\n🕐 Gerado às ${horaAgora()}`;
+  document.getElementById('textoOrganizado').innerText=txt;
+  document.getElementById('modalOrg').classList.add('show');
+  window._textoZap=txt;
+}
+function copiarTexto(){ navigator.clipboard.writeText(document.getElementById('textoOrganizado').innerText); alert('Copiado!'); }
+function enviarZap(){ if(!ocorrencias.length){ alert('Sem ocorrências'); return; } if(!window._textoZap) organizar(); window.open('https://wa.me/?text='+encodeURIComponent(window._textoZap),'_blank'); }
+render();
+</script>
+</body>
+</html>

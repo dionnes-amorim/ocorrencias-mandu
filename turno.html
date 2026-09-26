@@ -3,241 +3,277 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CTT - Diário de Turno PRO</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<title>CTT - Diário de Turno</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
-:root{--bg:#070b18;--card:#121a32;--card2:#1a2342;--accent:#00e676;--accent2:#00b0ff;--violet:#7c4dff;--text:#fff}
-body{background:radial-gradient(1200px 600px at 50% -10%,#0e2a1e 0%,var(--bg) 60%);color:var(--text);min-height:100vh;padding-bottom:130px}
-.header{background:linear-gradient(135deg,rgba(0,230,118,.15),rgba(0,176,255,.08));backdrop-filter:blur(12px);padding:18px 16px;border-bottom:1px solid rgba(0,230,118,.25);position:sticky;top:0;z-index:10}
-.header h1{font-size:19px;font-weight:900;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
-.header h1 i{color:var(--accent);filter:drop-shadow(0 0 8px rgba(0,230,118,.8))}
-.sub{font-size:12px;opacity:.7;margin-top:6px;display:flex;justify-content:space-between;align-items:center}
-.badge-turno{background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:900}
-.badge-keep{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.4);color:var(--accent);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;margin-top:8px}
-.badge-keep.dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.mic-area{display:flex;flex-direction:column;align-items:center;margin:22px 0 10px;position:relative}
-#btnMic{width:130px;height:130px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;font-size:46px;cursor:pointer;box-shadow:0 15px 50px rgba(0,230,118,.45),inset 0 2px 10px rgba(255,255,255,.3);transition:.25s;position:relative;z-index:2}
-#btnMic.gravando{animation:pulse 1.1s infinite;background:linear-gradient(135deg,#ff5252,#d50000);color:#fff;box-shadow:0 15px 50px rgba(255,82,82,.6)}
-#btnMic:active{transform:scale(.95)}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
-.waves{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-.waves span{position:absolute;top:50%;left:50%;width:130px;height:130px;border:2px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);opacity:0}
-.gravando-waves span{animation:waveOut 1.8s infinite}
-.gravando-waves span:nth-child(2){animation-delay:.6s}
-.gravando-waves span:nth-child(3){animation-delay:1.2s}
-@keyframes waveOut{0%{width:130px;height:130px;opacity:.8}100%{width:220px;height:220px;opacity:0}}
-#statusMic{margin-top:14px;font-size:13px;font-weight:600;min-height:20px;text-align:center;padding:0 24px;opacity:.9}
-#timerGrav{font-size:11px;color:var(--accent);font-weight:800;margin-top:4px;letter-spacing:1px}
-.dica{background:linear-gradient(135deg,rgba(0,176,255,.12),rgba(124,77,255,.08));border:1px solid rgba(0,176,255,.25);margin:12px 16px;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.5}
-#transcricaoTemp{background:rgba(0,230,118,.07);border:1px dashed rgba(0,230,118,.5);border-radius:12px;padding:12px;margin:0 16px;font-size:14px;display:none;animation:slideIn.3s}
-@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.timeline{padding:0 16px}
-.timeline h3{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;opacity:.6;margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center}
-.btn-limpar{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.4);color:#ff6b6b;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:700}
-.card-ocorrencia{background:linear-gradient(135deg,var(--card),var(--card2));border-radius:16px;padding:13px 14px;margin-bottom:10px;border:1px solid rgba(255,255,255,.06);border-left:4px solid var(--accent2);animation:slideIn.35s ease;display:flex;gap:12px;align-items:flex-start;box-shadow:0 4px 20px rgba(0,0,0,.3)}
-.card-ocorrencia.meta{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
-.hora{font-size:11px;background:rgba(0,176,255,.18);color:#4dd0ff;padding:4px 9px;border-radius:20px;font-weight:800;white-space:nowrap}
-.frente-tag{font-size:10px;background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;padding:4px 9px;border-radius:20px;font-weight:900;letter-spacing:.3px}
-.card-ocorrencia p{font-size:13.5px;margin-top:2px;line-height:1.45}
-.card-ocorrencia.formal{font-size:11px;opacity:.55;margin-top:6px;font-style:italic;border-top:1px solid rgba(255,255,255,.06);padding-top:6px}
-.del{margin-left:auto;color:#ff5252;background:none;border:none;font-size:16px;padding:4px;opacity:.7}
-.filtros{display:flex;gap:8px;overflow-x:auto;padding:0 16px 6px;scrollbar-width:none}
-.filtros button{background:var(--card);border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 15px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;transition:.2s}
-.filtros button.ativo{background:linear-gradient(135deg,var(--accent),#00b894);color:#06281a;font-weight:900;transform:scale(1.05)}
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(7,11,24,.96);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.1);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{padding:16px;border-radius:14px;border:none;font-weight:900;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;letter-spacing:.3px}
-.btn-org{background:linear-gradient(135deg,var(--violet),var(--accent2));color:#fff;box-shadow:0 8px 25px rgba(124,77,255,.4)}
-.btn-zap{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;box-shadow:0 8px 25px rgba(37,211,102,.35)}
-.btn:active{transform:scale(.96)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;backdrop-filter:blur(8px)}
-.modal.show{display:flex;animation:fadeIn.3s}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal-content{background:linear-gradient(180deg,#182040,#10162e);border-radius:22px;padding:22px;width:100%;max-width:520px;max-height:86vh;overflow:auto;border:1px solid rgba(124,77,255,.35);box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.modal-content h3{font-size:16px;font-weight:800;margin-bottom:4px}
-.modal-content pre{white-space:pre-wrap;font-size:13px;line-height:1.65;background:#070b18;padding:16px;border-radius:14px;margin:14px 0;font-family:'Inter',monospace;border:1px solid rgba(255,255,255,.06)}
-.empty{text-align:center;opacity:.35;padding:36px 20px;font-size:13px;line-height:1.6}
-#manualAdd{display:flex;gap:8px;padding:0 16px;margin:10px 0}
-#manualAdd input{flex:1;background:var(--card);border:1px solid rgba(255,255,255,.12);color:#fff;padding:13px;border-radius:12px;font-size:13px}
-#manualAdd button{background:linear-gradient(135deg,var(--accent2),var(--violet));border:none;color:#fff;padding:0 20px;border-radius:12px;font-size:18px}
-.contador-top{display:flex;gap:10px;padding:0 16px;margin-top:10px}
-.mini-stat{flex:1;background:var(--card);border-radius:12px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,.06)}
-.mini-stat b{font-size:18px;color:var(--accent)}
-.mini-stat small{font-size:10px;opacity:.5;text-transform:uppercase}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#080c1a;color:#fff;min-height:100vh;padding-bottom:110px}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;background:radial-gradient(600px 300px at 50% 0%,rgba(0,230,118,.18),transparent);pointer-events:none;z-index:0}
+.header{position:sticky;top:0;z-index:10;padding:20px 18px 16px;background:rgba(8,12,26,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07)}
+.header h1{font-size:20px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+.header h1 i{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#00e676,#00b894);border-radius:12px;color:#06281a;font-size:18px}
+.sub{font-size:12px;opacity:.55;margin-top:8px;display:flex;justify-content:space-between}
+.badge-turno{background:#00e676;color:#06281a;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:800}
+.hero-mic{display:flex;flex-direction:column;align-items:center;padding:28px 20px 10px;position:relative;z-index:1}
+.mic-wrap{position:relative}
+#btnMic{width:132px;height:132px;border-radius:44px;border:none;background:linear-gradient(135deg,#00e676 0%,#00c853 100%);color:#06281a;font-size:48px;cursor:pointer;box-shadow:0 20px 60px rgba(0,230,118,.35);transition:.25s;position:relative;z-index:2}
+#btnMic.gravando{background:linear-gradient(135deg,#ff5252,#ff1744);color:#fff;box-shadow:0 20px 60px rgba(255,82,82,.4);animation:pulse 1.4s infinite;border-radius:50%}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.ring{position:absolute;inset:-6px;border-radius:50px;border:2px solid rgba(0,230,118,.4);opacity:0;pointer-events:none}
+.gravando ~.ring{animation:ringPulse 1.8s infinite}
+.ring.r2{animation-delay:.6s}.ring.r3{animation-delay:1.2s}
+@keyframes ringPulse{0%{transform:scale(.95);opacity:.8;border-radius:50px}100%{transform:scale(1.35);opacity:0;border-radius:60px}}
+#statusMic{margin-top:18px;font-size:14px;font-weight:600;text-align:center;opacity:.9;min-height:20px}
+#silenceBar{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:100px;margin-top:10px;overflow:hidden;display:none}
+#silenceFill{height:100%;background:#00e676;border-radius:100px;transition:width 1s linear;width:100%}
+.tip{margin:16px;background:rgba(0,176,255,.07);border:1px solid rgba(0,176,255,.15);padding:13px 15px;border-radius:16px;font-size:12.5px;line-height:1.6;position:relative;z-index:1}
+.tip b{color:#4dd0ff}
+#transcricaoTemp{margin:0 16px;padding:14px 16px;background:rgba(0,230,118,.06);border:1px dashed rgba(0,230,118,.35);border-radius:16px;font-size:14px;display:none;position:relative;z-index:1}
+#manualAdd{display:flex;gap:8px;padding:14px 16px 0;position:relative;z-index:1}
+#manualAdd input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;padding:14px 16px;border-radius:14px;font-size:14px;outline:none}
+#manualAdd input:focus{border-color:#00e676}
+#manualAdd button{background:#fff;color:#080c1a;border:none;width:52px;border-radius:14px;font-size:18px}
+.filtros{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;scrollbar-width:none;position:relative;z-index:1}
+.filtros::-webkit-scrollbar{display:none}
+.filtros button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:600;white-space:nowrap}
+.filtros button.ativo{background:#fff;color:#080c1a;font-weight:800}
+.section-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 10px;position:relative;z-index:1}
+.section-head h3{font-size:13px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:1px}
+.btn-limpar{background:rgba(255,82,82,.1);border:none;color:#ff7a7a;padding:8px 14px;border-radius:100px;font-size:12px;font-weight:700}
+#lista{padding:0 16px;position:relative;z-index:1}
+.card{background:rgba(255,255,255,.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:15px;margin-bottom:10px;display:flex;gap:13px;animation:in.35s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.meta{display:flex;flex-direction:column;gap:7px;align-items:flex-start;min-width:68px}
+.hora{font-size:11px;font-weight:800;background:rgba(0,176,255,.15);color:#4dd0ff;padding:5px 10px;border-radius:100px}
+.frente{font-size:10px;font-weight:800;background:#00e676;color:#06281a;padding:4px 10px;border-radius:100px}
+.card p{font-size:14px;line-height:1.5;flex:1}
+.acts{display:flex;flex-direction:column;gap:4px}
+.acts button{background:none;border:none;font-size:15px;padding:7px;opacity:.6}
+.acts.e{color:#4dd0ff}.acts.d{color:#ff7a7a}
+.empty{text-align:center;padding:40px 20px;opacity:.3;font-size:13px}
+.bottom{position:fixed;bottom:0;left:0;right:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:rgba(8,12,26,.92);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.07);z-index:20}
+.btn-organizar{width:100%;padding:18px;border:none;border-radius:18px;background:linear-gradient(135deg,#7c4dff,#00b0ff);color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 35px rgba(124,77,255,.4)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;z-index:100}
+.modal.show{display:flex}
+.sheet{background:#121a32;border-radius:28px 28px 0 0;width:100%;max-width:520px;max-height:88vh;overflow:auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom));animation:up.35s ease}
+@keyframes up{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet pre{white-space:pre-wrap;font-size:13.5px;line-height:1.7;background:#080c1a;padding:18px;border-radius:16px;margin:16px 0;border:1px solid rgba(255,255,255,.06)}
+.edit-area textarea{width:100%;background:#080c1a;border:1px solid rgba(255,255,255,.12);color:#fff;padding:14px;border-radius:14px;font-size:15px;min-height:100px;margin:12px 0;outline:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:15px;border-radius:14px;border:none;font-weight:800;font-size:14px}
+.btn-s{background:#00e676;color:#06281a}.btn-c{background:rgba(255,255,255,.1);color:#fff}
+.btn-copy{width:100%;background:#00e676;color:#06281a;padding:17px;border-radius:16px;border:none;font-weight:800;font-size:15px;margin-top:6px}
+.stats{display:flex;gap:10px;padding:0 16px;position:relative;z-index:1}
+.stat{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:12px;text-align:center}
+.stat b{font-size:20px;font-weight:800}.stat small{font-size:10px;opacity:.45;text-transform:uppercase;letter-spacing:.5px}
 </style>
 </head>
 <body>
 <div class="header">
-<h1><i class="fa-solid fa-tractor"></i> DIÁRIO DE TURNO - CTT PRO</h1>
+<h1><i class="fa-solid fa-tractor"></i> Diário de Turno</h1>
 <div class="sub"><span id="dataHoje"></span><span class="badge-turno" id="turnoAuto"></span></div>
-<div class="badge-keep"><span class="dot"></span> <span id="wakeStatus">Tela sempre ligada</span></div>
 </div>
 
-<div class="contador-top">
-<div class="mini-stat"><b id="stTotal">0</b><br><small>Ocorrências</small></div>
-<div class="mini-stat"><b id="stFrentes">0</b><br><small>Frentes ativas</small></div>
-<div class="mini-stat"><b id="stTempo">00:00</b><br><small>Gravando</small></div>
+<div class="stats" style="margin-top:14px">
+<div class="stat"><b id="stTotal">0</b><br><small>Ocorrências</small></div>
+<div class="stat"><b id="stFrentes">0</b><br><small>Frentes</small></div>
+<div class="stat"><b id="stUltima">--:--</b><br><small>Última</small></div>
 </div>
 
-<div class="mic-area">
-<div class="waves" id="waves"><span></span><span></span><span></span></div>
+<div class="hero-mic">
+<div class="mic-wrap">
 <button id="btnMic"><i class="fa-solid fa-microphone"></i></button>
-<div id="statusMic">Toque para começar — fica ligado até você parar</div>
-<div id="timerGrav"></div>
+<div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
+</div>
+<div id="statusMic">Toque para falar</div>
+<div id="silenceBar"><div id="silenceFill"></div></div>
 </div>
 
-<div class="dica"><i class="fa-solid fa-lightbulb" style="color:#ffeb3b"></i> Fale natural: <b>"Frente quinhentos e um, colhedora parada"</b> ou <b>"501 caminhão aguardando"</b> — ele entende e formaliza sozinho.</div>
+<div class="tip"><i class="fa-solid fa-lightbulb" style="color:#ffeb3b"></i> Fale natural com pausa pra pensar: <b>"vinte e três e quinze... frente 502... acolhedora quebrou"</b> — ele espera você terminar. Se ficar 20s em silêncio, desliga sozinho.</div>
 <div id="transcricaoTemp"></div>
 
 <div id="manualAdd">
-<input id="textoManual" placeholder="Ou digite: 502 trator em manutenção">
+<input id="textoManual" placeholder="Digite: 23:15 502 acolhedora quebrou">
 <button onclick="addManual()"><i class="fa-solid fa-plus"></i></button>
 </div>
 
-<div class="filtros" id="filtros">
+<div class="filtros">
 <button class="ativo" onclick="filtrar('TODAS',this)">Todas</button>
 <button onclick="filtrar('FRENTE 501',this)">501</button><button onclick="filtrar('FRENTE 502',this)">502</button><button onclick="filtrar('FRENTE 503',this)">503</button><button onclick="filtrar('FRENTE 504',this)">504</button><button onclick="filtrar('FRENTE 505',this)">505</button><button onclick="filtrar('FRENTE 506',this)">506</button>
 </div>
 
-<div class="timeline">
-<h3>Turno em tempo real <button class="btn-limpar" onclick="limparTudo()"><i class="fa-solid fa-trash"></i> Novo dia</button></h3>
+<div class="section-head"><h3>Tempo real</h3><button class="btn-limpar" onclick="limparTudo()">Novo dia</button></div>
 <div id="lista"></div>
-</div>
 
-<div class="bottom-bar">
-<button class="btn btn-org" onclick="organizar()"><i class="fa-solid fa-wand-magic-sparkles"></i> Organizar IA</button>
-<button class="btn btn-zap" onclick="enviarZap()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+<div class="bottom">
+<button class="btn-organizar" onclick="organizar()"><i class="fa-solid fa-wand-magic-sparkles"></i> ORGANIZAR TURNO</button>
 </div>
 
 <div id="modalOrg" class="modal" onclick="if(event.target.id==='modalOrg')this.classList.remove('show')">
-<div class="modal-content">
-<h3><i class="fa-solid fa-clipboard-check" style="color:#7c4dff"></i> Resumo Formal para Gerência</h3>
-<p style="font-size:11px;opacity:.6">Texto já formalizado e pronto para envio</p>
+<div class="sheet">
+<h3 style="font-size:17px"><i class="fa-solid fa-clipboard-check" style="color:#7c4dff"></i> Resumo por frente</h3>
+<p style="font-size:12px;opacity:.55;margin-top:4px">Pronto para copiar e colar</p>
 <pre id="textoOrganizado"></pre>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-<button class="btn btn-zap" onclick="enviarZap(true)"><i class="fa-brands fa-whatsapp"></i> Enviar</button>
-<button class="btn" style="background:#2a3555;color:#fff" onclick="copiarTexto()">Copiar</button>
+<button class="btn-copy" onclick="copiarTexto()"><i class="fa-solid fa-copy"></i> COPIAR TEXTO</button>
+<button class="btn btn-c" style="width:100%;margin-top:10px" onclick="document.getElementById('modalOrg').classList.remove('show')">Fechar</button>
 </div>
-<button class="btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#fff" onclick="document.getElementById('modalOrg').classList.remove('show')">Fechar</button>
+</div>
+
+<div id="modalEdit" class="modal">
+<div class="sheet edit-area">
+<h3 style="font-size:17px"><i class="fa-solid fa-pen" style="color:#4dd0ff"></i> Editar</h3>
+<textarea id="editTexto"></textarea>
+<div class="row2">
+<button class="btn btn-s" onclick="salvarEdit()">Salvar</button>
+<button class="btn btn-c" onclick="document.getElementById('modalEdit').classList.remove('show')">Cancelar</button>
+</div>
 </div>
 </div>
 
 <script>
-let ocorrencias = JSON.parse(localStorage.getItem('ctt_turno_v2')||'[]');
-let filtroAtual='TODAS';
-let recognition=null, gravando=false, restartAutomatico=true;
-let segGrav=0, timerInt=null, wakeLock=null;
+let ocorrencias = JSON.parse(localStorage.getItem('ctt_v5')||'[]');
+let filtroAtual='TODAS', editId=null;
+let rec=null, gravando=false, wantRestart=true;
+let silenceTimer=null, silenceCountdown=null, lastSpeechTime=0;
+let finalBuffer='', interimPauseTimer=null;
 
-// WAKE LOCK - não deixa tela apagar
-async function ativarWakeLock(){
-  try{
-    if('wakeLock' in navigator){
-      wakeLock = await navigator.wakeLock.request('screen');
-      document.getElementById('wakeStatus').innerText='Tela sempre ligada • ativo';
-      wakeLock.addEventListener('release',()=>{document.getElementById('wakeStatus').innerText='Tela sempre ligada • pausado';});
-    } else { document.getElementById('wakeStatus').innerText='Tela sempre ligada'; }
-  }catch(e){}
-}
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && gravando) ativarWakeLock(); });
-ativarWakeLock();
-
-function getTurnoAuto(){ const h=new Date().getHours(); if(h>=6&&h<14) return 'TURNO A'; if(h>=14&&h<22) return 'TURNO B'; return 'TURNO C'; }
+function getTurnoAuto(){const h=new Date().getHours(); if(h>=6&&h<14) return 'TURNO A'; if(h>=14&&h<22) return 'TURNO B'; return 'TURNO C';}
 document.getElementById('dataHoje').innerText=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
 document.getElementById('turnoAuto').innerText=getTurnoAuto();
 
-// DETECTA 501-506 FALADO DE QUALQUER JEITO
+// Wake lock silencioso
+if('wakeLock' in navigator){ navigator.wakeLock.request('screen').catch(()=>{}); }
+
+function detectarHorario(texto){
+  let t=texto.toLowerCase();
+  let m=t.match(/(\d{1,2})[:h](\d{2})/);
+  if(m) return String(m[1]).padStart(2,'0')+':'+m[2];
+  const nm={'zero':0,'uma':1,'um':1,'duas':2,'dois':2,'tres':3,'três':3,'quatro':4,'cinco':5,'seis':6,'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,'doze':12,'treze':13,'quatorze':14,'catorze':14,'quinze':15,'dezesseis':16,'dezessete':17,'dezoito':18,'dezenove':19,'vinte':20,'trinta':30,'quarenta':40,'cinquenta':50,'meia':30};
+  function pv(s){ s=s.replace(/ e /g,' ').trim(); let tot=0; s.split(/\s+/).forEach(p=>{ if(nm[p]!==undefined){ if(['vinte','trinta','quarenta','cinquenta'].includes(p)) tot+=nm[p]; else tot+=nm[p]; } }); return tot; }
+  m=t.match(/(?:às|as)?\s*([a-zà-ú\s]+?)\s+e\s+([a-zà-ú\s]+?)(?:,|\s+frente|\s+50|\s+a\s|$)/);
+  if(m){ let h=pv(m[1]), mi=pv(m[2]); if(h<=23&&mi<=59) return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0'); }
+  return null;
+}
 function detectarFrente(texto){
-  const t=texto.toLowerCase();
-  const mapaExtenso={'um':'1','dois':'2','tres':'3','três':'3','quatro':'4','cinco':'5','seis':'6','uma':'1','duas':'2'};
-  let m=t.match(/quinhent\w*\s*e?\s*(\w+)/);
-  if(m){ let n=mapaExtenso[m[1]]; if(n) return 'FRENTE 50'+n; }
-  m=t.match(/50\s*([1-6])/); if(m) return 'FRENTE 50'+m[1];
+  const t=texto.toLowerCase(); const mp={'um':'1','dois':'2','tres':'3','três':'3','quatro':'4','cinco':'5','seis':'6','uma':'1'};
+  let m=t.match(/quinhent\w*\s*e?\s*(\w+)/); if(m&&mp[m[1]]) return 'FRENTE 50'+mp[m[1]];
+  m=t.match(/\b50\s*([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
   m=t.match(/\b50([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
   m=t.match(/frente\s*([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
-  m=t.match(/\bf\s*50([1-6])/); if(m) return 'FRENTE 50'+m[1];
   return 'GERAL';
 }
-function limparTextoFrente(texto){
-  return texto.replace(/frente\s*(quinhent\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,'').trim();
+function limparCabecalho(texto){
+  let t=texto;
+  t=t.replace(/^\s*(às|as)?\s*\d{1,2}[:h]\d{2}\s*[,.\-]?\s*/i,'');
+  t=t.replace(/frente\s*(quinhent\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,'');
+  return t.trim();
 }
-// FORMALIZADOR - deixa apresentável
-function formalizar(texto){
+function correcaoLeve(texto){
   let t=texto.trim();
-  t=t.charAt(0).toUpperCase()+t.slice(1);
-  const correcoes=[
-    [/^colhedera/i,'Colhedora'],[/\bquebro\b/gi,'em manutenção corretiva'],[/\bquebrou\b/gi,'em manutenção corretiva'],
-    [/\bparou\b/gi,'parada para manutenção'],[/\btrocando\b/gi,'em processo de troca'],
-    [/\baguaradando\b/gi,'aguardando'],[/\bcaminhao\b/gi,'Caminhão'],[/\btransbordo\b/gi,'transbordo'],
-    [/\bpneu furado\b/gi,'pneu furado - aguardando borracharia'],[/\bsem\b/gi,'sem'],
-  ];
-  correcoes.forEach(([re,rep])=>{t=t.replace(re,rep);});
+  // acolhedora é equipamento - mantém
+  const fx=[[/colhedera/gi,'colhedora'],[/caminhao/gi,'caminhão'],[/manutencao/gi,'manutenção']];
+  fx.forEach(([r,p])=>t=t.replace(r,p));
   t=t.replace(/\s+/g,' ').trim();
-  if(!/[.!?]$/.test(t)) t+='.';
-  // Deixa mais técnico
-  t=t.replace(/(\d+)\s*min/gi,'$1 min');
+  if(t) t=t.charAt(0).toUpperCase()+t.slice(1);
+  if(t&&!/[.!?]$/.test(t)) t+='.';
   return t;
 }
-
-function salvar(){ localStorage.setItem('ctt_turno_v2',JSON.stringify(ocorrencias)); render(); }
-function horaAgora(){ return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
-function addOcorrencia(textoBruto){
-  if(!textoBruto.trim()||textoBruto.trim()==='...') return;
-  const frente=detectarFrente(textoBruto);
-  const textoLimpo=limparTextoFrente(textoBruto);
-  const textoFormal=formalizar(textoLimpo);
-  ocorrencias.unshift({id:Date.now()+Math.random(),hora:horaAgora(),frente,turno:getTurnoAuto(),texto:textoFormal,original:textoBruto.trim()});
+function salvar(){localStorage.setItem('ctt_v5',JSON.stringify(ocorrencias));render();}
+function horaAgora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function addOcorrencia(bruto){
+  if(!bruto.trim()||bruto.trim()==='...') return;
+  const hora=detectarHorario(bruto)||horaAgora();
+  const frente=detectarFrente(bruto);
+  const texto=correcaoLeve(limparCabecalho(bruto));
+  if(!texto||texto==='.') return;
+  ocorrencias.unshift({id:Date.now()+Math.random(),hora,frente,texto});
   salvar();
 }
-function addManual(){ const i=document.getElementById('textoManual'); addOcorrencia(i.value); i.value=''; }
-function deletar(id){ ocorrencias=ocorrencias.filter(o=>o.id!==id); salvar(); }
-function limparTudo(){ if(!ocorrencias.length) return; if(confirm('Apagar '+ocorrencias.length+' ocorrências e começar novo dia?')){ocorrencias=[];salvar();} }
-function filtrar(f,btn){ filtroAtual=f; document.querySelectorAll('.filtros button').forEach(b=>b.classList.remove('ativo')); btn.classList.add('ativo'); render(); }
+function addManual(){const i=document.getElementById('textoManual');addOcorrencia(i.value);i.value='';}
+function deletar(id){ocorrencias=ocorrencias.filter(o=>o.id!==id);salvar();}
+function limparTudo(){if(!ocorrencias.length)return;if(confirm('Apagar '+ocorrencias.length+' e começar novo dia?')){ocorrencias=[];salvar();}}
+function filtrar(f,b){filtroAtual=f;document.querySelectorAll('.filtros button').forEach(x=>x.classList.remove('ativo'));b.classList.add('ativo');render();}
+function abrirEdit(id){editId=id;const o=ocorrencias.find(x=>x.id===id);document.getElementById('editTexto').value=o.texto;document.getElementById('modalEdit').classList.add('show');}
+function salvarEdit(){const v=document.getElementById('editTexto').value.trim();if(!v)return;const o=ocorrencias.find(x=>x.id===editId);o.texto=correcaoLeve(v);salvar();document.getElementById('modalEdit').classList.remove('show');}
 function render(){
   const lista=document.getElementById('lista');
   let f=filtroAtual==='TODAS'?ocorrencias:ocorrencias.filter(o=>o.frente===filtroAtual);
   document.getElementById('stTotal').innerText=ocorrencias.length;
   document.getElementById('stFrentes').innerText=new Set(ocorrencias.map(o=>o.frente)).size;
-  if(!f.length){ lista.innerHTML='<div class="empty"><i class="fa-solid fa-microphone" style="font-size:28px;margin-bottom:10px;display:block"></i>Nenhuma ocorrência ainda.<br>Toque no microfone e fale naturally.</div>'; return; }
-  lista.innerHTML=f.map(o=>`<div class="card-ocorrencia"><div class="meta"><span class="hora">${o.hora}</span><span class="frente-tag">${o.frente.replace('FRENTE ','F ')}</span></div><div style="flex:1"><p>${o.texto}</p>${o.original&&o.original.toLowerCase()!==o.texto.toLowerCase()?`<div class="formal">Falado: "${o.original}"</div>`:''}</div><button class="del" onclick="deletar(${o.id})"><i class="fa-solid fa-trash"></i></button></div>`).join('');
+  document.getElementById('stUltima').innerText=ocorrencias.length?ocorrencias[0].hora:'--:--';
+  if(!f.length){lista.innerHTML='<div class="empty">Toque no microfone e fale.<br>Pode pausar pra pensar, ele espera.</div>';return;}
+  lista.innerHTML=f.map(o=>`<div class="card"><div class="meta"><span class="hora">${o.hora}</span><span class="frente">${o.frente.replace('FRENTE ','')}</span></div><p>${o.texto}</p><div class="acts"><button class="e" onclick="abrirEdit(${o.id})"><i class="fa-solid fa-pen"></i></button><button class="d" onclick="deletar(${o.id})"><i class="fa-solid fa-trash"></i></button></div></div>`).join('');
 }
 
-// MICROFONE CONTÍNUO - não desliga sozinho
-const btnMic=document.getElementById('btnMic'), statusMic=document.getElementById('statusMic'), tempDiv=document.getElementById('transcricaoTemp'), waves=document.getElementById('waves');
-function iniciarTimer(){ segGrav=0; clearInterval(timerInt); timerInt=setInterval(()=>{ segGrav++; const m=String(Math.floor(segGrav/60)).padStart(2,'0'), s=String(segGrav%60).padStart(2,'0'); document.getElementById('stTempo').innerText=m+':'+s; document.getElementById('timerGrav').innerText='● '+m+':'+s+' gravando'; },1000); }
-function pararTimer(){ clearInterval(timerInt); document.getElementById('timerGrav').innerText=''; }
+// MICROFONE COM PAUSA INTELIGENTE
+const btnMic=document.getElementById('btnMic'),statusMic=document.getElementById('statusMic'),tempDiv=document.getElementById('transcricaoTemp'),silenceBar=document.getElementById('silenceBar'),silenceFill=document.getElementById('silenceFill');
+function resetSilenceTimer(){
+  clearTimeout(silenceTimer); clearInterval(silenceCountdown);
+  lastSpeechTime=Date.now();
+  silenceBar.style.display='block';
+  let rest=20;
+  silenceFill.style.width='100%'; silenceFill.style.background='#00e676';
+  silenceCountdown=setInterval(()=>{
+    rest--; silenceFill.style.width=(rest/20*100)+'%';
+    if(rest<=5) silenceFill.style.background='#ff5252';
+    if(rest<=0){ clearInterval(silenceCountdown); pararTudo('Tempo esgotado - 20s sem fala'); }
+  },1000);
+  silenceTimer=setTimeout(()=>{ pararTudo('Encerrado após 20s em silêncio'); },20000);
+}
+function pararTudo(msg){
+  gravando=false; wantRestart=false;
+  try{rec.stop();}catch(e){}
+  clearTimeout(silenceTimer); clearInterval(silenceCountdown); clearTimeout(interimPauseTimer);
+  btnMic.classList.remove('gravando'); btnMic.innerHTML='<i class="fa-solid fa-microphone"></i>';
+  statusMic.innerText=msg||'Toque para falar'; silenceBar.style.display='none'; tempDiv.style.display='none';
+  if(finalBuffer.trim()){ addOcorrencia(finalBuffer.trim()); finalBuffer=''; }
+  setTimeout(()=>wantRestart=true,600);
+}
 
 if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SR(); recognition.lang='pt-BR'; recognition.interimResults=true; recognition.continuous=true;
-  recognition.onstart=()=>{ gravando=true; btnMic.classList.add('gravando'); waves.classList.add('gravando-waves'); btnMic.innerHTML='<i class="fa-solid fa-stop"></i>'; statusMic.innerText='Ouvindo direto... pode falar à vontade'; tempDiv.style.display='block'; tempDiv.innerText='...'; iniciarTimer(); ativarWakeLock(); };
-  recognition.onresult=(e)=>{
-    let final='';
-    for(let i=e.resultIndex;i<e.results.length;i++){ const tr=e.results[i][0].transcript; if(e.results[i].isFinal) final+=tr+' '; else tempDiv.innerText=tr; }
-    if(final.trim()){ addOcorrencia(final.trim()); tempDiv.innerText='✔ Salvo: '+final.trim(); setTimeout(()=>{ if(gravando) tempDiv.innerText='Ouvindo...'; },1500); }
+  rec=new SR(); rec.lang='pt-BR'; rec.interimResults=true; rec.continuous=true;
+  rec.onstart=()=>{ gravando=true; finalBuffer=''; btnMic.classList.add('gravando'); btnMic.innerHTML='<i class="fa-solid fa-stop"></i>'; statusMic.innerText='Ouvindo... pode pausar pra pensar'; tempDiv.style.display='block'; tempDiv.innerText='...'; resetSilenceTimer(); if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{}); };
+  rec.onresult=(e)=>{
+    // qualquer resultado = teve fala, reseta timer de 20s
+    resetSilenceTimer();
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      let tr=e.results[i][0].transcript;
+      if(e.results[i].isFinal){ finalBuffer+=tr+' '; }
+      else { interim+=tr; }
+    }
+    tempDiv.innerText=(finalBuffer+interim).trim()||'...';
+    // espera 2.8s de pausa pra considerar que terminou o raciocínio e salvar
+    clearTimeout(interimPauseTimer);
+    interimPauseTimer=setTimeout(()=>{
+      if(finalBuffer.trim() && gravando){
+        addOcorrencia(finalBuffer.trim());
+        tempDiv.innerText='✔ Salvo! Continue falando...';
+        finalBuffer='';
+        setTimeout(()=>{ if(gravando) tempDiv.innerText='Ouvindo...'; },1200);
+      }
+    },2800);
   };
-  recognition.onend=()=>{ if(gravando&&restartAutomatico){ try{recognition.start();}catch(e){} } else { btnMic.classList.remove('gravando'); waves.classList.remove('gravando-waves'); btnMic.innerHTML='<i class="fa-solid fa-microphone"></i>'; statusMic.innerText='Toque para começar — fica ligado até você parar'; pararTimer(); tempDiv.style.display='none'; } };
-  recognition.onerror=(e)=>{ if(e.error==='not-allowed'){ statusMic.innerText='Permita o microfone no navegador'; pararGravacao(); } };
-  function pararGravacao(){ gravando=false; restartAutomatico=false; try{recognition.stop();}catch(e){} setTimeout(()=>restartAutomatico=true,500); }
-  btnMic.onclick=()=>{ if(gravando){ pararGravacao(); } else { restartAutomatico=true; try{recognition.start();}catch(e){} } };
-}else{ statusMic.innerText='Sem suporte a voz. Use digitação.'; btnMic.style.opacity='.4'; }
+  rec.onend=()=>{ if(gravando&&wantRestart){ try{rec.start();}catch(e){} } };
+  rec.onerror=(e)=>{ if(e.error==='not-allowed'){ statusMic.innerText='Permita o microfone'; gravando=false; } };
+  btnMic.onclick=()=>{ if(gravando){ pararTudo('Toque para falar'); } else { wantRestart=true; try{rec.start();}catch(e){} } };
+}else{ statusMic.innerText='Sem suporte a voz'; }
 
 function organizar(){
-  if(!ocorrencias.length){ alert('Sem ocorrências'); return; }
+  if(!ocorrencias.length){alert('Sem ocorrências');return;}
   const turno=getTurnoAuto(), data=new Date().toLocaleDateString('pt-BR');
-  let txt=`🚜 *DIÁRIO DE TURNO - CTT*\n📅 ${data} | ${turno}\n━━━━━━━━━━━━━━━\n\n`;
+  let txt=`DIÁRIO DE TURNO - CTT\n${data} | ${turno}\n━━━━━━━━━━━━━━━\n\n`;
   ["FRENTE 501","FRENTE 502","FRENTE 503","FRENTE 504","FRENTE 505","FRENTE 506","GERAL"].forEach(fr=>{
     let ops=ocorrencias.filter(o=>o.frente===fr).slice().reverse();
-    if(ops.length){ const num=fr.replace('FRENTE ',''); txt+=`📍 *FRENTE ${num}* — ${ops.length} ocorrência(s)\n`; ops.forEach(o=>{ txt+=` • ${o.hora} — ${o.texto}\n`; }); txt+=`\n`; }
+    if(ops.length){ txt+=`FRENTE ${fr.replace('FRENTE ','')} — ${ops.length}\n`; ops.forEach(o=>txt+=` • ${o.hora} — ${o.texto}\n`); txt+=`\n`; }
   });
-  txt+=`━━━━━━━━━━━━━━━\n✅ Total: ${ocorrencias.length} ocorrências\n🕐 Gerado às ${horaAgora()}`;
+  txt+=`━━━━━━━━━━━━━━━\nTotal: ${ocorrencias.length} ocorrências`;
   document.getElementById('textoOrganizado').innerText=txt;
   document.getElementById('modalOrg').classList.add('show');
-  window._textoZap=txt;
 }
-function copiarTexto(){ navigator.clipboard.writeText(document.getElementById('textoOrganizado').innerText); alert('Copiado!'); }
-function enviarZap(){ if(!ocorrencias.length){ alert('Sem ocorrências'); return; } if(!window._textoZap) organizar(); window.open('https://wa.me/?text='+encodeURIComponent(window._textoZap),'_blank'); }
+function copiarTexto(){navigator.clipboard.writeText(document.getElementById('textoOrganizado').innerText);alert('Copiado!');}
 render();
 </script>
 </body>

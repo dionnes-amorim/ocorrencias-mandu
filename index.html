@@ -123,16 +123,18 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;backgro
 </div>
 </div>
 <script>
-// SUPABASE
+// SUPABASE - corrigido sem persist de storage
 const SUPABASE_URL = 'https://ecrpiuhsbhuqcxbbpqfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_I7Hw7KieW3VNFqb9LYrFoQ_tFWWABwl';
 const TABLE = 'ocorrencias_mandu';
-const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+});
 
 let ocorrencias = [];
 let filtroAtual='TODAS', editId=null;
 let rec=null, gravando=false, wantRestart=true;
-let silenceTimer=null, silenceCountdown=null, lastSpeechTime=0;
+let silenceTimer=null, silenceCountdown=null;
 let finalBuffer='', interimPauseTimer=null;
 
 function getTurnoAuto(){const h=new Date().getHours(); if(h>=6&&h<14) return 'TURNO A'; if(h>=14&&h<22) return 'TURNO B'; return 'TURNO C';}
@@ -177,7 +179,13 @@ function horaAgora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit
 
 async function loadSupa(){
   const {data,error}=await supa.from(TABLE).select('*').order('created_at',{ascending:false}).limit(500);
-  if(!error){ ocorrencias=data.map(d=>({id:d.id,hora:d.hora,frente:d.frente,texto:d.texto,created_at:d.created_at})); render(); }
+  if(error){
+    console.error('load erro',error);
+    document.getElementById('lista').innerHTML='<div class="empty">ERRO LOAD: '+error.message+'</div>';
+    return;
+  }
+  ocorrencias=data.map(d=>({id:d.id,hora:d.hora,frente:d.frente,texto:d.texto,created_at:d.created_at}));
+  render();
 }
 async function addOcorrencia(bruto){
   if(!bruto.trim()||bruto.trim()==='...') return;
@@ -185,15 +193,21 @@ async function addOcorrencia(bruto){
   const frente=detectarFrente(bruto);
   const texto=correcaoLeve(limparCabecalho(bruto));
   if(!texto||texto==='.') return;
-  const {error}=await supa.from(TABLE).insert([{hora,frente,texto,turno:getTurnoAuto(),unidade:'MANDU'}]);
-  if(error) alert('Erro: '+error.message);
+  console.log('salvando',hora,frente,texto);
+  const {data,error}=await supa.from(TABLE).insert([{hora,frente,texto,turno:getTurnoAuto(),unidade:'MANDU'}]).select();
+  if(error){
+    console.error(error);
+    alert('ERRO SUPABASE: '+error.message+' | '+error.code+' | '+error.details);
+  } else {
+    console.log('salvo',data);
+  }
 }
-function addManual(){const i=document.getElementById('textoManual');addOcorrencia(i.value);i.value='';}
-async function deletar(id){ if(!confirm('Excluir?'))return; await supa.from(TABLE).delete().eq('id',id); }
-async function limparTudo(){if(!ocorrencias.length)return;if(confirm('Apagar '+ocorrencias.length+' e começar novo dia?')){ await supa.from(TABLE).delete().neq('id','00000000-0000-0000-0000-000000000000'); }}
+function addManual(){const i=document.getElementById('textoManual');const v=i.value; i.value=''; addOcorrencia(v);}
+async function deletar(id){ if(!confirm('Excluir?'))return; const {error}=await supa.from(TABLE).delete().eq('id',id); if(error) alert('Erro excluir: '+error.message); }
+async function limparTudo(){if(!ocorrencias.length)return;if(confirm('Apagar '+ocorrencias.length+' e começar novo dia?')){ const {error}=await supa.from(TABLE).delete().neq('id','00000000-0000-0000-0000-000000000000'); if(error) alert('Erro limpar: '+error.message); }}
 function filtrar(f,b){filtroAtual=f;document.querySelectorAll('.filtros button').forEach(x=>x.classList.remove('ativo'));b.classList.add('ativo');render();}
-function abrirEdit(id){editId=id;const o=ocorrencias.find(x=>x.id===id);document.getElementById('editTexto').value=o.texto;document.getElementById('modalEdit').classList.add('show');}
-async function salvarEdit(){const v=document.getElementById('editTexto').value.trim();if(!v)return; await supa.from(TABLE).update({texto:correcaoLeve(v)}).eq('id',editId); document.getElementById('modalEdit').classList.remove('show');}
+function abrirEdit(id){editId=id;const o=ocorrencias.find(x=>String(x.id)===String(id));document.getElementById('editTexto').value=o.texto;document.getElementById('modalEdit').classList.add('show');}
+async function salvarEdit(){const v=document.getElementById('editTexto').value.trim();if(!v)return; const {error}=await supa.from(TABLE).update({texto:correcaoLeve(v)}).eq('id',editId); if(error) alert('Erro edit: '+error.message); document.getElementById('modalEdit').classList.remove('show');}
 function render(){
   const lista=document.getElementById('lista');
   let f=filtroAtual==='TODAS'?ocorrencias:ocorrencias.filter(o=>o.frente===filtroAtual);
@@ -201,12 +215,11 @@ function render(){
   document.getElementById('stFrentes').innerText=new Set(ocorrencias.map(o=>o.frente)).size;
   document.getElementById('stUltima').innerText=ocorrencias.length?ocorrencias[0].hora:'--:--';
   if(!f.length){lista.innerHTML='<div class="empty">Toque no microfone e fale.<br>Pode pausar pra pensar, ele espera.</div>';return;}
-  lista.innerHTML=f.map(o=>`<div class="card"><div class="meta"><span class="hora">${o.hora}</span><span class="frente">${o.frente.replace('FRENTE ','')}</span></div><p>${o.texto}</p><div class="acts"><button class="e" onclick="abrirEdit('${o.id}')"><i class="fa-solid fa-pen"></i></button><button class="d" onclick="deletar('${o.id}')"><i class="fa-solid fa-trash"></i></button></div></div>`).join('');
+  lista.innerHTML=f.map(o=>`<div class="card"><div class="meta"><span class="hora">${o.hora}</span><span class="frente">${String(o.frente).replace('FRENTE ','')}</span></div><p>${o.texto}</p><div class="acts"><button class="e" onclick="abrirEdit('${o.id}')"><i class="fa-solid fa-pen"></i></button><button class="d" onclick="deletar('${o.id}')"><i class="fa-solid fa-trash"></i></button></div></div>`).join('');
 }
 const btnMic=document.getElementById('btnMic'),statusMic=document.getElementById('statusMic'),tempDiv=document.getElementById('transcricaoTemp'),silenceBar=document.getElementById('silenceBar'),silenceFill=document.getElementById('silenceFill');
 function resetSilenceTimer(){
   clearTimeout(silenceTimer); clearInterval(silenceCountdown);
-  lastSpeechTime=Date.now();
   silenceBar.style.display='block';
   let rest=20;
   silenceFill.style.width='100%'; silenceFill.style.background='#00e676';

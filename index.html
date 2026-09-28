@@ -123,13 +123,13 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;backgro
 </div>
 </div>
 <script>
-// SUPABASE - corrigido sem persist de storage
 const SUPABASE_URL = 'https://ecrpiuhsbhuqcxbbpqfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_I7Hw7KieW3VNFqb9LYrFoQ_tFWWABwl';
 const TABLE = 'ocorrencias_mandu';
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
+const API_URL = '/organizar-ia';
 
 let ocorrencias = [];
 let filtroAtual='TODAS', editId=null;
@@ -180,7 +180,6 @@ function horaAgora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit
 async function loadSupa(){
   const {data,error}=await supa.from(TABLE).select('*').order('created_at',{ascending:false}).limit(500);
   if(error){
-    console.error('load erro',error);
     document.getElementById('lista').innerHTML='<div class="empty">ERRO LOAD: '+error.message+'</div>';
     return;
   }
@@ -193,14 +192,8 @@ async function addOcorrencia(bruto){
   const frente=detectarFrente(bruto);
   const texto=correcaoLeve(limparCabecalho(bruto));
   if(!texto||texto==='.') return;
-  console.log('salvando',hora,frente,texto);
-  const {data,error}=await supa.from(TABLE).insert([{hora,frente,texto,turno:getTurnoAuto(),unidade:'MANDU'}]).select();
-  if(error){
-    console.error(error);
-    alert('ERRO SUPABASE: '+error.message+' | '+error.code+' | '+error.details);
-  } else {
-    console.log('salvo',data);
-  }
+  const {error}=await supa.from(TABLE).insert([{hora,frente,texto,turno:getTurnoAuto(),unidade:'MANDU'}]).select();
+  if(error){ alert('ERRO SUPABASE: '+error.message); }
 }
 function addManual(){const i=document.getElementById('textoManual');const v=i.value; i.value=''; addOcorrencia(v);}
 async function deletar(id){ if(!confirm('Excluir?'))return; const {error}=await supa.from(TABLE).delete().eq('id',id); if(error) alert('Erro excluir: '+error.message); }
@@ -266,17 +259,22 @@ if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
   rec.onerror=(e)=>{ if(e.error==='not-allowed'){ statusMic.innerText='Permita o microfone'; gravando=false; } };
   btnMic.onclick=()=>{ if(gravando){ pararTudo('Toque para falar'); } else { wantRestart=true; try{rec.start();}catch(e){} } };
 }else{ statusMic.innerText='Sem suporte a voz'; }
-function organizar(){
+
+async function organizar(){
   if(!ocorrencias.length){alert('Sem ocorrências');return;}
-  const turno=getTurnoAuto(), data=new Date().toLocaleDateString('pt-BR');
-  let txt=`DIÁRIO DE TURNO - CTT MANDU\n${data} | ${turno}\n━━━━━━━━━━━━━━━\n\n`;
-  ["FRENTE 501","FRENTE 502","FRENTE 503","FRENTE 504","FRENTE 505","FRENTE 506","GERAL"].forEach(fr=>{
-    let ops=ocorrencias.filter(o=>o.frente===fr).slice().reverse();
-    if(ops.length){ txt+=`FRENTE ${fr.replace('FRENTE ','')} — ${ops.length}\n`; ops.forEach(o=>txt+=` • ${o.hora} — ${o.texto}\n`); txt+=`\n`; }
-  });
-  txt+=`━━━━━━━━━━━━━━━\nTotal: ${ocorrencias.length} ocorrências`;
-  document.getElementById('textoOrganizado').innerText=txt;
+  document.getElementById('textoOrganizado').innerText='Organizando com IA... aguarde';
   document.getElementById('modalOrg').classList.add('show');
+  try{
+    const r = await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ocorrencias: ocorrencias.slice().reverse() })
+    });
+    const data = await r.json();
+    document.getElementById('textoOrganizado').innerText = data.texto || 'Erro ao organizar';
+  }catch(e){
+    document.getElementById('textoOrganizado').innerText = 'Erro: '+e.message;
+  }
 }
 function copiarTexto(){navigator.clipboard.writeText(document.getElementById('textoOrganizado').innerText);alert('Copiado!');}
 supa.channel('mandu-rt').on('postgres_changes',{event:'*',schema:'public',table:TABLE},()=>loadSupa()).subscribe();

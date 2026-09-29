@@ -1,289 +1,334 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CTT - Diário de Turno</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
-body{background:#080c1a;color:#fff;min-height:100vh;padding-bottom:110px}
-body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;background:radial-gradient(600px 300px at 50% 0%,rgba(0,230,118,.18),transparent);pointer-events:none;z-index:0}
-.header{position:sticky;top:0;z-index:10;padding:20px 18px 16px;background:rgba(8,12,26,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07)}
-.header h1{font-size:20px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
-.header h1 i{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#00e676,#00b894);border-radius:12px;color:#06281a;font-size:18px}
-.sub{font-size:12px;opacity:.55;margin-top:8px;display:flex;justify-content:space-between}
-.badge-turno{background:#00e676;color:#06281a;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:800}
-.hero-mic{display:flex;flex-direction:column;align-items:center;padding:28px 20px 10px;position:relative;z-index:1}
-.mic-wrap{position:relative}
-#btnMic{width:132px;height:132px;border-radius:44px;border:none;background:linear-gradient(135deg,#00e676 0%,#00c853 100%);color:#06281a;font-size:48px;cursor:pointer;box-shadow:0 20px 60px rgba(0,230,118,.35);transition:.25s;position:relative;z-index:2}
-#btnMic.gravando{background:linear-gradient(135deg,#ff5252,#ff1744);color:#fff;box-shadow:0 20px 60px rgba(255,82,82,.4);animation:pulse 1.4s infinite;border-radius:50%}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-.ring{position:absolute;inset:-6px;border-radius:50px;border:2px solid rgba(0,230,118,.4);opacity:0;pointer-events:none}
-.gravando ~.ring{animation:ringPulse 1.8s infinite}
-.ring.r2{animation-delay:.6s}.ring.r3{animation-delay:1.2s}
-@keyframes ringPulse{0%{transform:scale(.95);opacity:.8;border-radius:50px}100%{transform:scale(1.35);opacity:0;border-radius:60px}}
-#statusMic{margin-top:18px;font-size:14px;font-weight:600;text-align:center;opacity:.9;min-height:20px}
-#silenceBar{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:100px;margin-top:10px;overflow:hidden;display:none}
-#silenceFill{height:100%;background:#00e676;border-radius:100px;transition:width 1s linear;width:100%}
-.tip{margin:16px;background:rgba(0,176,255,.07);border:1px solid rgba(0,176,255,.15);padding:13px 15px;border-radius:16px;font-size:12.5px;line-height:1.6;position:relative;z-index:1}
-.tip b{color:#4dd0ff}
-#transcricaoTemp{margin:0 16px;padding:14px 16px;background:rgba(0,230,118,.06);border:1px dashed rgba(0,230,118,.35);border-radius:16px;font-size:14px;display:none;position:relative;z-index:1}
-#manualAdd{display:flex;gap:8px;padding:14px 16px 0;position:relative;z-index:1}
-#manualAdd input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;padding:14px 16px;border-radius:14px;font-size:14px;outline:none}
-#manualAdd input:focus{border-color:#00e676}
-#manualAdd button{background:#fff;color:#080c1a;border:none;width:52px;border-radius:14px;font-size:18px}
-.filtros{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;scrollbar-width:none;position:relative;z-index:1}
-.filtros::-webkit-scrollbar{display:none}
-.filtros button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:600;white-space:nowrap}
-.filtros button.ativo{background:#fff;color:#080c1a;font-weight:800}
-.section-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 10px;position:relative;z-index:1}
-.section-head h3{font-size:13px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:1px}
-.btn-limpar{background:rgba(255,82,82,.1);border:none;color:#ff7a7a;padding:8px 14px;border-radius:100px;font-size:12px;font-weight:700}
-#lista{padding:0 16px;position:relative;z-index:1}
-.card{background:rgba(255,255,255,.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:15px;margin-bottom:10px;display:flex;gap:13px;animation:in.35s ease}
-@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.meta{display:flex;flex-direction:column;gap:7px;align-items:flex-start;min-width:68px}
-.hora{font-size:11px;font-weight:800;background:rgba(0,176,255,.15);color:#4dd0ff;padding:5px 10px;border-radius:100px}
-.frente{font-size:10px;font-weight:800;background:#00e676;color:#06281a;padding:4px 10px;border-radius:100px}
-.card p{font-size:14px;line-height:1.5;flex:1}
-.acts{display:flex;flex-direction:column;gap:4px}
-.acts button{background:none;border:none;font-size:15px;padding:7px;opacity:.6}
-.acts.e{color:#4dd0ff}.acts.d{color:#ff7a7a}
-.empty{text-align:center;padding:40px 20px;opacity:.3;font-size:13px}
-.bottom{position:fixed;bottom:0;left:0;right:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:rgba(8,12,26,.92);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.07);z-index:20}
-.btn-organizar{width:100%;padding:18px;border:none;border-radius:18px;background:linear-gradient(135deg,#7c4dff,#00b0ff);color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 35px rgba(124,77,255,.4)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;z-index:100}
-.modal.show{display:flex}
-.sheet{background:#121a32;border-radius:28px 28px 0 0;width:100%;max-width:520px;max-height:88vh;overflow:auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom));animation:up.35s ease}
-@keyframes up{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
-.sheet pre{white-space:pre-wrap;font-size:13.5px;line-height:1.7;background:#080c1a;padding:18px;border-radius:16px;margin:16px 0;border:1px solid rgba(255,255,255,.06)}
-.edit-area textarea{width:100%;background:#080c1a;border:1px solid rgba(255,255,255,.12);color:#fff;padding:14px;border-radius:14px;font-size:15px;min-height:100px;margin:12px 0;outline:none}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{padding:15px;border-radius:14px;border:none;font-weight:800;font-size:14px}
-.btn-s{background:#00e676;color:#06281a}.btn-c{background:rgba(255,255,255,.1);color:#fff}
-.btn-copy{width:100%;background:#00e676;color:#06281a;padding:17px;border-radius:16px;border:none;font-weight:800;font-size:15px;margin-top:6px}
-.stats{display:flex;gap:10px;padding:0 16px;position:relative;z-index:1}
-.stat{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:12px;text-align:center}
-.stat b{font-size:20px;font-weight:800}.stat small{font-size:10px;opacity:.45;text-transform:uppercase;letter-spacing:.5px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Ocorrências Mandu - IA Gemini</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .hero-card { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px; }
+    .record-btn {
+      width: 90px; height: 90px; border-radius: 50%;
+      font-size: 32px; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease-in-out; border: 4px solid #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .record-btn.recording { background-color: #dc3545 !important; animation: pulse 1.2s infinite; }
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+      70% { transform: scale(1.08); box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    .card-occurrence { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
+    .card-occurrence:hover { transform: translateY(-3px); }
+  </style>
 </head>
 <body>
-<div class="header">
-<h1><i class="fa-solid fa-tractor"></i> Diário de Turno - MANDU</h1>
-<div class="sub"><span id="dataHoje"></span><span class="badge-turno" id="turnoAuto"></span></div>
+
+<div class="container py-4">
+  <!-- Topo -->
+  <div class="hero-card p-4 mb-4 shadow text-center">
+    <h2><i class="bi bi-shield-check me-2"></i> Central de Ocorrências Mandu</h2>
+    <p class="mb-3 text-white-50">Grave um áudio ou segure o botão para descrever uma ocorrência. A IA analisa e gera os registros em tempo real.</p>
+    
+    <!-- Botão com dual mode (Segurar ou Clicar) -->
+    <div class="d-flex flex-column align-items-center">
+      <button id="micBtn" class="btn btn-danger record-btn mb-2">
+        <i class="bi bi-mic-fill"></i>
+      </button>
+      <span id="recordingStatus" class="badge bg-light text-dark px-3 py-2">Clique ou Segure para Gravar</span>
+    </div>
+  </div>
+
+  <!-- Filtro / Busca -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-8">
+      <h4><i class="bi bi-journal-text me-2"></i> Ocorrências Registradas</h4>
+    </div>
+    <div class="col-md-4">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar por título ou descrição..." onkeyup="filterOccurrences()">
+    </div>
+  </div>
+
+  <!-- Loading spinner -->
+  <div id="loader" class="text-center d-none my-4">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">A IA Gemini está processando seu áudio...</p>
+  </div>
+
+  <!-- Lista de Ocorrências -->
+  <div id="occurrencesList" class="row g-3">
+    <!-- Renderizado dinamicamente -->
+  </div>
 </div>
-<div class="stats" style="margin-top:14px">
-<div class="stat"><b id="stTotal">0</b><br><small>Ocorrências</small></div>
-<div class="stat"><b id="stFrentes">0</b><br><small>Frentes</small></div>
-<div class="stat"><b id="stUltima">--:--</b><br><small>Última</small></div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Ocorrência</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" id="editId">
+          <div class="mb-3">
+            <label class="form-label">Título</label>
+            <input type="text" id="editTitulo" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Descrição</label>
+            <textarea id="editDescricao" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Local</label>
+              <input type="text" id="editLocal" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Gravidade</label>
+              <select id="editGravidade" class="form-select">
+                <option value="Baixa">Baixa</option>
+                <option value="Média">Média</option>
+                <option value="Alta">Alta</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveEdit()">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="hero-mic">
-<div class="mic-wrap">
-<button id="btnMic"><i class="fa-solid fa-microphone"></i></button>
-<div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
-</div>
-<div id="statusMic">Toque para falar</div>
-<div id="silenceBar"><div id="silenceFill"></div></div>
-</div>
-<div class="tip"><i class="fa-solid fa-lightbulb" style="color:#ffeb3b"></i> Fale natural com pausa pra pensar: <b>"vinte e três e quinze... frente 502... acolhedora quebrou"</b> — ele espera você terminar. Se ficar 20s em silêncio, desliga sozinho.</div>
-<div id="transcricaoTemp"></div>
-<div id="manualAdd">
-<input id="textoManual" placeholder="Digite: 23:15 502 acolhedora quebrou">
-<button onclick="addManual()"><i class="fa-solid fa-plus"></i></button>
-</div>
-<div class="filtros">
-<button class="ativo" onclick="filtrar('TODAS',this)">Todas</button>
-<button onclick="filtrar('FRENTE 501',this)">501</button><button onclick="filtrar('FRENTE 502',this)">502</button><button onclick="filtrar('FRENTE 503',this)">503</button><button onclick="filtrar('FRENTE 504',this)">504</button><button onclick="filtrar('FRENTE 505',this)">505</button><button onclick="filtrar('FRENTE 506',this)">506</button>
-</div>
-<div class="section-head"><h3>Tempo real</h3><button class="btn-limpar" onclick="limparTudo()">Novo dia</button></div>
-<div id="lista"></div>
-<div class="bottom">
-<button class="btn-organizar" onclick="organizar()"><i class="fa-solid fa-wand-magic-sparkles"></i> ORGANIZAR TURNO</button>
-</div>
-<div id="modalOrg" class="modal" onclick="if(event.target.id==='modalOrg')this.classList.remove('show')">
-<div class="sheet">
-<h3 style="font-size:17px"><i class="fa-solid fa-clipboard-check" style="color:#7c4dff"></i> Resumo por frente</h3>
-<p style="font-size:12px;opacity:.55;margin-top:4px">Pronto para copiar e colar</p>
-<pre id="textoOrganizado"></pre>
-<button class="btn-copy" onclick="copiarTexto()"><i class="fa-solid fa-copy"></i> COPIAR TEXTO</button>
-<button class="btn btn-c" style="width:100%;margin-top:10px" onclick="document.getElementById('modalOrg').classList.remove('show')">Fechar</button>
-</div>
-</div>
-<div id="modalEdit" class="modal">
-<div class="sheet edit-area">
-<h3 style="font-size:17px"><i class="fa-solid fa-pen" style="color:#4dd0ff"></i> Editar</h3>
-<textarea id="editTexto"></textarea>
-<div class="row2">
-<button class="btn btn-s" onclick="salvarEdit()">Salvar</button>
-<button class="btn btn-c" onclick="document.getElementById('modalEdit').classList.remove('show')">Cancelar</button>
-</div>
-</div>
-</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://ecrpiuhsbhuqcxbbpqfh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_I7Hw7KieW3VNFqb9LYrFoQ_tFWWABwl';
-const TABLE = 'ocorrencias_mandu';
-const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-});
-const API_URL = 'https://ocorrencias-mandu.onrender.com/organizar-ia';
+  let mediaRecorder;
+  let audioChunks = [];
+  let isRecording = false;
+  let holdTimer = null;
+  let occurrencesData = [];
+  let editModalInstance;
 
-let ocorrencias = [];
-let filtroAtual='TODAS', editId=null;
-let rec=null, gravando=false, wantRestart=true;
-let silenceTimer=null, silenceCountdown=null;
-let finalBuffer='', interimPauseTimer=null;
+  document.addEventListener('DOMContentLoaded', () => {
+    editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
+    loadOccurrences();
+    setupHoldToTalk();
+  });
 
-function getTurnoAuto(){const h=new Date().getHours(); if(h>=6&&h<14) return 'TURNO A'; if(h>=14&&h<22) return 'TURNO B'; return 'TURNO C';}
-document.getElementById('dataHoje').innerText=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
-document.getElementById('turnoAuto').innerText=getTurnoAuto();
-if('wakeLock' in navigator){ navigator.wakeLock.request('screen').catch(()=>{}); }
+  // Configuração Hold-to-Talk & Click-to-Talk
+  function setupHoldToTalk() {
+    const btn = document.getElementById('micBtn');
 
-function detectarHorario(texto){
-  let t=texto.toLowerCase();
-  let m=t.match(/(\d{1,2})[:h](\d{2})/);
-  if(m) return String(m[1]).padStart(2,'0')+':'+m[2];
-  const nm={'zero':0,'uma':1,'um':1,'duas':2,'dois':2,'tres':3,'três':3,'quatro':4,'cinco':5,'seis':6,'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,'doze':12,'treze':13,'quatorze':14,'catorze':14,'quinze':15,'dezesseis':16,'dezessete':17,'dezoito':18,'dezenove':19,'vinte':20,'trinta':30,'quarenta':40,'cinquenta':50,'meia':30};
-  function pv(s){ s=s.replace(/ e /g,' ').trim(); let tot=0; s.split(/\s+/).forEach(p=>{ if(nm[p]!==undefined){ tot+=nm[p]; } }); return tot; }
-  m=t.match(/(?:às|as)?\s*([a-zà-ú\s]+?)\s+e\s+([a-zà-ú\s]+?)(?:,|\s+frente|\s+50|\s+a\s|$)/);
-  if(m){ let h=pv(m[1]), mi=pv(m[2]); if(h<=23&&mi<=59) return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0'); }
-  return null;
-}
-function detectarFrente(texto){
-  const t=texto.toLowerCase(); const mp={'um':'1','dois':'2','tres':'3','três':'3','quatro':'4','cinco':'5','seis':'6','uma':'1'};
-  let m=t.match(/quinhent\w*\s*e?\s*(\w+)/); if(m&&mp[m[1]]) return 'FRENTE 50'+mp[m[1]];
-  m=t.match(/\b50\s*([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
-  m=t.match(/\b50([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
-  m=t.match(/frente\s*([1-6])\b/); if(m) return 'FRENTE 50'+m[1];
-  return 'GERAL';
-}
-function limparCabecalho(texto){
-  let t=texto;
-  t=t.replace(/^\s*(às|as)?\s*\d{1,2}[:h]\d{2}\s*[,.\-]?\s*/i,'');
-  t=t.replace(/frente\s*(quinhent\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,'');
-  return t.trim();
-}
-function correcaoLeve(texto){
-  let t=texto.trim();
-  const fx=[[/colhedera/gi,'colhedora'],[/caminhao/gi,'caminhão'],[/manutencao/gi,'manutenção']];
-  fx.forEach(([r,p])=>t=t.replace(r,p));
-  t=t.replace(/\s+/g,' ').trim();
-  if(t) t=t.charAt(0).toUpperCase()+t.slice(1);
-  if(t&&!/[.!?]$/.test(t)) t+='.';
-  return t;
-}
-function horaAgora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+    // Suporte para Mouse
+    btn.addEventListener('mousedown', startHoldRecording);
+    btn.addEventListener('mouseup', stopHoldRecording);
+    btn.addEventListener('mouseleave', stopHoldRecording);
 
-async function loadSupa(){
-  const {data,error}=await supa.from(TABLE).select('*').order('created_at',{ascending:false}).limit(500);
-  if(error){
-    document.getElementById('lista').innerHTML='<div class="empty">ERRO LOAD: '+error.message+'</div>';
-    return;
+    // Suporte para Touch (Dispositivos Móveis)
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); startHoldRecording(); });
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); stopHoldRecording(); });
   }
-  ocorrencias=data.map(d=>({id:d.id,hora:d.hora,frente:d.frente,texto:d.texto,created_at:d.created_at}));
-  render();
-}
-async function addOcorrencia(bruto){
-  if(!bruto.trim()||bruto.trim()==='...') return;
-  const hora=detectarHorario(bruto)||horaAgora();
-  const frente=detectarFrente(bruto);
-  const texto=correcaoLeve(limparCabecalho(bruto));
-  if(!texto||texto==='.') return;
-  const {error}=await supa.from(TABLE).insert([{hora,frente,texto,turno:getTurnoAuto(),unidade:'MANDU'}]).select();
-  if(error){ alert('ERRO SUPABASE: '+error.message); }
-}
-function addManual(){const i=document.getElementById('textoManual');const v=i.value; i.value=''; addOcorrencia(v);}
-async function deletar(id){ if(!confirm('Excluir?'))return; const {error}=await supa.from(TABLE).delete().eq('id',id); if(error) alert('Erro excluir: '+error.message); }
-async function limparTudo(){if(!ocorrencias.length)return;if(confirm('Apagar '+ocorrencias.length+' e começar novo dia?')){ const {error}=await supa.from(TABLE).delete().neq('id','00000000-0000-0000-0000-000000000000'); if(error) alert('Erro limpar: '+error.message); }}
-function filtrar(f,b){filtroAtual=f;document.querySelectorAll('.filtros button').forEach(x=>x.classList.remove('ativo'));b.classList.add('ativo');render();}
-function abrirEdit(id){editId=id;const o=ocorrencias.find(x=>String(x.id)===String(id));document.getElementById('editTexto').value=o.texto;document.getElementById('modalEdit').classList.add('show');}
-async function salvarEdit(){const v=document.getElementById('editTexto').value.trim();if(!v)return; const {error}=await supa.from(TABLE).update({texto:correcaoLeve(v)}).eq('id',editId); if(error) alert('Erro edit: '+error.message); document.getElementById('modalEdit').classList.remove('show');}
-function render(){
-  const lista=document.getElementById('lista');
-  let f=filtroAtual==='TODAS'?ocorrencias:ocorrencias.filter(o=>o.frente===filtroAtual);
-  document.getElementById('stTotal').innerText=ocorrencias.length;
-  document.getElementById('stFrentes').innerText=new Set(ocorrencias.map(o=>o.frente)).size;
-  document.getElementById('stUltima').innerText=ocorrencias.length?ocorrencias[0].hora:'--:--';
-  if(!f.length){lista.innerHTML='<div class="empty">Toque no microfone e fale.<br>Pode pausar pra pensar, ele espera.</div>';return;}
-  lista.innerHTML=f.map(o=>`<div class="card"><div class="meta"><span class="hora">${o.hora}</span><span class="frente">${String(o.frente).replace('FRENTE ','')}</span></div><p>${o.texto}</p><div class="acts"><button class="e" onclick="abrirEdit('${o.id}')"><i class="fa-solid fa-pen"></i></button><button class="d" onclick="deletar('${o.id}')"><i class="fa-solid fa-trash"></i></button></div></div>`).join('');
-}
-const btnMic=document.getElementById('btnMic'),statusMic=document.getElementById('statusMic'),tempDiv=document.getElementById('transcricaoTemp'),silenceBar=document.getElementById('silenceBar'),silenceFill=document.getElementById('silenceFill');
-function resetSilenceTimer(){
-  clearTimeout(silenceTimer); clearInterval(silenceCountdown);
-  silenceBar.style.display='block';
-  let rest=20;
-  silenceFill.style.width='100%'; silenceFill.style.background='#00e676';
-  silenceCountdown=setInterval(()=>{
-    rest--; silenceFill.style.width=(rest/20*100)+'%';
-    if(rest<=5) silenceFill.style.background='#ff5252';
-    if(rest<=0){ clearInterval(silenceCountdown); pararTudo('Tempo esgotado - 20s sem fala'); }
-  },1000);
-  silenceTimer=setTimeout(()=>{ pararTudo('Encerrado após 20s em silêncio'); },20000);
-}
-function pararTudo(msg){
-  gravando=false; wantRestart=false;
-  try{rec.stop();}catch(e){}
-  clearTimeout(silenceTimer); clearInterval(silenceCountdown); clearTimeout(interimPauseTimer);
-  btnMic.classList.remove('gravando'); btnMic.innerHTML='<i class="fa-solid fa-microphone"></i>';
-  statusMic.innerText=msg||'Toque para falar'; silenceBar.style.display='none'; tempDiv.style.display='none';
-  if(finalBuffer.trim()){ addOcorrencia(finalBuffer.trim()); finalBuffer=''; }
-  setTimeout(()=>wantRestart=true,600);
-}
-if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  rec=new SR(); rec.lang='pt-BR'; rec.interimResults=true; rec.continuous=true;
-  rec.onstart=()=>{ gravando=true; finalBuffer=''; btnMic.classList.add('gravando'); btnMic.innerHTML='<i class="fa-solid fa-stop"></i>'; statusMic.innerText='Ouvindo... pode pausar pra pensar'; tempDiv.style.display='block'; tempDiv.innerText='...'; resetSilenceTimer(); if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{}); };
-  rec.onresult=(e)=>{
-    resetSilenceTimer();
-    let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      let tr=e.results[i][0].transcript;
-      if(e.results[i].isFinal){ finalBuffer+=tr+' '; }
-      else { interim+=tr; }
-    }
-    tempDiv.innerText=(finalBuffer+interim).trim()||'...';
-    clearTimeout(interimPauseTimer);
-    interimPauseTimer=setTimeout(()=>{
-      if(finalBuffer.trim() && gravando){
-        addOcorrencia(finalBuffer.trim());
-        tempDiv.innerText='✔ Salvo! Continue falando...';
-        finalBuffer='';
-        setTimeout(()=>{ if(gravando) tempDiv.innerText='Ouvindo...'; },1200);
-      }
-    },2800);
-  };
-  rec.onend=()=>{ if(gravando&&wantRestart){ try{rec.start();}catch(e){} } };
-  rec.onerror=(e)=>{ if(e.error==='not-allowed'){ statusMic.innerText='Permita o microfone'; gravando=false; } };
-  btnMic.onclick=()=>{ if(gravando){ pararTudo('Toque para falar'); } else { wantRestart=true; try{rec.start();}catch(e){} } };
-}else{ statusMic.innerText='Sem suporte a voz'; }
 
-async function organizar(){
-  if(!ocorrencias.length){alert('Sem ocorrências');return;}
-  document.getElementById('textoOrganizado').innerText='Organizando com IA... aguarde';
-  document.getElementById('modalOrg').classList.add('show');
-  try{
-    const r = await fetch(API_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ ocorrencias: ocorrencias.slice().reverse() })
-    });
-    const txt = await r.text();
-    let data;
-    try{ data = JSON.parse(txt); }catch(e){
-      document.getElementById('textoOrganizado').innerText = 'Erro backend: resposta vazia. Veja Logs no Render. Retorno: '+txt.slice(0,200);
+  function startHoldRecording() {
+    if (isRecording) return;
+    holdTimer = setTimeout(() => {
+      startRecording();
+    }, 200); // Pequeno atraso para diferenciar clique rápido de pressionar
+  }
+
+  function stopHoldRecording() {
+    if (holdTimer) clearTimeout(holdTimer);
+    if (isRecording) {
+      stopRecording();
+    }
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = sendAudioToServer;
+
+      mediaRecorder.start();
+      isRecording = true;
+      updateUIState(true);
+    } catch (err) {
+      alert("Permissão de microfone negada ou indisponível.");
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      isRecording = false;
+      updateUIState(false);
+      
+      // Para as faixas de áudio para desligar o microfone
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+  }
+
+  function updateUIState(recording) {
+    const btn = document.getElementById('micBtn');
+    const status = document.getElementById('recordingStatus');
+    if (recording) {
+      btn.classList.add('recording');
+      status.textContent = "Gravando... Solte ou clique para enviar.";
+      status.className = "badge bg-danger text-white px-3 py-2";
+    } else {
+      btn.classList.remove('recording');
+      status.textContent = "Clique ou Segure para Gravar";
+      status.className = "badge bg-light text-dark px-3 py-2";
+    }
+  }
+
+  async function sendAudioToServer() {
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'rec.webm');
+
+    document.getElementById('loader').classList.remove('d-none');
+
+    try {
+      const res = await fetch('/api/transcribe-occurrences', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadOccurrences(); // Atualiza a lista instantaneamente
+      } else {
+        alert("Erro no processamento da IA: " + (data.error || "Erro desconhecido"));
+      }
+    } catch (e) {
+      alert("Falha de conexão com o servidor.");
+    } finally {
+      document.getElementById('loader').classList.add('d-none');
+    }
+  }
+
+  // Carregar e listar ocorrências
+  async function loadOccurrences() {
+    try {
+      const res = await fetch('/api/ocorrencias');
+      occurrencesData = await res.json();
+      renderOccurrences(occurrencesData);
+    } catch (e) {
+      console.error("Erro ao carregar registros:", e);
+    }
+  }
+
+  function renderOccurrences(list) {
+    const container = document.getElementById('occurrencesList');
+    container.innerHTML = '';
+
+    if (list.length === 0) {
+      container.innerHTML = `<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1"></i><p>Nenhuma ocorrência registrada ainda.</p></div>`;
       return;
     }
-    document.getElementById('textoOrganizado').innerText = data.texto || 'Erro ao organizar';
-  }catch(e){
-    document.getElementById('textoOrganizado').innerText = 'Erro: '+e.message;
+
+    list.forEach(item => {
+      const badgeClass = item.gravidade === 'Alta' ? 'bg-danger' : item.gravidade === 'Média' ? 'bg-warning text-dark' : 'bg-info text-dark';
+      
+      const col = document.createElement('div');
+      col.className = 'col-md-6 col-lg-4';
+      col.innerHTML = `
+        <div class="card card-occurrence h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title text-primary mb-0">${item.titulo || 'Ocorrência'}</h5>
+              <span class="badge ${badgeClass}">${item.gravidade || 'Baixa'}</span>
+            </div>
+            <p class="card-text text-secondary flex-grow-1">${item.descricao}</p>
+            <div class="border-top pt-2 mt-2 fs-7 text-muted small">
+              <div><i class="bi bi-geo-alt"></i> ${item.local || 'N/A'}</div>
+              <div><i class="bi bi-clock"></i> ${item.dataHora || 'Data não informada'}</div>
+            </div>
+            <div class="d-flex gap-2 mt-3 pt-2 border-top">
+              <button class="btn btn-sm btn-outline-primary w-50" onclick="openEditModal('${item.id}')"><i class="bi bi-pencil"></i> Editar</button>
+              <button class="btn btn-sm btn-outline-danger w-50" onclick="deleteOccurrence('${item.id}')"><i class="bi bi-trash"></i> Excluir</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(col);
+    });
   }
-}
-function copiarTexto(){navigator.clipboard.writeText(document.getElementById('textoOrganizado').innerText);alert('Copiado!');}
-supa.channel('mandu-rt').on('postgres_changes',{event:'*',schema:'public',table:TABLE},()=>loadSupa()).subscribe();
-loadSupa();
+
+  // Editar
+  function openEditModal(id) {
+    const item = occurrencesData.find(o => o.id === id);
+    if (!item) return;
+
+    document.getElementById('editId').value = item.id;
+    document.getElementById('editTitulo').value = item.titulo || '';
+    document.getElementById('editDescricao').value = item.descricao || '';
+    document.getElementById('editLocal').value = item.local || '';
+    document.getElementById('editGravidade').value = item.gravidade || 'Baixa';
+
+    editModalInstance.show();
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById('editId').value;
+    const body = {
+      titulo: document.getElementById('editTitulo').value,
+      descricao: document.getElementById('editDescricao').value,
+      local: document.getElementById('editLocal').value,
+      gravidade: document.getElementById('editGravidade').value,
+    };
+
+    try {
+      const res = await fetch(`/api/ocorrencias/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        editModalInstance.hide();
+        loadOccurrences(); // Atualiza os registros no painel
+      }
+    } catch (e) {
+      alert("Erro ao atualizar ocorrência.");
+    }
+  }
+
+  // Excluir
+  async function deleteOccurrence(id) {
+    if (!confirm("Deseja realmente excluir esta ocorrência?")) return;
+    try {
+      const res = await fetch(`/api/ocorrencias/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadOccurrences(); // Atualiza lista
+      }
+    } catch (e) {
+      alert("Erro ao remover ocorrência.");
+    }
+  }
+
+  // Filtro
+  function filterOccurrences() {
+    const term = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = occurrencesData.filter(item => 
+      (item.titulo && item.titulo.toLowerCase().includes(term)) ||
+      (item.descricao && item.descricao.toLowerCase().includes(term)) ||
+      (item.local && item.local.toLowerCase().includes(term))
+    );
+    renderOccurrences(filtered);
+  }
 </script>
+
 </body>
 </html>

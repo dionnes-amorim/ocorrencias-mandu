@@ -1,63 +1,69 @@
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
-// Permite requisições do seu front-end (evita erro de CORS)
-app.use(cors());
 app.use(express.json());
+app.use(express.static('.'));
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Inicialização das APIs
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
-// Rota para verificação de status
-app.get('/', (req, res) => {
-  res.send('Servidor do Diário de Turno MANDU está rodando perfeitamente!');
-});
-
-// Rota POST exatamente na raiz solicitada pelo front-end (/organizar-ia)
-app.post('/organizar-ia', async (req, res) => {
+// Rota para processar o texto/áudio gravado com o Gemini e salvar no Supabase
+app.post('/api/ocorrencias', async (req, res) => {
   try {
-    const { ocorrencias } = req.body;
+    const { textoOriginal } = req.body;
 
-    if (!ocorrencias || !Array.isArray(ocorrencias) || ocorrencias.length === 0) {
-      return res.status(400).json({ texto: 'Nenhuma ocorrência foi enviada para organização.' });
+    if (!textoOriginal) {
+      return res.status(400).json({ error: 'Texto não fornecido.' });
     }
 
-    const prompt = `Você é um assistente encarregado de organizar o Diário de Turno da Usina MANDU.
-Abaixo está uma lista de ocorrências registradas ao longo do turno.
-
-Sua tarefa:
-1. Agrupar as ocorrências por FRENTE DE TRABALHO (ex: FRENTE 501, FRENTE 502, GERAL, etc.).
-2. Ordenar cronologicamente o horário das ocorrências em cada frente.
-3. Resumir e formatar o texto de forma limpa, profissional e legível para repasse de turno no WhatsApp.
-
-Ocorrências recebidas:
-${JSON.stringify(ocorrencias, null, 2)}`;
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
+    // Processamento do texto com a IA (Gemini) para organização
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Organize e formate o seguinte relato de ocorrência de forma clara, profissional e estruturada (mantenha os fatos principais):\n\n${textoOriginal}`,
     });
 
-    const textoOrganizado = response.choices[0].message.content;
-    return res.json({ texto: textoOrganizado });
+    const textoOrganizado = response.text;
 
-  } catch (error) {
-    console.error('Erro na IA:', error);
-    return res.status(500).json({ 
-      texto: 'Erro ao processar resumo com a IA: ' + (error.message || 'Erro desconhecido no servidor.') 
-    });
+    // Salva a ocorrência processada no Supabase
+    const { data, error } = await supabase
+      .from('ocorrencias')
+      .insert([{ relatorio: textoOrganizado, criado_em: new Date() }])
+      .select();
+
+    if (error) throw error;
+
+    return res.status(201).json({ success: true, data: data[0] });
+  } catch (err) {
+    console.error('Erro no processamento:', err);
+    return res.status(500).json({ error: 'Falha ao processar ocorrência.' });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
+// Rota para exclusão no Supabase
+app.delete('/api/ocorrencias/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('ocorrencias').delete().eq('id', id);
+
+    if (error) throw error;
+
+    return res.json({ success: true, id });
+  } catch (err) {
+    console.error('Erro ao excluir:', err);
+    return res.status(500).json({ error: 'Erro ao excluir a ocorrência.' });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

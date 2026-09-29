@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 
@@ -15,14 +15,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuração do Google Gemini SDK
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Inicializa o SDK Oficial do Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Configuração de upload de arquivos (áudios)
+// Configuração de upload de áudios temporários
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, 'uploads');
@@ -61,7 +61,7 @@ app.get('/api/ocorrencias', (req, res) => {
   res.json(ocorrencias);
 });
 
-// 2. Processar Áudio com Gemini IA e Criar Ocorrência
+// 2. Processar Áudio com Gemini IA
 app.post('/api/transcribe-occurrences', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
@@ -82,26 +82,21 @@ app.post('/api/transcribe-occurrences', upload.single('audio'), async (req, res)
       "gravidade": "Alta" | "Média" | "Baixa"
     }`;
 
-    // Chamada à API oficial do Gemini com processamento multimodal
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType: req.file.mimetype || 'audio/webm',
-                data: base64Audio
-              }
-            }
-          ]
-        }
-      ]
-    });
+    // Obter o modelo e gerar resposta multimodal
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    let textResponse = response.text || '';
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          mimeType: req.file.mimetype || 'audio/webm',
+          data: base64Audio
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    let textResponse = response.text() || '';
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let extractedData;
@@ -127,7 +122,7 @@ app.post('/api/transcribe-occurrences', upload.single('audio'), async (req, res)
     list.unshift(newOcorrencia);
     saveOcorrencias(list);
 
-    // Remove o arquivo temporário após o processamento
+    // Limpa o arquivo temporário
     fs.unlink(audioPath, () => {});
 
     res.json({ success: true, item: newOcorrencia });
@@ -138,7 +133,7 @@ app.post('/api/transcribe-occurrences', upload.single('audio'), async (req, res)
   }
 });
 
-// 3. Atualizar/Editar Ocorrência
+// 3. Editar Ocorrência
 app.put('/api/ocorrencias/:id', (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;

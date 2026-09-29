@@ -9,16 +9,16 @@ const app = express();
 app.use(express.json());
 app.use(express.static('.'));
 
-// Inicialização das APIs
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Conexão com Supabase e Gemini
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+const supabase = createClient(supabaseUrl || '', supabaseKey || '');
+const genAI = new GoogleGenerativeAI(geminiApiKey || '');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
-// Rota para listar ocorrências
+// Rota GET: Listar Ocorrências
 app.get('/api/ocorrencias', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -27,43 +27,49 @@ app.get('/api/ocorrencias', async (req, res) => {
       .order('criado_em', { ascending: false });
 
     if (error) throw error;
-    return res.json(data);
+    return res.json(data || []);
   } catch (err) {
     console.error('Erro ao buscar ocorrências:', err);
-    return res.status(500).json({ error: 'Erro ao carregar ocorrências.' });
+    return res.status(500).json({ error: 'Erro interno ao buscar ocorrências.' });
   }
 });
 
-// Rota para processar o relato com Gemini e salvar no Supabase
+// Rota POST: Organizar com Gemini e Salvar no Supabase
 app.post('/api/ocorrencias', async (req, res) => {
   try {
-    const { textoOriginal } = req.body;
+    const { textoOriginal, titulo } = req.body;
 
     if (!textoOriginal) {
       return res.status(400).json({ error: 'Texto não fornecido.' });
     }
 
-    // Processamento do texto com o Gemini
-    const prompt = `Organize e formate o seguinte relato de ocorrência de forma clara, profissional e estruturada:\n\n${textoOriginal}`;
+    // Processa com Gemini (100% Grátis até limites padrão da API)
+    const prompt = `Organize e formate o seguinte relato de ocorrência em um texto claro, formal e estruturado:\n\n${textoOriginal}`;
     const result = await model.generateContent(prompt);
     const textoOrganizado = result.response.text();
 
-    // Salva a ocorrência no Supabase
+    // Inserção no Supabase
     const { data, error } = await supabase
       .from('ocorrencias')
-      .insert([{ relatorio: textoOrganizado }])
+      .insert([
+        { 
+          titulo: titulo || 'Ocorrência sem título',
+          relatorio: textoOrganizado,
+          criado_em: new Date()
+        }
+      ])
       .select();
 
     if (error) throw error;
 
     return res.status(201).json({ success: true, data: data[0] });
   } catch (err) {
-    console.error('Erro no processamento:', err);
+    console.error('Erro no processamento da IA/Banco:', err);
     return res.status(500).json({ error: 'Falha ao processar ocorrência.' });
   }
 });
 
-// Rota para exclusão
+// Rota DELETE: Excluir ocorrência
 app.delete('/api/ocorrencias/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,5 +86,5 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor a rodar na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

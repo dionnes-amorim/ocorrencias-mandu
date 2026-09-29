@@ -10,6 +10,34 @@ app.use(express.static(path.join(__dirname)));
 
 app.get('/ping', (req, res) => res.send('ok'));
 
+const MODELOS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-8b'
+];
+
+async function chamarGemini(prompt) {
+  let ultimoErro = '';
+  for (const modelo of MODELOS) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const j = await r.json();
+      const texto = j.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (texto) return texto;
+      ultimoErro = JSON.stringify(j).slice(0,500);
+      console.log(`Modelo ${modelo} falhou:`, ultimoErro);
+    } catch (e) {
+      ultimoErro = e.message;
+      console.log(`Erro no modelo ${modelo}:`, ultimoErro);
+    }
+  }
+  return 'Erro Gemini: ' + ultimoErro;
+}
+
 app.post('/organizar-ia', async (req, res) => {
   try {
     const ocorrencias = req.body.ocorrencias || [];
@@ -30,17 +58,7 @@ No final, faça um total por frente.
 Ocorrências:
 ${listaTexto}`;
 
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-
-    const j = await r.json();
-    const texto = j.candidates?.[0]?.content?.parts?.[0]?.text || 'Erro Gemini: ' + JSON.stringify(j).slice(0,500);
-
+    const texto = await chamarGemini(prompt);
     res.json({ texto });
   } catch (e) {
     console.error(e);

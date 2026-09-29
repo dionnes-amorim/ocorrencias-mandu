@@ -22,7 +22,7 @@ app.post('/organizar-ia', async (req,res)=>{
         "X-Title": "CTT Mandu"
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3.1-8b-instruct:free",
+        model: "meta-llama/llama-3.1-8b-instruct",
         messages: [
           {role:"system", content:"Você é supervisor da CTT Mandu. Organize o diário de turno por frente 501 a 506, ordene por hora, seção PONTOS CRÍTICOS, formato WhatsApp com *negrito*."},
           {role:"user", content: "Organize:\n" + JSON.stringify(ocorrencias).slice(0,12000)}

@@ -3,332 +3,348 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestão de Ocorrências Mandu - IA Gemini</title>
+  <title>Ocorrências Mandu</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .hero-card { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px; }
-    .record-btn {
-      width: 90px; height: 90px; border-radius: 50%;
-      font-size: 32px; display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s ease-in-out; border: 4px solid #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    body {
+      background-color: #f8f9fa;
+      color: #333;
     }
-    .record-btn.recording { background-color: #dc3545 !important; animation: pulse 1.2s infinite; }
+    .header-box {
+      background-color: #ffffff;
+      border-bottom: 1px solid #dee2e6;
+      padding: 15px 0;
+      margin-bottom: 20px;
+    }
+    .btn-mic {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      transition: transform 0.1s ease, background-color 0.2s;
+    }
+    .btn-mic.recording {
+      background-color: #dc3545 !important;
+      color: #fff !important;
+      animation: pulse 1s infinite;
+    }
     @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-      70% { transform: scale(1.08); box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.6); }
+      70% { box-shadow: 0 0 0 12px rgba(220, 53, 69, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
     }
-    .card-occurrence { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
-    .card-occurrence:hover { transform: translateY(-3px); }
+    .occurrence-card {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
   </style>
 </head>
 <body>
 
-<div class="container py-4">
-  <!-- Topo -->
-  <div class="hero-card p-4 mb-4 shadow text-center">
-    <h2><i class="bi bi-shield-check me-2"></i> Central de Ocorrências Mandu</h2>
-    <p class="mb-3 text-white-50">Grave um áudio ou segure o botão para descrever uma ocorrência. A IA analisa e gera os registros em tempo real.</p>
-    
-    <!-- Botão com dual mode (Segurar ou Clicar) -->
-    <div class="d-flex flex-column align-items-center">
-      <button id="micBtn" class="btn btn-danger record-btn mb-2">
-        <i class="bi bi-mic-fill"></i>
+  <div class="header-box text-center">
+    <div class="container">
+      <h3 class="fw-bold m-0"><i class="bi bi-shield-lock"></i> Ocorrências Mandu</h3>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Bloco de Gravação de Áudio (Suporta Clicar ou Segurar) -->
+    <div class="card p-4 text-center mb-4">
+      <h5 class="card-title mb-3">Registrar Nova Ocorrência por Áudio</h5>
+      <button id="recordBtn" class="btn btn-outline-danger btn-mic mb-2">
+        <i class="bi bi-mic"></i>
       </button>
-      <span id="recordingStatus" class="badge bg-light text-dark px-3 py-2">Clique ou Segure para Gravar</span>
-    </div>
-  </div>
-
-  <!-- Filtro / Busca -->
-  <div class="row mb-3 align-items-center">
-    <div class="col-md-8">
-      <h4><i class="bi bi-journal-text me-2"></i> Ocorrências Registradas</h4>
-    </div>
-    <div class="col-md-4">
-      <input type="text" id="searchInput" class="form-control" placeholder="Buscar por título ou descrição..." onkeyup="filterOccurrences()">
-    </div>
-  </div>
-
-  <!-- Loading spinner -->
-  <div id="loader" class="text-center d-none my-4">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted">A IA Gemini está processando seu áudio...</p>
-  </div>
-
-  <!-- Lista de Ocorrências -->
-  <div id="occurrencesList" class="row g-3">
-    <!-- Renderizado dinamicamente -->
-  </div>
-</div>
-
-<!-- Modal de Edição -->
-<div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Editar Ocorrência</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div id="statusLabel" class="text-muted small">Clique ou Segure o botão para gravar</div>
+      
+      <div id="loader" class="spinner-border text-primary mx-auto mt-3 d-none" role="status">
+        <span class="visually-hidden">Carregando...</span>
       </div>
-      <div class="modal-body">
-        <form id="editForm">
-          <input type="hidden" id="editId">
+    </div>
+
+    <!-- Lista de Ocorrências Registradas -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="m-0">Registros de Ocorrências</h5>
+      <button class="btn btn-sm btn-outline-secondary" onclick="fetchOcorrencias()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+    </div>
+
+    <div id="ocorrenciasList">
+      <!-- Lista preenchida via JS -->
+    </div>
+  </div>
+
+  <!-- Modal para Visualizar / Organizar com IA -->
+  <div class="modal fade" id="organizeModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-magic"></i> Organizar Ocorrência com IA</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="modalOcorrenciaId">
+          
           <div class="mb-3">
-            <label class="form-label">Título</label>
-            <input type="text" id="editTitulo" class="form-control" required>
+            <label class="form-label fw-bold">Texto / Relato Atual</label>
+            <textarea id="modalTexto" class="form-control" rows="4"></textarea>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Descrição</label>
-            <textarea id="editDescricao" class="form-control" rows="3" required></textarea>
+
+          <div id="aiLoader" class="text-center py-2 d-none">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-2 text-muted">A Inteligência Artificial está organizando os dados...</span>
           </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Local</label>
-              <input type="text" id="editLocal" class="form-control">
+
+          <div id="aiResultArea" class="d-none">
+            <hr>
+            <h6>Resultado Organizado pela IA:</h6>
+            <div class="mb-2">
+              <label class="form-label small text-muted">Título Sugerido</label>
+              <input type="text" id="aiTitulo" class="form-control">
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Gravidade</label>
-              <select id="editGravidade" class="form-select">
+            <div class="mb-2">
+              <label class="form-label small text-muted">Local</label>
+              <input type="text" id="aiLocal" class="form-control">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small text-muted">Gravidade</label>
+              <select id="aiGravidade" class="form-select">
                 <option value="Baixa">Baixa</option>
                 <option value="Média">Média</option>
                 <option value="Alta">Alta</option>
               </select>
             </div>
           </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="saveEdit()">Salvar Alterações</button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-warning" onclick="processAIOrganize()"><i class="bi bi-cpu"></i> Executar Organização</button>
+          <button type="button" class="btn btn-primary" onclick="saveOrganizedData()">Salvar Alterações</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  let mediaRecorder;
-  let audioChunks = [];
-  let isRecording = false;
-  let holdTimer = null;
-  let occurrencesData = [];
-  let editModalInstance;
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    let holdTimer = null;
+    let occurrencesData = [];
+    let modalInstance;
 
-  document.addEventListener('DOMContentLoaded', () => {
-    editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
-    loadOccurrences();
-    setupHoldToTalk();
-  });
+    document.addEventListener('DOMContentLoaded', () => {
+      modalInstance = new bootstrap.Modal(document.getElementById('organizeModal'));
+      fetchOcorrencias();
+      setupRecordButton();
+    });
 
-  // Configuração Hold-to-Talk & Click-to-Talk
-  function setupHoldToTalk() {
-    const btn = document.getElementById('micBtn');
+    // Configuração do botão de gravar (Segurar ou Clicar)
+    function setupRecordButton() {
+      const btn = document.getElementById('recordBtn');
 
-    // Suporte para Mouse
-    btn.addEventListener('mousedown', startHoldRecording);
-    btn.addEventListener('mouseup', stopHoldRecording);
-    btn.addEventListener('mouseleave', stopHoldRecording);
+      btn.addEventListener('mousedown', () => { holdTimer = setTimeout(startRecording, 200); });
+      btn.addEventListener('mouseup', () => { clearTimeout(holdTimer); if(isRecording) stopRecording(); });
+      btn.addEventListener('mouseleave', () => { clearTimeout(holdTimer); if(isRecording) stopRecording(); });
 
-    // Suporte para Touch (Dispositivos Móveis)
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); startHoldRecording(); });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); stopHoldRecording(); });
-  }
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); holdTimer = setTimeout(startRecording, 200); });
+      btn.addEventListener('touchend', (e) => { e.preventDefault(); clearTimeout(holdTimer); if(isRecording) stopRecording(); });
 
-  function startHoldRecording() {
-    if (isRecording) return;
-    holdTimer = setTimeout(() => {
-      startRecording();
-    }, 200); // Pequeno atraso para diferenciar clique rápido de pressionar
-  }
-
-  function stopHoldRecording() {
-    if (holdTimer) clearTimeout(holdTimer);
-    if (isRecording) {
-      stopRecording();
+      btn.addEventListener('click', () => {
+        if (!isRecording && !holdTimer) {
+          startRecording();
+        }
+      });
     }
-  }
 
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
+    async function startRecording() {
+      if (isRecording) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunks.push(event.data);
+        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+        mediaRecorder.onstop = uploadAudioRecording;
+
+        mediaRecorder.start();
+        isRecording = true;
+        setRecordingUI(true);
+      } catch (err) {
+        alert("Não foi possível acessar o microfone.");
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        setRecordingUI(false);
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    function setRecordingUI(recording) {
+      const btn = document.getElementById('recordBtn');
+      const label = document.getElementById('statusLabel');
+      if (recording) {
+        btn.classList.add('recording');
+        label.textContent = "Gravando... Solte para finalizar";
+      } else {
+        btn.classList.remove('recording');
+        label.textContent = "Clique ou Segure o botão para gravar";
+      }
+    }
+
+    // Enviar áudio apenas para Registrar (sem passar pela IA diretamente)
+    async function uploadAudioRecording() {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'registro.webm');
+
+      document.getElementById('loader').classList.remove('d-none');
+
+      try {
+        const res = await fetch('/api/ocorrencias/audio', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          fetchOcorrencias();
+        } else {
+          alert("Erro ao salvar áudio registrado.");
+        }
+      } catch (e) {
+        alert("Erro na conexão com o servidor ao enviar o áudio.");
+      } finally {
+        document.getElementById('loader').classList.add('d-none');
+      }
+    }
+
+    // Carregar Ocorrências
+    async function fetchOcorrencias() {
+      try {
+        const res = await fetch('/api/ocorrencias');
+        occurrencesData = await res.json();
+        renderList(occurrencesData);
+      } catch (e) {
+        console.error("Erro ao buscar ocorrências:", e);
+      }
+    }
+
+    function renderList(list) {
+      const container = document.getElementById('ocorrenciasList');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4">Nenhuma ocorrência salva.</div>';
+        return;
+      }
+
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'occurrence-card';
+        div.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start">
+            <h6 class="fw-bold text-primary mb-1">${item.titulo || 'Ocorrência Gravada'}</h6>
+            <span class="badge bg-secondary">${item.gravidade || 'Não analisado'}</span>
+          </div>
+          <p class="mb-2 text-break">${item.descricao || 'Sem descrição'}</p>
+          <div class="small text-muted mb-2">
+            <span><i class="bi bi-geo-alt"></i> ${item.local || 'N/A'}</span> | 
+            <span><i class="bi bi-clock"></i> ${item.dataHora || 'Recente'}</span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-warning" onclick="openOrganizeModal('${item.id}')">
+              <i class="bi bi-magic"></i> Organizar com IA
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteOcorrencia('${item.id}')">
+              <i class="bi bi-trash"></i> Excluir
+            </button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Abrir modal de organização
+    function openOrganizeModal(id) {
+      const item = occurrencesData.find(o => o.id === id);
+      if (!item) return;
+
+      document.getElementById('modalOcorrenciaId').value = item.id;
+      document.getElementById('modalTexto').value = item.descricao || '';
+      document.getElementById('aiResultArea').classList.add('d-none');
+
+      modalInstance.show();
+    }
+
+    // Ação acionada exclusivamente pelo botão "Organizar com IA"
+    async function processAIOrganize() {
+      const id = document.getElementById('modalOcorrenciaId').value;
+      const texto = document.getElementById('modalTexto').value;
+
+      document.getElementById('aiLoader').classList.remove('d-none');
+
+      try {
+        const res = await fetch('/api/organizar-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, texto })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('aiTitulo').value = data.data.titulo || '';
+          document.getElementById('aiLocal').value = data.data.local || '';
+          document.getElementById('aiGravidade').value = data.data.gravidade || 'Baixa';
+          document.getElementById('aiResultArea').classList.remove('d-none');
+        } else {
+          alert("Erro ao processar organização pela IA.");
+        }
+      } catch (e) {
+        alert("Falha na chamada da IA.");
+      } finally {
+        document.getElementById('aiLoader').classList.add('d-none');
+      }
+    }
+
+    // Salvar alterações organizadas
+    async function saveOrganizedData() {
+      const id = document.getElementById('modalOcorrenciaId').value;
+      const updated = {
+        descricao: document.getElementById('modalTexto').value,
+        titulo: document.getElementById('aiTitulo').value || undefined,
+        local: document.getElementById('aiLocal').value || undefined,
+        gravidade: document.getElementById('aiGravidade').value || undefined
       };
 
-      mediaRecorder.onstop = sendAudioToServer;
-
-      mediaRecorder.start();
-      isRecording = true;
-      updateUIState(true);
-    } catch (err) {
-      alert("Permissão de microfone negada ou indisponível.");
-    }
-  }
-
-  function stopRecording() {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      isRecording = false;
-      updateUIState(false);
-      
-      // Para as faixas de áudio para desligar o microfone
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    }
-  }
-
-  function updateUIState(recording) {
-    const btn = document.getElementById('micBtn');
-    const status = document.getElementById('recordingStatus');
-    if (recording) {
-      btn.classList.add('recording');
-      status.textContent = "Gravando... Solte ou clique para enviar.";
-      status.className = "badge bg-danger text-white px-3 py-2";
-    } else {
-      btn.classList.remove('recording');
-      status.textContent = "Clique ou Segure para Gravar";
-      status.className = "badge bg-light text-dark px-3 py-2";
-    }
-  }
-
-  async function sendAudioToServer() {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'rec.webm');
-
-    document.getElementById('loader').classList.remove('d-none');
-
-    try {
-      const res = await fetch('/api/transcribe-occurrences', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.success) {
-        loadOccurrences(); // Atualiza a lista instantaneamente
-      } else {
-        alert("Erro no processamento da IA: " + (data.error || "Erro desconhecido"));
+      try {
+        const res = await fetch(`/api/ocorrencias/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        if (res.ok) {
+          modalInstance.hide();
+          fetchOcorrencias();
+        }
+      } catch (e) {
+        alert("Erro ao atualizar registro.");
       }
-    } catch (e) {
-      alert("Falha de conexão com o servidor.");
-    } finally {
-      document.getElementById('loader').classList.add('d-none');
-    }
-  }
-
-  // Carregar e listar ocorrências
-  async function loadOccurrences() {
-    try {
-      const res = await fetch('/api/ocorrencias');
-      occurrencesData = await res.json();
-      renderOccurrences(occurrencesData);
-    } catch (e) {
-      console.error("Erro ao carregar registros:", e);
-    }
-  }
-
-  function renderOccurrences(list) {
-    const container = document.getElementById('occurrencesList');
-    container.innerHTML = '';
-
-    if (list.length === 0) {
-      container.innerHTML = `<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1"></i><p>Nenhuma ocorrência registrada ainda.</p></div>`;
-      return;
     }
 
-    list.forEach(item => {
-      const badgeClass = item.gravidade === 'Alta' ? 'bg-danger' : item.gravidade === 'Média' ? 'bg-warning text-dark' : 'bg-info text-dark';
-      
-      const col = document.createElement('div');
-      col.className = 'col-md-6 col-lg-4';
-      col.innerHTML = `
-        <div class="card card-occurrence h-100">
-          <div class="card-body d-flex flex-column">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="card-title text-primary mb-0">${item.titulo || 'Ocorrência'}</h5>
-              <span class="badge ${badgeClass}">${item.gravidade || 'Baixa'}</span>
-            </div>
-            <p class="card-text text-secondary flex-grow-1">${item.descricao}</p>
-            <div class="border-top pt-2 mt-2 fs-7 text-muted small">
-              <div><i class="bi bi-geo-alt"></i> ${item.local || 'N/A'}</div>
-              <div><i class="bi bi-clock"></i> ${item.dataHora || 'Data não informada'}</div>
-            </div>
-            <div class="d-flex gap-2 mt-3 pt-2 border-top">
-              <button class="btn btn-sm btn-outline-primary w-50" onclick="openEditModal('${item.id}')"><i class="bi bi-pencil"></i> Editar</button>
-              <button class="btn btn-sm btn-outline-danger w-50" onclick="deleteOccurrence('${item.id}')"><i class="bi bi-trash"></i> Excluir</button>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(col);
-    });
-  }
-
-  // Editar
-  function openEditModal(id) {
-    const item = occurrencesData.find(o => o.id === id);
-    if (!item) return;
-
-    document.getElementById('editId').value = item.id;
-    document.getElementById('editTitulo').value = item.titulo || '';
-    document.getElementById('editDescricao').value = item.descricao || '';
-    document.getElementById('editLocal').value = item.local || '';
-    document.getElementById('editGravidade').value = item.gravidade || 'Baixa';
-
-    editModalInstance.show();
-  }
-
-  async function saveEdit() {
-    const id = document.getElementById('editId').value;
-    const body = {
-      titulo: document.getElementById('editTitulo').value,
-      descricao: document.getElementById('editDescricao').value,
-      local: document.getElementById('editLocal').value,
-      gravidade: document.getElementById('editGravidade').value,
-    };
-
-    try {
-      const res = await fetch(`/api/ocorrencias/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (res.ok) {
-        editModalInstance.hide();
-        loadOccurrences(); // Atualiza os registros no painel
-      }
-    } catch (e) {
-      alert("Erro ao atualizar ocorrência.");
+    async function deleteOcorrencia(id) {
+      if (!confirm("Excluir esta ocorrência?")) return;
+      await fetch(`/api/ocorrencias/${id}`, { method: 'DELETE' });
+      fetchOcorrencias();
     }
-  }
-
-  // Excluir
-  async function deleteOccurrence(id) {
-    if (!confirm("Deseja realmente excluir esta ocorrência?")) return;
-    try {
-      const res = await fetch(`/api/ocorrencias/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        loadOccurrences(); // Atualiza lista
-      }
-    } catch (e) {
-      alert("Erro ao remover ocorrência.");
-    }
-  }
-
-  // Filtro
-  function filterOccurrences() {
-    const term = document.getElementById('searchInput').value.toLowerCase();
-    const filtered = occurrencesData.filter(item => 
-      (item.titulo && item.titulo.toLowerCase().includes(term)) ||
-      (item.descricao && item.descricao.toLowerCase().includes(term)) ||
-      (item.local && item.local.toLowerCase().includes(term))
-    );
-    renderOccurrences(filtered);
-  }
-</script>
-
+  </script>
 </body>
 </html>

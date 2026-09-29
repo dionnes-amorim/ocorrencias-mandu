@@ -17,12 +17,15 @@ app.use(express.static('.'));
 const PORT = process.env.PORT || 3000;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
+
 const SUPABASE_KEY =
   process.env.SUPABASE_SECRET_KEY ||
   process.env.SUPABASE_PUBLISHABLE_KEY ||
   process.env.SUPABASE_ANON_KEY;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+const TABLE = 'ocorrencias_mandu';
 
 
 // =========================================================
@@ -41,7 +44,7 @@ if (!SUPABASE_KEY) {
 
 if (!GEMINI_API_KEY) {
   console.warn(
-    'AVISO: GEMINI_API_KEY não configurada. A IA ficará indisponível.'
+    'AVISO: GEMINI_API_KEY não configurada. A organização por IA ficará indisponível.'
   );
 }
 
@@ -50,23 +53,25 @@ if (!GEMINI_API_KEY) {
 // CLIENTES
 // =========================================================
 
-const supabase = SUPABASE_URL && SUPABASE_KEY
-  ? createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    )
-  : null;
+const supabase =
+  SUPABASE_URL && SUPABASE_KEY
+    ? createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      )
+    : null;
 
 
-const ai = GEMINI_API_KEY
-  ? new GoogleGenAI({
-      apiKey: GEMINI_API_KEY
-    })
-  : null;
+const ai =
+  GEMINI_API_KEY
+    ? new GoogleGenAI({
+        apiKey: GEMINI_API_KEY
+      })
+    : null;
 
 
 // =========================================================
-// HEALTH CHECK
+// STATUS
 // =========================================================
 
 app.get('/api/status', async (req, res) => {
@@ -75,8 +80,220 @@ app.get('/api/status', async (req, res) => {
     online: true,
     supabase: Boolean(supabase),
     gemini: Boolean(ai),
+    tabela: TABLE,
     timestamp: new Date().toISOString()
   });
+
+});
+
+
+// =========================================================
+// ORGANIZAR TURNO COM IA
+// =========================================================
+
+app.post('/organizar-ia', async (req, res) => {
+
+  try {
+
+    if (!ai) {
+
+      return res.status(500).json({
+        texto:
+          'IA não configurada no servidor. Verifique a GEMINI_API_KEY no ambiente do Render.'
+      });
+
+    }
+
+
+    const ocorrencias = Array.isArray(req.body?.ocorrencias)
+      ? req.body.ocorrencias
+      : [];
+
+
+    if (!ocorrencias.length) {
+
+      return res.status(400).json({
+        texto: 'Nenhuma ocorrência foi enviada para organização.'
+      });
+
+    }
+
+
+    // =====================================================
+    // LIMPA E NORMALIZA OS DADOS
+    // =====================================================
+
+    const dados = ocorrencias.map((o, index) => ({
+
+      ordem: index + 1,
+
+      hora:
+        typeof o.hora === 'string'
+          ? o.hora
+          : '',
+
+      frente:
+        typeof o.frente === 'string'
+          ? o.frente
+          : 'GERAL',
+
+      texto:
+        typeof o.texto === 'string'
+          ? o.texto.trim()
+          : '',
+
+      turno:
+        typeof o.turno === 'string'
+          ? o.turno
+          : '',
+
+      unidade:
+        typeof o.unidade === 'string'
+          ? o.unidade
+          : 'MANDU'
+
+    })).filter(o => o.texto);
+
+
+    if (!dados.length) {
+
+      return res.status(400).json({
+        texto: 'As ocorrências enviadas não possuem textos válidos.'
+      });
+
+    }
+
+
+    // =====================================================
+    // MONTA O MATERIAL PARA A IA
+    // =====================================================
+
+    const material = dados
+      .map(o => {
+
+        return [
+          `Horário: ${o.hora || '--:--'}`,
+          `Frente: ${o.frente}`,
+          `Turno: ${o.turno || 'Não informado'}`,
+          `Unidade: ${o.unidade || 'MANDU'}`,
+          `Ocorrência: ${o.texto}`
+        ].join('\n');
+
+      })
+      .join('\n\n');
+
+
+    // =====================================================
+    // PROMPT OPERACIONAL
+    // =====================================================
+
+    const prompt = `
+Você é um assistente responsável por organizar o Diário de Turno operacional do CTT da unidade Mandu.
+
+Sua função é transformar as ocorrências registradas durante o turno em um relatório operacional claro, profissional e objetivo.
+
+REGRAS IMPORTANTES:
+
+1. Não invente nenhuma informação.
+2. Não crie números que não estejam nas ocorrências.
+3. Não altere horários.
+4. Não altere números de frentes.
+5. Não altere nomes de equipamentos ou pessoas.
+6. Não invente causas, ações ou consequências.
+7. Preserve todas as informações operacionais relevantes.
+8. Corrija erros de português e transcrição.
+9. Agrupe ocorrências relacionadas quando isso melhorar a leitura.
+10. Organize preferencialmente por frente.
+11. Dentro de cada frente, mantenha a sequência temporal quando possível.
+12. Destaque situações de manutenção, parada, indisponibilidade, atraso, risco operacional e retomada quando essas informações estiverem presentes.
+13. Não transforme uma possibilidade em fato.
+14. Não faça análise que não esteja sustentada pelas ocorrências.
+15. Não use linguagem exagerada.
+16. O texto deve ser adequado para comunicação profissional de operação/gerência.
+17. Não coloque introduções desnecessárias.
+18. Não coloque explicações sobre o que você fez.
+19. Entregue somente o relatório final.
+
+FORMATO PREFERENCIAL:
+
+CTT - DIÁRIO DE TURNO | MANDU
+
+[Frente / área]
+- HH:MM — ocorrência.
+- HH:MM — ocorrência.
+
+[Outra frente / área]
+- HH:MM — ocorrência.
+
+[GERAL]
+- HH:MM — ocorrência.
+
+Se houver informações suficientes, ao final inclua:
+
+PONTOS DE ATENÇÃO
+- ponto operacional relevante.
+
+Mas somente inclua pontos de atenção que estejam claramente presentes nos registros.
+
+OCORRÊNCIAS DO TURNO:
+
+${material}
+`;
+
+
+    // =====================================================
+    // CHAMADA GEMINI
+    // =====================================================
+
+    const response =
+      await ai.models.generateContent({
+
+        model: 'gemini-2.5-flash',
+
+        contents: prompt
+
+      });
+
+
+    const textoIA =
+      response.text?.trim();
+
+
+    if (!textoIA) {
+
+      return res.status(500).json({
+        texto:
+          'A IA não retornou um relatório válido.'
+      });
+
+    }
+
+
+    return res.json({
+
+      success: true,
+
+      texto: textoIA
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'Erro POST /organizar-ia:',
+      error
+    );
+
+    return res.status(500).json({
+
+      texto:
+        'Erro ao organizar as ocorrências com IA: ' +
+        (error?.message || 'erro desconhecido')
+
+    });
+
+  }
 
 });
 
@@ -92,7 +309,8 @@ app.get('/api/ocorrencias', async (req, res) => {
     if (!supabase) {
 
       return res.status(500).json({
-        error: 'Supabase não configurado no servidor.'
+        error:
+          'Supabase não configurado no servidor.'
       });
 
     }
@@ -102,14 +320,15 @@ app.get('/api/ocorrencias', async (req, res) => {
       data,
       error
     } = await supabase
-      .from('ocorrencias')
-      .select('id, titulo, relatorio, criado_em')
+      .from(TABLE)
+      .select('*')
       .order(
-        'criado_em',
+        'created_at',
         {
           ascending: false
         }
-      );
+      )
+      .limit(500);
 
 
     if (error) {
@@ -121,7 +340,7 @@ app.get('/api/ocorrencias', async (req, res) => {
 
       return res.status(500).json({
         error:
-          'Erro ao carregar ocorrências no banco.'
+          'Erro ao carregar ocorrências.'
       });
 
     }
@@ -141,7 +360,7 @@ app.get('/api/ocorrencias', async (req, res) => {
 
     return res.status(500).json({
       error:
-        'Erro interno ao carregar ocorrências.'
+        'Erro interno do servidor.'
     });
 
   }
@@ -150,7 +369,7 @@ app.get('/api/ocorrencias', async (req, res) => {
 
 
 // =========================================================
-// POST - CRIAR OCORRÊNCIA
+// POST - CRIAR OCORRÊNCIA VIA API
 // =========================================================
 
 app.post('/api/ocorrencias', async (req, res) => {
@@ -168,134 +387,62 @@ app.post('/api/ocorrencias', async (req, res) => {
 
 
     const {
-      textoOriginal,
-      titulo
+      hora,
+      frente,
+      texto,
+      turno,
+      unidade
     } = req.body;
 
 
-    const texto =
-      typeof textoOriginal === 'string'
-        ? textoOriginal.trim()
-        : '';
-
-
-    const tituloFinal =
-      typeof titulo === 'string' &&
-      titulo.trim()
-        ? titulo.trim()
-        : 'Ocorrência';
-
-
-    if (!texto) {
+    if (
+      typeof texto !== 'string' ||
+      !texto.trim()
+    ) {
 
       return res.status(400).json({
         error:
-          'O relato é obrigatório.'
+          'O campo texto é obrigatório.'
       });
 
     }
 
 
-    if (texto.length > 10000) {
+    const registro = {
 
-      return res.status(400).json({
-        error:
-          'O relato ultrapassa o limite permitido de 10.000 caracteres.'
-      });
+      hora:
+        typeof hora === 'string' && hora.trim()
+          ? hora.trim()
+          : '--:--',
 
-    }
+      frente:
+        typeof frente === 'string' && frente.trim()
+          ? frente.trim()
+          : 'GERAL',
 
+      texto:
+        texto.trim(),
 
-    // =====================================================
-    // PROCESSAMENTO COM IA
-    // =====================================================
+      turno:
+        typeof turno === 'string'
+          ? turno.trim()
+          : null,
 
-    let relatoFormatado = texto;
+      unidade:
+        typeof unidade === 'string' && unidade.trim()
+          ? unidade.trim()
+          : 'MANDU'
 
+    };
 
-    if (ai) {
-
-      try {
-
-        const prompt = `
-Você é responsável por organizar registros operacionais.
-
-Transforme o relato abaixo em um texto formal, profissional, objetivo e bem estruturado.
-
-Regras:
-- Não invente informações.
-- Não altere números, horários, nomes ou fatos.
-- Preserve todas as informações importantes.
-- Corrija erros de português.
-- Organize o texto para facilitar a leitura.
-- Não coloque título.
-- Entregue somente o relato final.
-
-Relato original:
-
-${texto}
-`;
-
-
-        const response =
-          await ai.models.generateContent({
-
-            model:
-              'gemini-2.5-flash',
-
-            contents:
-              prompt
-
-          });
-
-
-        const textoIA =
-          response.text?.trim();
-
-
-        if (textoIA) {
-
-          relatoFormatado =
-            textoIA;
-
-        }
-
-      } catch (aiError) {
-
-        console.warn(
-          'IA indisponível. Salvando texto original.',
-          aiError?.message || aiError
-        );
-
-      }
-
-    }
-
-
-    // =====================================================
-    // SALVAR NO SUPABASE
-    // =====================================================
 
     const {
       data,
       error
     } = await supabase
-      .from('ocorrencias')
-      .insert({
-
-        titulo:
-          tituloFinal,
-
-        relatorio:
-          relatoFormatado,
-
-        criado_em:
-          new Date().toISOString()
-
-      })
-      .select(
-        'id, titulo, relatorio, criado_em'
-      )
+      .from(TABLE)
+      .insert([registro])
+      .select('*')
       .single();
 
 
@@ -308,7 +455,7 @@ ${texto}
 
       return res.status(500).json({
         error:
-          'Erro ao salvar ocorrência no banco.'
+          'Erro ao salvar ocorrência.'
       });
 
     }
@@ -341,7 +488,7 @@ ${texto}
 
 
 // =========================================================
-// DELETE - EXCLUIR
+// DELETE - EXCLUIR OCORRÊNCIA
 // =========================================================
 
 app.delete('/api/ocorrencias/:id', async (req, res) => {
@@ -367,7 +514,7 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 
       return res.status(400).json({
         error:
-          'ID da ocorrência não informado.'
+          'ID não informado.'
       });
 
     }
@@ -376,7 +523,7 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
     const {
       error
     } = await supabase
-      .from('ocorrencias')
+      .from(TABLE)
       .delete()
       .eq(
         'id',
@@ -393,7 +540,7 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 
       return res.status(500).json({
         error:
-          'Erro ao excluir ocorrência no banco.'
+          'Erro ao excluir ocorrência.'
       });
 
     }

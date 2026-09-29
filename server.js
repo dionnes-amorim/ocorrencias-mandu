@@ -1,70 +1,171 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import multer from 'multer';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+// Configuração do Google Gemini SDK
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
 
-app.use(express.static(path.join(__dirname)));
-
-app.get('/ping', (req, res) => res.send('ok'));
-
-const MODELOS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash-8b'
-];
-
-async function chamarGemini(prompt) {
-  let ultimoErro = '';
-  for (const modelo of MODELOS) {
-    try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      });
-      const j = await r.json();
-      const texto = j.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (texto) return texto;
-      ultimoErro = JSON.stringify(j).slice(0,500);
-      console.log(`Modelo ${modelo} falhou:`, ultimoErro);
-    } catch (e) {
-      ultimoErro = e.message;
-      console.log(`Erro no modelo ${modelo}:`, ultimoErro);
+// Configuração de upload de arquivos (áudios)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
-  }
-  return 'Erro Gemini: ' + ultimoErro;
-}
-
-app.post('/organizar-ia', async (req, res) => {
-  try {
-    const ocorrencias = req.body.ocorrencias || [];
-    if (!ocorrencias.length) {
-      return res.json({ texto: 'Sem ocorrências para organizar.' });
-    }
-
-    const listaTexto = ocorrencias.map(o => `${o.hora} ${o.frente} ${o.texto}`).join("\n");
-
-    const prompt = `Você é assistente de turno agrícola. Organize o resumo abaixo por frente (FRENTE 501, 502, etc e GERAL).
-
-Formato:
-FRENTE 50X
-- HH:MM - texto
-
-No final, faça um total por frente.
-
-Ocorrências:
-${listaTexto}`;
-
-    const texto = await chamarGemini(prompt);
-    res.json({ texto });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ texto: 'Erro no servidor: ' + e.message });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `audio_${Date.now()}${path.extname(file.originalname) || '.webm'}`);
   }
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log('rodando na porta ' + PORT));
+const upload = multer({ storage });
+
+// Persistência local em JSON
+const DATA_FILE = path.join(__dirname, 'ocorrencias.json');
+
+function getOcorrencias() {
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify([]));
+  }
+  const data = fs.readFileSync(DATA_FILE, 'utf-8');
+  return JSON.parse(data || '[]');
+}
+
+function saveOcorrencias(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
+// REST API Endpoints
+
+// 1. Listar Ocorrências
+app.get('/api/ocorrencias', (req, res) => {
+  const ocorrencias = getOcorrencias();
+  res.json(ocorrencias);
+});
+
+// 2. Processar Áudio com Gemini IA e Criar Ocorrência
+app.post('/api/transcribe-occurrences', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo de áudio foi enviado.' });
+    }
+
+    const audioPath = req.file.path;
+    const audioBuffer = fs.readFileSync(audioPath);
+    const base64Audio = audioBuffer.toString('base64');
+
+    const prompt = `Analise este áudio contendo a narração ou descrição de uma ocorrência. 
+    Extraia e retorne EXCLUSIVAMENTE um objeto JSON válido no seguinte formato sem marcações de markdown adicionais:
+    {
+      "titulo": "Título resumo da ocorrência",
+      "descricao": "Transcrição e descrição detalhada do relato do áudio",
+      "local": "Local citado ou N/A se não mencionado",
+      "dataHora": "Data e hora citada ou a data/hora atual se não informada",
+      "gravidade": "Alta" | "Média" | "Baixa"
+    }`;
+
+    // Chamada à API oficial do Gemini com processamento multimodal
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: req.file.mimetype || 'audio/webm',
+                data: base64Audio
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    let textResponse = response.text || '';
+    textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    let extractedData;
+    try {
+      extractedData = JSON.parse(textResponse);
+    } catch (e) {
+      extractedData = {
+        titulo: "Ocorrência Gravada",
+        descricao: textResponse || "Não foi possível estruturar o texto do áudio.",
+        local: "Não identificado",
+        dataHora: new Date().toLocaleString('pt-BR'),
+        gravidade: "Média"
+      };
+    }
+
+    const newOcorrencia = {
+      id: Date.now().toString(),
+      ...extractedData,
+      createdAt: new Date().toISOString()
+    };
+
+    const list = getOcorrencias();
+    list.unshift(newOcorrencia);
+    saveOcorrencias(list);
+
+    // Remove o arquivo temporário após o processamento
+    fs.unlink(audioPath, () => {});
+
+    res.json({ success: true, item: newOcorrencia });
+
+  } catch (error) {
+    console.error('Erro no processamento da IA:', error);
+    res.status(500).json({ error: 'Falha ao processar o áudio com a IA.', details: error.message });
+  }
+});
+
+// 3. Atualizar/Editar Ocorrência
+app.put('/api/ocorrencias/:id', (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+  
+  let list = getOcorrencias();
+  const index = list.findIndex(item => item.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Ocorrência não encontrada.' });
+  }
+
+  list[index] = { ...list[index], ...updatedData };
+  saveOcorrencias(list);
+
+  res.json({ success: true, item: list[index] });
+});
+
+// 4. Excluir Ocorrência
+app.delete('/api/ocorrencias/:id', (req, res) => {
+  const { id } = req.params;
+  let list = getOcorrencias();
+  list = list.filter(item => item.id !== id);
+  saveOcorrencias(list);
+
+  res.json({ success: true });
+});
+
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
+});

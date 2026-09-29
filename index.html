@@ -129,7 +129,7 @@ const TABLE = 'ocorrencias_mandu';
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
-const API_URL = '/organizar-ia';
+const API_URL = 'https://ocorrencias-mandu.onrender.com/organizar-ia';
 
 let ocorrencias = [];
 let filtroAtual='TODAS', editId=null;

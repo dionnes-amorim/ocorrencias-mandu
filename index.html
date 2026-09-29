@@ -385,5 +385,192 @@
 
     document.addEventListener('DOMContentLoaded', carregarOcorrencias);
   </script>
-</body>
-</html>
+<script>
+  let recognition = null;
+  let isRecording = false;
+
+  // Reconhecimento de Voz Nativo (Web Speech API)
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.lang = 'pt-BR';
+
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      
+      // Procura pelo campo de texto (suporta ID 'relato' ou 'textoOcorrencia')
+      const campoTexto = document.getElementById('relato') || document.getElementById('textoOcorrencia');
+      if (campoTexto) {
+        campoTexto.value += (campoTexto.value ? ' ' : '') + transcript;
+      }
+    };
+
+    recognition.onerror = () => pararGravacao();
+    recognition.onend = () => { if (isRecording) pararGravacao(); };
+  }
+
+  function toggleGravacao() {
+    if (!recognition) {
+      alert("Seu navegador não suporta gravação de voz.");
+      return;
+    }
+
+    const btnGravar = document.getElementById('btnGravar') || document.getElementById('btnGravacao');
+
+    if (isRecording) {
+      recognition.stop();
+      pararGravacao();
+    } else {
+      recognition.start();
+      isRecording = true;
+      if (btnGravar) {
+        btnGravar.classList.add('recording');
+        btnGravar.innerText = '⏹ Parar Gravação';
+      }
+    }
+  }
+
+  function pararGravacao() {
+    isRecording = false;
+    const btnGravar = document.getElementById('btnGravar') || document.getElementById('btnGravacao');
+    if (btnGravar) {
+      btnGravar.classList.remove('recording');
+      btnGravar.innerText = '🎤 Gravar Áudio';
+    }
+  }
+
+  // Carrega as ocorrências do banco ao abrir a página
+  async function carregarOcorrencias() {
+    const container = document.getElementById('listaOcorrencias') || document.getElementById('lista-ocorrencias');
+    if (!container) return;
+
+    try {
+      const response = await fetch('/api/ocorrencias');
+      if (!response.ok) throw new Error('Erro na requisição');
+
+      const dados = await response.json();
+
+      if (!dados || dados.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; text-align: center;">Nenhuma ocorrência registrada.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      dados.forEach(item => adicionarCardNaTela(item));
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<p style="color: #ef4444; text-align: center;">Erro ao carregar histórico.</p>';
+    }
+  }
+
+  // Adiciona o card diretamente no DOM sem recarregar a página (Sem F5)
+  function adicionarCardNaTela(item, noTopo = false) {
+    const container = document.getElementById('listaOcorrencias') || document.getElementById('lista-ocorrencias');
+    if (!container) return;
+
+    const dataFormatada = item.criado_em 
+      ? new Date(item.criado_em).toLocaleString('pt-BR')
+      : new Date().toLocaleString('pt-BR');
+
+    const card = document.createElement('div');
+    card.className = 'ocorrencia-item item-card';
+    card.id = `ocorrencia-${item.id}`;
+    card.style.cssText = 'background: #fff; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #4f46e5; box-shadow: 0 2px 4px rgba(0,0,0,0.05);';
+
+    card.innerHTML = `
+      <div style="font-weight: bold; margin-bottom: 0.5rem;">${item.titulo || 'Ocorrência'}</div>
+      <div style="white-space: pre-line; color: #374151; margin-bottom: 0.75rem;">${item.relatorio}</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e7eb; padding-top: 0.5rem; font-size: 0.85rem; color: #6b7280;">
+        <span>${dataFormatada}</span>
+        <button style="background: #ef4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;" onclick="excluirOcorrencia('${item.id}')">
+          🗑 Excluir
+        </button>
+      </div>
+    `;
+
+    if (noTopo && container.firstChild) {
+      container.insertBefore(card, container.firstChild);
+    } else {
+      container.appendChild(card);
+    }
+  }
+
+  // Registra a ocorrência no backend e atualiza a tela instantaneamente
+  async function salvarOcorrencia(e) {
+    if (e) e.preventDefault();
+
+    const campoTexto = document.getElementById('relato') || document.getElementById('textoOcorrencia');
+    const campoTitulo = document.getElementById('titulo');
+    const btnSalvar = document.getElementById('btnSalvar') || document.getElementById('btnEnviar');
+
+    const relato = campoTexto ? campoTexto.value.trim() : '';
+    const titulo = campoTitulo ? campoTitulo.value.trim() : 'Ocorrência';
+
+    if (!relato) {
+      alert('Por favor, informe ou grave o relato antes de salvar.');
+      return;
+    }
+
+    if (isRecording) toggleGravacao();
+
+    if (btnSalvar) {
+      btnSalvar.disabled = true;
+      btnSalvar.innerText = 'Processando com IA...';
+    }
+
+    try {
+      const response = await fetch('/api/ocorrencias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ textoOriginal: relato, titulo: titulo })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        if (campoTexto) campoTexto.value = '';
+        if (campoTitulo) campoTitulo.value = '';
+        
+        // Insere na tela na hora sem F5
+        adicionarCardNaTela(result.data, true);
+      } else {
+        alert(result.error || 'Erro ao registrar ocorrência.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao comunicar com o servidor.');
+    } finally {
+      if (btnSalvar) {
+        btnSalvar.disabled = false;
+        btnSalvar.innerText = '💾 Registrar Ocorrência';
+      }
+    }
+  }
+
+  // Exclui do Supabase e remove da tela instantaneamente sem F5
+  async function excluirOcorrencia(id) {
+    if (!confirm('Deseja realmente excluir esta ocorrência?')) return;
+
+    try {
+      const response = await fetch(`/api/ocorrencias/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        const el = document.getElementById(`ocorrencia-${id}`);
+        if (el) el.remove();
+      } else {
+        alert('Erro ao excluir do banco de dados.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao excluir.');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', carregarOcorrencias);
+</script>

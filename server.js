@@ -6,7 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// serve o index.html se estiver na mesma pasta
 app.use(express.static(path.join(__dirname)));
 
 app.get('/ping', (req, res) => res.send('ok'));

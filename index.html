@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Ocorrências Mandu</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  >
+
   <style>
     :root {
       --primary: #4f46e5;
@@ -16,6 +22,7 @@
       --border-color: #e5e7eb;
       --danger: #ef4444;
       --danger-hover: #dc2626;
+      --success: #10b981;
     }
 
     * {
@@ -26,16 +33,16 @@
     }
 
     body {
-      background-color: var(--bg-color);
+      background: var(--bg-color);
       color: var(--text-main);
-      display: flex;
-      justify-content: center;
+      min-height: 100vh;
       padding: 2rem 1rem;
     }
 
     .container {
       width: 100%;
       max-width: 800px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
@@ -43,12 +50,13 @@
 
     header {
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     header h1 {
       font-size: 2rem;
       color: var(--primary);
+      margin-bottom: 0.4rem;
     }
 
     header p {
@@ -56,10 +64,12 @@
     }
 
     .card {
-      background-color: var(--card-bg);
+      background: var(--card-bg);
       border-radius: 12px;
       padding: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     .form-group {
@@ -69,32 +79,38 @@
     }
 
     label {
+      display: block;
       font-weight: 600;
       font-size: 0.95rem;
+      margin-bottom: 0.45rem;
     }
 
-    input[type="text"], textarea {
+    input[type="text"],
+    textarea {
       width: 100%;
-      padding: 0.75rem;
+      padding: 0.8rem;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       font-size: 1rem;
       outline: none;
-      transition: border-color 0.2s;
+      transition: 0.2s;
     }
 
-    input[type="text"]:focus, textarea:focus {
+    input[type="text"]:focus,
+    textarea:focus {
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
 
     textarea {
-      min-height: 120px;
+      min-height: 150px;
       resize: vertical;
+      line-height: 1.5;
     }
 
     .actions {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
     }
 
@@ -108,35 +124,46 @@
       border: none;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: 0.2s;
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
     .btn-primary {
-      background-color: var(--primary);
+      background: var(--primary);
       color: white;
     }
 
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
     }
 
     .btn-record {
-      background-color: #10b981;
+      background: var(--success);
       color: white;
     }
 
+    .btn-record:hover:not(:disabled) {
+      filter: brightness(0.95);
+    }
+
     .btn-record.recording {
-      background-color: var(--danger);
+      background: var(--danger);
       animation: pulse 1.5s infinite;
     }
 
     .btn-danger {
-      background-color: var(--danger);
+      background: var(--danger);
       color: white;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.8rem;
     }
 
     .btn-danger:hover {
-      background-color: var(--danger-hover);
+      background: var(--danger-hover);
     }
 
     @keyframes pulse {
@@ -148,429 +175,674 @@
     .list-header {
       font-size: 1.25rem;
       font-weight: 600;
-      margin-top: 1rem;
+      margin-top: 0.5rem;
     }
 
     .ocorrencia-item {
-      background-color: var(--card-bg);
+      background: var(--card-bg);
       border-radius: 8px;
       padding: 1.25rem;
       margin-top: 1rem;
       border-left: 4px solid var(--primary);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
     }
 
     .ocorrencia-title {
       font-weight: 700;
       font-size: 1.1rem;
+      margin-bottom: 0.65rem;
     }
 
     .ocorrencia-body {
-      white-space: pre-wrap;
       color: #374151;
-      line-height: 1.5;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .ocorrencia-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border-color);
       font-size: 0.85rem;
       color: var(--text-muted);
-      border-top: 1px solid var(--border-color);
-      padding-top: 0.5rem;
+    }
+
+    .mensagem {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 1rem;
+    }
+
+    .erro {
+      color: var(--danger);
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 1rem 0.75rem;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .actions button {
+        width: 100%;
+      }
+
+      .ocorrencia-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
     }
   </style>
 </head>
+
 <body>
 
-  <div class="container">
+  <main class="container">
+
     <header>
       <h1>Ocorrências Mandu</h1>
       <p>Registro inteligente e organizado de ocorrências</p>
     </header>
 
-    <div class="card">
-      <form id="formOcorrencia" onsubmit="salvarOcorrencia(event)">
+    <section class="card">
+
+      <form id="formOcorrencia">
+
         <div class="form-group">
+
           <div>
             <label for="titulo">Título da Ocorrência</label>
-            <input type="text" id="titulo" placeholder="Ex: Incidente no setor B" required>
+
+            <input
+              type="text"
+              id="titulo"
+              placeholder="Ex.: Incidente no setor B"
+              maxlength="150"
+              required
+            >
           </div>
 
           <div>
             <label for="relato">Relato dos Fatos</label>
-            <textarea id="relato" placeholder="Digite ou clique no microfone para gravar o relato..." required></textarea>
+
+            <textarea
+              id="relato"
+              placeholder="Digite ou utilize o microfone para registrar o relato..."
+              required
+            ></textarea>
           </div>
 
           <div class="actions">
-            <button type="button" id="btnGravar" class="btn-record" onclick="toggleGravação()">
-              <i class="fa-solid fa-microphone"></i> Gravar Áudio
+
+            <button
+              type="button"
+              id="btnGravar"
+              class="btn-record"
+            >
+              <i class="fa-solid fa-microphone"></i>
+              <span>Gravar Áudio</span>
             </button>
 
-            <button type="submit" id="btnSalvar" class="btn-primary">
-              <i class="fa-solid fa-paper-plane"></i> Registrar Ocorrência
+            <button
+              type="submit"
+              id="btnSalvar"
+              class="btn-primary"
+            >
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Registrar Ocorrência</span>
             </button>
+
           </div>
-        </div>
-      </form>
-    </div>
 
-    <div class="list-header">Histórico de Ocorrências</div>
-    <div id="listaOcorrencias">
-      <p style="color: var(--text-muted);">Carregando ocorrências...</p>
-    </div>
-  </div>
+        </div>
+
+      </form>
+
+    </section>
+
+    <section>
+
+      <div class="list-header">
+        Histórico de Ocorrências
+      </div>
+
+      <div id="listaOcorrencias">
+        <p class="mensagem">
+          Carregando ocorrências...
+        </p>
+      </div>
+
+    </section>
+
+  </main>
 
   <script>
+
     let recognition = null;
     let isRecording = false;
 
-    // Inicialização do Reconhecimento de Voz nativo
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const form = document.getElementById('formOcorrencia');
+    const titulo = document.getElementById('titulo');
+    const relato = document.getElementById('relato');
+    const btnGravar = document.getElementById('btnGravar');
+    const btnSalvar = document.getElementById('btnSalvar');
+    const lista = document.getElementById('listaOcorrencias');
+
+
+    // =========================================================
+    // RECONHECIMENTO DE VOZ
+    // =========================================================
+
+    function iniciarReconhecimento() {
+
+      const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        alert(
+          'Seu navegador não suporta reconhecimento de voz. ' +
+          'Utilize Google Chrome ou Microsoft Edge.'
+        );
+
+        return;
+      }
+
       recognition = new SpeechRecognition();
+
       recognition.continuous = true;
+      recognition.interimResults = true;
       recognition.lang = 'pt-BR';
 
-      recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+      recognition.onresult = function(event) {
+
+        let texto = '';
+
+        for (
+          let i = event.resultIndex;
+          i < event.results.length;
+          i++
+        ) {
+
+          if (event.results[i].isFinal) {
+            texto += event.results[i][0].transcript;
+          }
+
         }
-        const relatoField = document.getElementById('relato');
-        relatoField.value += (relatoField.value ? ' ' : '') + transcript;
+
+        if (texto.trim()) {
+
+          relato.value +=
+            (relato.value.trim() ? ' ' : '') +
+            texto.trim();
+
+        }
+
       };
 
-      recognition.onerror = () => pararGravacao();
-      recognition.onend = () => { if (isRecording) pararGravacao(); };
+      recognition.onerror = function(event) {
+
+        console.error(
+          'Erro no reconhecimento de voz:',
+          event.error
+        );
+
+        pararGravacao();
+
+      };
+
+      recognition.onend = function() {
+
+        if (isRecording) {
+          pararGravacao();
+        }
+
+      };
+
     }
 
-    function toggleGravação() {
+
+    function toggleGravacao() {
+
       if (!recognition) {
-        alert("Navegador não suporta gravação de voz.");
-        return;
+        iniciarReconhecimento();
       }
+
+      if (!recognition) return;
 
       if (isRecording) {
+
         recognition.stop();
+
         pararGravacao();
+
       } else {
-        recognition.start();
-        isRecording = true;
-        const btn = document.getElementById('btnGravar');
-        btn.classList.add('recording');
-        btn.innerHTML = `<i class="fa-solid fa-stop"></i> Parar Gravação`;
+
+        try {
+
+          recognition.start();
+
+          isRecording = true;
+
+          btnGravar.classList.add('recording');
+
+          btnGravar.innerHTML =
+            '<i class="fa-solid fa-stop"></i>' +
+            '<span>Parar Gravação</span>';
+
+        } catch (error) {
+
+          console.error(error);
+
+        }
+
       }
+
     }
+
 
     function pararGravacao() {
+
       isRecording = false;
-      const btn = document.getElementById('btnGravar');
-      btn.classList.remove('recording');
-      btn.innerHTML = `<i class="fa-solid fa-microphone"></i> Gravar Áudio`;
-    }
 
-    // Buscar ocorrências do banco e carregar na tela
-    async function carregarOcorrencias() {
-      const container = document.getElementById('listaOcorrencias');
-      try {
-        const response = await fetch('/api/ocorrencias');
-        if (!response.ok) throw new Error('Falha ao carregar dados');
-
-        const dados = await response.json();
-
-        if (!dados || dados.length === 0) {
-          container.innerHTML = `<p style="color: var(--text-muted);">Nenhuma ocorrência registrada.</p>`;
-          return;
-        }
-
-        container.innerHTML = '';
-        dados.forEach(item => renderizarCard(item));
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `<p style="color: var(--danger);">Erro ao carregar lista de ocorrências.</p>`;
-      }
-    }
-
-    // Cria o elemento visual sem precisar dar F5
-    function renderizarCard(item, topo = false) {
-      const container = document.getElementById('listaOcorrencias');
-      
-      const dataFormatada = item.criado_em 
-        ? new Date(item.criado_em).toLocaleString('pt-BR')
-        : new Date().toLocaleString('pt-BR');
-
-      const card = document.createElement('div');
-      card.className = 'ocorrencia-item';
-      card.id = `card-${item.id}`;
-      card.innerHTML = `
-        <div class="ocorrencia-title">${item.titulo || 'Ocorrência'}</div>
-        <div class="ocorrencia-body">${item.relatorio}</div>
-        <div class="ocorrencia-footer">
-          <span>${dataFormatada}</span>
-          <button class="btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="excluirOcorrencia('${item.id}')">
-            <i class="fa-solid fa-trash"></i> Excluir
-          </button>
-        </div>
-      `;
-
-      if (topo && container.firstChild) {
-        container.insertBefore(card, container.firstChild);
-      } else {
-        container.appendChild(card);
-      }
-    }
-
-    // Salvar ocorrência chamando o backend
-    async function salvarOcorrencia(event) {
-      event.preventDefault();
-      
-      const titulo = document.getElementById('titulo').value;
-      const relato = document.getElementById('relato').value;
-      const btnSalvar = document.getElementById('btnSalvar');
-
-      if (isRecording) toggleGravação();
-
-      btnSalvar.disabled = true;
-      btnSalvar.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando com IA...`;
-
-      try {
-        const response = await fetch('/api/ocorrencias', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ titulo: titulo, textoOriginal: relato })
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          document.getElementById('formOcorrencia').reset();
-          renderizarCard(result.data, true); // Atualiza na hora na tela
-        } else {
-          alert(result.error || 'Erro ao registrar ocorrência.');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Erro ao conectar ao servidor backend.');
-      } finally {
-        btnSalvar.disabled = false;
-        btnSalvar.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Registrar Ocorrência`;
-      }
-    }
-
-    // Excluir ocorrência sem F5
-    async function excluirOcorrencia(id) {
-      if (!confirm("Tem certeza que deseja excluir esta ocorrência?")) return;
-
-      try {
-        const response = await fetch(`/api/ocorrencias/${id}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          const card = document.getElementById(`card-${id}`);
-          if (card) card.remove();
-        } else {
-          alert("Erro ao excluir do banco de dados.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Erro de conexão ao tentar excluir.");
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', carregarOcorrencias);
-  </script>
-<script>
-  let recognition = null;
-  let isRecording = false;
-
-  // Reconhecimento de Voz Nativo (Web Speech API)
-  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.lang = 'pt-BR';
-
-    recognition.onresult = (event) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      
-      // Procura pelo campo de texto (suporta ID 'relato' ou 'textoOcorrencia')
-      const campoTexto = document.getElementById('relato') || document.getElementById('textoOcorrencia');
-      if (campoTexto) {
-        campoTexto.value += (campoTexto.value ? ' ' : '') + transcript;
-      }
-    };
-
-    recognition.onerror = () => pararGravacao();
-    recognition.onend = () => { if (isRecording) pararGravacao(); };
-  }
-
-  function toggleGravacao() {
-    if (!recognition) {
-      alert("Seu navegador não suporta gravação de voz.");
-      return;
-    }
-
-    const btnGravar = document.getElementById('btnGravar') || document.getElementById('btnGravacao');
-
-    if (isRecording) {
-      recognition.stop();
-      pararGravacao();
-    } else {
-      recognition.start();
-      isRecording = true;
-      if (btnGravar) {
-        btnGravar.classList.add('recording');
-        btnGravar.innerText = '⏹ Parar Gravação';
-      }
-    }
-  }
-
-  function pararGravacao() {
-    isRecording = false;
-    const btnGravar = document.getElementById('btnGravar') || document.getElementById('btnGravacao');
-    if (btnGravar) {
       btnGravar.classList.remove('recording');
-      btnGravar.innerText = '🎤 Gravar Áudio';
+
+      btnGravar.innerHTML =
+        '<i class="fa-solid fa-microphone"></i>' +
+        '<span>Gravar Áudio</span>';
+
     }
-  }
 
-  // Carrega as ocorrências do banco ao abrir a página
-  async function carregarOcorrencias() {
-    const container = document.getElementById('listaOcorrencias') || document.getElementById('lista-ocorrencias');
-    if (!container) return;
 
-    try {
-      const response = await fetch('/api/ocorrencias');
-      if (!response.ok) throw new Error('Erro na requisição');
+    btnGravar.addEventListener(
+      'click',
+      toggleGravacao
+    );
 
-      const dados = await response.json();
 
-      if (!dados || dados.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280; text-align: center;">Nenhuma ocorrência registrada.</p>';
+    // =========================================================
+    // CRIAÇÃO SEGURA DOS CARDS
+    // =========================================================
+
+    function renderizarCard(item, noTopo = false) {
+
+      const card = document.createElement('article');
+
+      card.className = 'ocorrencia-item';
+
+      card.id = `card-${item.id}`;
+
+
+      const tituloElement = document.createElement('div');
+
+      tituloElement.className = 'ocorrencia-title';
+
+      tituloElement.textContent =
+        item.titulo || 'Ocorrência';
+
+
+      const corpoElement = document.createElement('div');
+
+      corpoElement.className = 'ocorrencia-body';
+
+      corpoElement.textContent =
+        item.relatorio || '';
+
+
+      const footer = document.createElement('div');
+
+      footer.className = 'ocorrencia-footer';
+
+
+      const dataElement = document.createElement('span');
+
+      const data = item.criado_em
+        ? new Date(item.criado_em)
+        : new Date();
+
+      dataElement.textContent =
+        data.toLocaleString('pt-BR');
+
+
+      const btnExcluir =
+        document.createElement('button');
+
+      btnExcluir.type = 'button';
+
+      btnExcluir.className = 'btn-danger';
+
+      btnExcluir.innerHTML =
+        '<i class="fa-solid fa-trash"></i> Excluir';
+
+      btnExcluir.addEventListener(
+        'click',
+        function() {
+          excluirOcorrencia(item.id);
+        }
+      );
+
+
+      footer.appendChild(dataElement);
+      footer.appendChild(btnExcluir);
+
+      card.appendChild(tituloElement);
+      card.appendChild(corpoElement);
+      card.appendChild(footer);
+
+
+      if (noTopo) {
+
+        lista.prepend(card);
+
+      } else {
+
+        lista.appendChild(card);
+
+      }
+
+    }
+
+
+    // =========================================================
+    // CARREGAR OCORRÊNCIAS
+    // =========================================================
+
+    async function carregarOcorrencias() {
+
+      lista.innerHTML =
+        '<p class="mensagem">Carregando ocorrências...</p>';
+
+      try {
+
+        const response =
+          await fetch('/api/ocorrencias');
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.error ||
+            'Erro ao carregar ocorrências.'
+          );
+
+        }
+
+
+        lista.innerHTML = '';
+
+
+        if (
+          !Array.isArray(result) ||
+          result.length === 0
+        ) {
+
+          lista.innerHTML =
+            '<p class="mensagem">' +
+            'Nenhuma ocorrência registrada.' +
+            '</p>';
+
+          return;
+
+        }
+
+
+        result.forEach(function(item) {
+
+          renderizarCard(item);
+
+        });
+
+      } catch (error) {
+
+        console.error(error);
+
+        lista.innerHTML =
+          '<p class="mensagem erro">' +
+          'Erro ao carregar o histórico de ocorrências.' +
+          '</p>';
+
+      }
+
+    }
+
+
+    // =========================================================
+    // SALVAR OCORRÊNCIA
+    // =========================================================
+
+    async function salvarOcorrencia(event) {
+
+      event.preventDefault();
+
+
+      const tituloValue =
+        titulo.value.trim();
+
+      const relatoValue =
+        relato.value.trim();
+
+
+      if (!tituloValue) {
+
+        alert('Informe o título da ocorrência.');
+
+        titulo.focus();
+
         return;
+
       }
 
-      container.innerHTML = '';
-      dados.forEach(item => adicionarCardNaTela(item));
-    } catch (err) {
-      console.error(err);
-      container.innerHTML = '<p style="color: #ef4444; text-align: center;">Erro ao carregar histórico.</p>';
-    }
-  }
 
-  // Adiciona o card diretamente no DOM sem recarregar a página (Sem F5)
-  function adicionarCardNaTela(item, noTopo = false) {
-    const container = document.getElementById('listaOcorrencias') || document.getElementById('lista-ocorrencias');
-    if (!container) return;
+      if (!relatoValue) {
 
-    const dataFormatada = item.criado_em 
-      ? new Date(item.criado_em).toLocaleString('pt-BR')
-      : new Date().toLocaleString('pt-BR');
+        alert('Informe o relato da ocorrência.');
 
-    const card = document.createElement('div');
-    card.className = 'ocorrencia-item item-card';
-    card.id = `ocorrencia-${item.id}`;
-    card.style.cssText = 'background: #fff; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #4f46e5; box-shadow: 0 2px 4px rgba(0,0,0,0.05);';
+        relato.focus();
 
-    card.innerHTML = `
-      <div style="font-weight: bold; margin-bottom: 0.5rem;">${item.titulo || 'Ocorrência'}</div>
-      <div style="white-space: pre-line; color: #374151; margin-bottom: 0.75rem;">${item.relatorio}</div>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e7eb; padding-top: 0.5rem; font-size: 0.85rem; color: #6b7280;">
-        <span>${dataFormatada}</span>
-        <button style="background: #ef4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;" onclick="excluirOcorrencia('${item.id}')">
-          🗑 Excluir
-        </button>
-      </div>
-    `;
+        return;
 
-    if (noTopo && container.firstChild) {
-      container.insertBefore(card, container.firstChild);
-    } else {
-      container.appendChild(card);
-    }
-  }
+      }
 
-  // Registra a ocorrência no backend e atualiza a tela instantaneamente
-  async function salvarOcorrencia(e) {
-    if (e) e.preventDefault();
 
-    const campoTexto = document.getElementById('relato') || document.getElementById('textoOcorrencia');
-    const campoTitulo = document.getElementById('titulo');
-    const btnSalvar = document.getElementById('btnSalvar') || document.getElementById('btnEnviar');
+      if (isRecording) {
 
-    const relato = campoTexto ? campoTexto.value.trim() : '';
-    const titulo = campoTitulo ? campoTitulo.value.trim() : 'Ocorrência';
+        recognition.stop();
 
-    if (!relato) {
-      alert('Por favor, informe ou grave o relato antes de salvar.');
-      return;
-    }
+        pararGravacao();
 
-    if (isRecording) toggleGravacao();
+      }
 
-    if (btnSalvar) {
+
       btnSalvar.disabled = true;
-      btnSalvar.innerText = 'Processando com IA...';
-    }
 
-    try {
-      const response = await fetch('/api/ocorrencias', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ textoOriginal: relato, titulo: titulo })
-      });
+      btnSalvar.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i>' +
+        '<span>Processando com IA...</span>';
 
-      const result = await response.json();
 
-      if (response.ok && result.success) {
-        if (campoTexto) campoTexto.value = '';
-        if (campoTitulo) campoTitulo.value = '';
-        
-        // Insere na tela na hora sem F5
-        adicionarCardNaTela(result.data, true);
-      } else {
-        alert(result.error || 'Erro ao registrar ocorrência.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao comunicar com o servidor.');
-    } finally {
-      if (btnSalvar) {
+      try {
+
+        const response =
+          await fetch('/api/ocorrencias', {
+
+            method: 'POST',
+
+            headers: {
+              'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify({
+
+              titulo: tituloValue,
+
+              textoOriginal: relatoValue
+
+            })
+
+          });
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok || !result.success) {
+
+          throw new Error(
+            result.error ||
+            'Erro ao registrar ocorrência.'
+          );
+
+        }
+
+
+        // Limpa formulário
+        form.reset();
+
+
+        // Adiciona imediatamente no histórico
+        renderizarCard(
+          result.data,
+          true
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          error.message ||
+          'Erro ao comunicar com o servidor.'
+        );
+
+      } finally {
+
         btnSalvar.disabled = false;
-        btnSalvar.innerText = '💾 Registrar Ocorrência';
+
+        btnSalvar.innerHTML =
+          '<i class="fa-solid fa-paper-plane"></i>' +
+          '<span>Registrar Ocorrência</span>';
+
       }
+
     }
-  }
 
-  // Exclui do Supabase e remove da tela instantaneamente sem F5
-  async function excluirOcorrencia(id) {
-    if (!confirm('Deseja realmente excluir esta ocorrência?')) return;
 
-    try {
-      const response = await fetch(`/api/ocorrencias/${id}`, {
-        method: 'DELETE'
-      });
+    form.addEventListener(
+      'submit',
+      salvarOcorrencia
+    );
 
-      if (response.ok) {
-        const el = document.getElementById(`ocorrencia-${id}`);
-        if (el) el.remove();
-      } else {
-        alert('Erro ao excluir do banco de dados.');
+
+    // =========================================================
+    // EXCLUIR
+    // =========================================================
+
+    async function excluirOcorrencia(id) {
+
+      const confirmar =
+        confirm(
+          'Deseja realmente excluir esta ocorrência?'
+        );
+
+
+      if (!confirmar) return;
+
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/ocorrencias/${encodeURIComponent(id)}`,
+            {
+              method: 'DELETE'
+            }
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok || !result.success) {
+
+          throw new Error(
+            result.error ||
+            'Erro ao excluir ocorrência.'
+          );
+
+        }
+
+
+        const card =
+          document.getElementById(
+            `card-${id}`
+          );
+
+
+        if (card) {
+
+          card.remove();
+
+        }
+
+
+        if (!lista.querySelector('.ocorrencia-item')) {
+
+          lista.innerHTML =
+            '<p class="mensagem">' +
+            'Nenhuma ocorrência registrada.' +
+            '</p>';
+
+        }
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          error.message ||
+          'Erro de conexão ao excluir ocorrência.'
+        );
+
       }
-    } catch (err) {
-      console.error(err);
-      alert('Erro de conexão ao excluir.');
-    }
-  }
 
-  document.addEventListener('DOMContentLoaded', carregarOcorrencias);
-</script>
+    }
+
+
+    // =========================================================
+    // INICIALIZAÇÃO
+    // =========================================================
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      function() {
+
+        iniciarReconhecimento();
+
+        carregarOcorrencias();
+
+      }
+    );
+
+  </script>
+
+</body>
+</html>

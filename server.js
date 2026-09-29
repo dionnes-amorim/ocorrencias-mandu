@@ -1,3 +1,12 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
+
 app.post('/organizar-ia', async (req,res)=>{
   try {
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions",{
@@ -16,8 +25,16 @@ app.post('/organizar-ia', async (req,res)=>{
         ]
       })
     });
-    const data = await r.json();
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e){ return res.json({ texto: "Erro OpenRouter retorno: " + text.slice(0,200) }); }
     if(data.error) return res.json({ texto: "Erro OpenRouter: " + data.error.message });
+    if(!data.choices ||!data.choices[0]) return res.json({ texto: "Erro OpenRouter: sem resposta" });
     res.json({ texto: data.choices[0].message.content });
   } catch(e){ res.json({ texto: "Erro: " + e.message }); }
 });
+
+app.get('/', (req,res)=> res.sendFile(path.join(__dirname,'index.html')));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, ()=> console.log('rodando na porta '+PORT));

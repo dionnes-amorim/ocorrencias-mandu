@@ -26,7 +26,6 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 const TABLE = 'ocorrencias_mandu';
 
-
 // =========================================================
 // CLIENTE SUPABASE
 // =========================================================
@@ -35,7 +34,6 @@ const supabase =
   SUPABASE_URL && SUPABASE_KEY
     ? createClient(SUPABASE_URL, SUPABASE_KEY)
     : null;
-
 
 // =========================================================
 // LOG INICIAL
@@ -50,13 +48,11 @@ console.log('Tabela:', TABLE);
 console.log('Porta:', PORT);
 console.log('==========================================');
 
-
 // =========================================================
 // STATUS
 // =========================================================
 
 app.get('/api/status', (req, res) => {
-
   res.json({
     online: true,
     supabase: Boolean(supabase),
@@ -64,16 +60,13 @@ app.get('/api/status', (req, res) => {
     tabela: TABLE,
     timestamp: new Date().toISOString()
   });
-
 });
-
 
 // =========================================================
 // ORGANIZAR TURNO COM OPENROUTER
 // =========================================================
 
 app.post('/organizar-ia', async (req, res) => {
-
   try {
 
     // -------------------------------------------------------
@@ -81,14 +74,10 @@ app.post('/organizar-ia', async (req, res) => {
     // -------------------------------------------------------
 
     if (!OPENROUTER_API_KEY) {
-
       return res.status(500).json({
-        texto:
-          'OPENROUTER_API_KEY não configurada no Render.'
+        texto: 'OPENROUTER_API_KEY não configurada no Render.'
       });
-
     }
-
 
     // -------------------------------------------------------
     // RECEBER OCORRÊNCIAS
@@ -98,16 +87,11 @@ app.post('/organizar-ia', async (req, res) => {
       ? req.body.ocorrencias
       : [];
 
-
     if (ocorrencias.length === 0) {
-
       return res.status(400).json({
-        texto:
-          'Nenhuma ocorrência foi enviada para organização.'
+        texto: 'Nenhuma ocorrência foi enviada para organização.'
       });
-
     }
-
 
     // -------------------------------------------------------
     // PREPARAR DADOS
@@ -152,7 +136,6 @@ app.post('/organizar-ia', async (req, res) => {
       })
       .filter(Boolean)
       .join('\n\n');
-
 
     // -------------------------------------------------------
     // PROMPT
@@ -212,7 +195,6 @@ OCORRÊNCIAS:
 ${material}
 `;
 
-
     // -------------------------------------------------------
     // CHAMADA OPENROUTER
     // -------------------------------------------------------
@@ -220,7 +202,6 @@ ${material}
     console.log(
       `Enviando ${ocorrencias.length} ocorrência(s) para OpenRouter...`
     );
-
 
     const resposta = await fetch(
       'https://openrouter.ai/api/v1/chat/completions',
@@ -230,18 +211,14 @@ ${material}
         headers: {
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-
           'HTTP-Referer':
             'https://ocorrencias-mandu.onrender.com',
-
           'X-Title':
             'CTT Diário de Turno - Mandu'
         },
 
         body: JSON.stringify({
-
-          model:
-            model: 'openrouter/free',
+          model: 'openrouter/free',
 
           messages: [
             {
@@ -251,13 +228,10 @@ ${material}
           ],
 
           temperature: 0.2,
-
           max_tokens: 2000
-
         })
       }
     );
-
 
     // -------------------------------------------------------
     // LER RESPOSTA
@@ -265,33 +239,37 @@ ${material}
 
     const data = await resposta.json();
 
-
     console.log(
       'Status OpenRouter:',
       resposta.status
     );
 
+    console.log(
+      'Resposta OpenRouter:',
+      JSON.stringify(data, null, 2)
+    );
+
+    // -------------------------------------------------------
+    // TRATAR ERRO OPENROUTER
+    // -------------------------------------------------------
 
     if (!resposta.ok) {
 
       console.error(
         'Resposta de erro OpenRouter:',
-        JSON.stringify(data)
+        JSON.stringify(data, null, 2)
       );
 
+      const mensagemErro =
+        data?.error?.message ||
+        data?.error?.code ||
+        JSON.stringify(data?.error) ||
+        'erro desconhecido';
 
       return res.status(500).json({
-        texto:
-          'Erro OpenRouter: ' +
-          (
-            data?.error?.message ||
-            JSON.stringify(data?.error) ||
-            'erro desconhecido'
-          )
+        texto: 'Erro OpenRouter: ' + mensagemErro
       });
-
     }
-
 
     // -------------------------------------------------------
     // EXTRAIR TEXTO
@@ -302,33 +280,35 @@ ${material}
       data?.choices?.[0]?.text?.trim() ||
       '';
 
+    // -------------------------------------------------------
+    // VALIDAR TEXTO
+    // -------------------------------------------------------
 
     if (!texto) {
 
       console.error(
         'OpenRouter respondeu sem texto:',
-        JSON.stringify(data)
+        JSON.stringify(data, null, 2)
       );
-
 
       return res.status(500).json({
         texto:
           'A IA respondeu, mas não retornou texto. Verifique os logs do Render.'
       });
-
     }
 
+    // -------------------------------------------------------
+    // SUCESSO
+    // -------------------------------------------------------
 
     console.log(
       'Relatório gerado com sucesso.'
     );
 
-
     return res.json({
       success: true,
       texto
     });
-
 
   } catch (error) {
 
@@ -336,7 +316,6 @@ ${material}
       'ERRO /organizar-ia:',
       error
     );
-
 
     return res.status(500).json({
       texto:
@@ -346,11 +325,8 @@ ${material}
           'erro desconhecido'
         )
     });
-
   }
-
 });
-
 
 // =========================================================
 // GET - OCORRÊNCIAS
@@ -361,14 +337,11 @@ app.get('/api/ocorrencias', async (req, res) => {
   try {
 
     if (!supabase) {
-
       return res.status(500).json({
         error:
           'Supabase não configurado no servidor.'
       });
-
     }
-
 
     const { data, error } =
       await supabase
@@ -382,7 +355,6 @@ app.get('/api/ocorrencias', async (req, res) => {
         )
         .limit(500);
 
-
     if (error) {
 
       console.error(
@@ -390,17 +362,13 @@ app.get('/api/ocorrencias', async (req, res) => {
         error
       );
 
-
       return res.status(500).json({
         error:
           'Erro ao carregar ocorrências.'
       });
-
     }
 
-
     return res.json(data || []);
-
 
   } catch (error) {
 
@@ -409,16 +377,12 @@ app.get('/api/ocorrencias', async (req, res) => {
       error
     );
 
-
     return res.status(500).json({
       error:
         'Erro interno do servidor.'
     });
-
   }
-
 });
-
 
 // =========================================================
 // POST - CRIAR OCORRÊNCIA
@@ -429,14 +393,11 @@ app.post('/api/ocorrencias', async (req, res) => {
   try {
 
     if (!supabase) {
-
       return res.status(500).json({
         error:
           'Supabase não configurado no servidor.'
       });
-
     }
-
 
     const {
       hora,
@@ -446,19 +407,15 @@ app.post('/api/ocorrencias', async (req, res) => {
       unidade
     } = req.body;
 
-
     if (
       typeof texto !== 'string' ||
       !texto.trim()
     ) {
-
       return res.status(400).json({
         error:
           'O campo texto é obrigatório.'
       });
-
     }
-
 
     const registro = {
 
@@ -488,9 +445,7 @@ app.post('/api/ocorrencias', async (req, res) => {
         unidade.trim()
           ? unidade.trim()
           : 'MANDU'
-
     };
-
 
     const { data, error } =
       await supabase
@@ -499,7 +454,6 @@ app.post('/api/ocorrencias', async (req, res) => {
         .select('*')
         .single();
 
-
     if (error) {
 
       console.error(
@@ -507,20 +461,16 @@ app.post('/api/ocorrencias', async (req, res) => {
         error
       );
 
-
       return res.status(500).json({
         error:
           'Erro ao salvar ocorrência.'
       });
-
     }
-
 
     return res.status(201).json({
       success: true,
       data
     });
-
 
   } catch (error) {
 
@@ -529,16 +479,12 @@ app.post('/api/ocorrencias', async (req, res) => {
       error
     );
 
-
     return res.status(500).json({
       error:
         'Erro interno do servidor.'
     });
-
   }
-
 });
-
 
 // =========================================================
 // DELETE - EXCLUIR OCORRÊNCIA
@@ -549,34 +495,26 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
   try {
 
     if (!supabase) {
-
       return res.status(500).json({
         error:
           'Supabase não configurado no servidor.'
       });
-
     }
-
 
     const { id } = req.params;
 
-
     if (!id) {
-
       return res.status(400).json({
         error:
           'ID não informado.'
       });
-
     }
-
 
     const { error } =
       await supabase
         .from(TABLE)
         .delete()
         .eq('id', id);
-
 
     if (error) {
 
@@ -585,20 +523,16 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
         error
       );
 
-
       return res.status(500).json({
         error:
           'Erro ao excluir ocorrência.'
       });
-
     }
-
 
     return res.json({
       success: true,
       id
     });
-
 
   } catch (error) {
 
@@ -607,16 +541,12 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
       error
     );
 
-
     return res.status(500).json({
       error:
         'Erro interno do servidor.'
     });
-
   }
-
 });
-
 
 // =========================================================
 // ERRO GLOBAL
@@ -629,14 +559,11 @@ app.use((err, req, res, next) => {
     err
   );
 
-
   return res.status(500).json({
     error:
       'Erro interno do servidor.'
   });
-
 });
-
 
 // =========================================================
 // SERVIDOR

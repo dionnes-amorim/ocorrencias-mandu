@@ -33,12 +33,6 @@ const TABLE = 'ocorrencias_mandu';
 const OPENROUTER_URL =
   'https://openrouter.ai/api/v1/chat/completions';
 
-/*
- * Roteador gratuito da OpenRouter.
- *
- * Não deixar chave de API no frontend.
- */
-
 const AI_MODEL = 'openrouter/free';
 
 /* =========================================================
@@ -48,6 +42,7 @@ const AI_MODEL = 'openrouter/free';
 let supa = null;
 
 if (SUPABASE_URL && SUPABASE_KEY) {
+
   supa = createClient(
     SUPABASE_URL,
     SUPABASE_KEY,
@@ -59,6 +54,7 @@ if (SUPABASE_URL && SUPABASE_KEY) {
       }
     }
   );
+
 }
 
 /* =========================================================
@@ -69,13 +65,6 @@ app.disable('x-powered-by');
 
 app.use(
   express.json({
-    /*
-     * Não limitamos artificialmente a quantidade
-     * de ocorrências.
-     *
-     * O limite existe somente para evitar requisições
-     * absurdamente grandes que possam derrubar o servidor.
-     */
     limit: '5mb'
   })
 );
@@ -97,11 +86,19 @@ app.use(
   })
 );
 
-app.get('/', (req, res) => {
-  res.sendFile(
-    path.join(__dirname, 'index.html')
-  );
-});
+app.get(
+  '/',
+  (req, res) => {
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        'index.html'
+      )
+    );
+
+  }
+);
 
 /* =========================================================
    FUNÇÕES AUXILIARES
@@ -111,6 +108,7 @@ function textoSeguro(
   valor,
   limite = 10000
 ) {
+
   if (
     valor === undefined ||
     valor === null
@@ -122,16 +120,23 @@ function textoSeguro(
     .replace(/\u0000/g, '')
     .trim()
     .slice(0, limite);
+
 }
 
 function frenteSegura(valor) {
+
   const frente =
-    textoSeguro(valor, 50);
+    textoSeguro(
+      valor,
+      50
+    );
 
   return frente || 'GERAL';
+
 }
 
 function turnoAtual() {
+
   const hora =
     new Date().getHours();
 
@@ -150,9 +155,11 @@ function turnoAtual() {
   }
 
   return 'TURNO C';
+
 }
 
 function horaAtual() {
+
   return new Intl.DateTimeFormat(
     'pt-BR',
     {
@@ -160,24 +167,134 @@ function horaAtual() {
       minute: '2-digit',
       hour12: false
     }
-  ).format(new Date());
+  ).format(
+    new Date()
+  );
+
 }
 
 function normalizarOcorrencia(item) {
+
   return {
-    id: item.id,
-    hora: item.hora || '',
+
+    id:
+      item.id,
+
+    hora:
+      item.hora || '',
+
     frente:
       item.frente || 'GERAL',
+
     texto:
       item.texto || '',
+
     turno:
       item.turno || '',
+
     unidade:
       item.unidade || 'MANDU',
+
     created_at:
       item.created_at || null
+
   };
+
+}
+
+/* =========================================================
+   BUSCAR OCORRÊNCIAS DO BANCO
+========================================================= */
+
+/*
+ * Essa função é utilizada pela IA.
+ *
+ * Assim o frontend não precisa enviar todas as ocorrências
+ * novamente em cada chamada.
+ *
+ * A fonte oficial passa a ser o Supabase.
+ */
+
+async function buscarOcorrenciasBanco() {
+
+  if (!supa) {
+
+    throw new Error(
+      'Supabase não configurado no Render.'
+    );
+
+  }
+
+  const {
+    data,
+    error
+  } = await supa
+    .from(TABLE)
+    .select(
+      'id,hora,frente,texto,turno,unidade,created_at'
+    )
+    .order(
+      'created_at',
+      {
+        ascending: true
+      }
+    );
+
+  if (error) {
+
+    console.error(
+      'Erro ao buscar ocorrências para IA:',
+      error
+    );
+
+    throw new Error(
+      'Erro ao carregar as ocorrências do Supabase.'
+    );
+
+  }
+
+  return (
+    data || []
+  )
+    .map(normalizarOcorrencia);
+
+}
+
+/* =========================================================
+   OBTER OCORRÊNCIAS PARA IA
+========================================================= */
+
+/*
+ * Se usarBanco = true:
+ *     busca diretamente do Supabase.
+ *
+ * Caso contrário:
+ *     usa as ocorrências enviadas pelo frontend.
+ *
+ * Isso mantém compatibilidade com chamadas antigas.
+ */
+
+async function obterOcorrenciasIA(
+  req
+) {
+
+  const usarBanco =
+    req.body?.usarBanco === true;
+
+  if (usarBanco) {
+
+    return buscarOcorrenciasBanco();
+
+  }
+
+  return (
+    Array.isArray(
+      req.body?.ocorrencias
+    )
+      ? req.body.ocorrencias
+      : []
+  );
+
 }
 
 /* =========================================================
@@ -195,11 +312,12 @@ app.get(
 
       try {
 
-        const { error } =
-          await supa
-            .from(TABLE)
-            .select('id')
-            .limit(1);
+        const {
+          error
+        } = await supa
+          .from(TABLE)
+          .select('id')
+          .limit(1);
 
         supabaseStatus =
           error
@@ -210,28 +328,43 @@ app.get(
 
         supabaseStatus =
           'ERRO';
+
       }
 
     } else {
 
       supabaseStatus =
         'NÃO CONFIGURADO';
+
     }
 
     res.json({
-      status: 'online',
-      servidor: 'OK',
+
+      status:
+        'online',
+
+      servidor:
+        'OK',
+
       supabase:
         supabaseStatus,
+
       openrouter:
         OPENROUTER_API_KEY
           ? 'OK'
           : 'NÃO CONFIGURADO',
-      modelo: AI_MODEL,
-      unidade: 'MANDU',
+
+      modelo:
+        AI_MODEL,
+
+      unidade:
+        'MANDU',
+
       timestamp:
         new Date().toISOString()
+
     });
+
   }
 );
 
@@ -249,9 +382,11 @@ function exigirSupabase(res) {
     });
 
     return false;
+
   }
 
   return true;
+
 }
 
 function exigirIA(res) {
@@ -264,9 +399,11 @@ function exigirIA(res) {
     });
 
     return false;
+
   }
 
   return true;
+
 }
 
 /* =========================================================
@@ -277,7 +414,9 @@ app.get(
   '/api/ocorrencias',
   async (req, res) => {
 
-    if (!exigirSupabase(res)) {
+    if (
+      !exigirSupabase(res)
+    ) {
       return;
     }
 
@@ -309,11 +448,16 @@ app.get(
           error:
             'Erro ao carregar ocorrências.'
         });
+
       }
 
       res.json(
-        (data || [])
-          .map(normalizarOcorrencia)
+        (
+          data || []
+        )
+          .map(
+            normalizarOcorrencia
+          )
       );
 
     } catch (erro) {
@@ -327,7 +471,9 @@ app.get(
         error:
           'Erro interno ao carregar ocorrências.'
       });
+
     }
+
   }
 );
 
@@ -339,7 +485,9 @@ app.post(
   '/api/ocorrencias',
   async (req, res) => {
 
-    if (!exigirSupabase(res)) {
+    if (
+      !exigirSupabase(res)
+    ) {
       return;
     }
 
@@ -357,13 +505,15 @@ app.post(
           error:
             'Digite uma ocorrência.'
         });
+
       }
 
       const hora =
         textoSeguro(
           req.body?.hora,
           20
-        ) || horaAtual();
+        ) ||
+        horaAtual();
 
       const frente =
         frenteSegura(
@@ -374,20 +524,24 @@ app.post(
         textoSeguro(
           req.body?.turno,
           30
-        ) || turnoAtual();
+        ) ||
+        turnoAtual();
 
       const unidade =
         textoSeguro(
           req.body?.unidade,
           30
-        ) || 'MANDU';
+        ) ||
+        'MANDU';
 
       const novaOcorrencia = {
+
         hora,
         frente,
         texto,
         turno,
         unidade
+
       };
 
       const {
@@ -414,10 +568,13 @@ app.post(
           error:
             'Erro ao salvar ocorrência.'
         });
+
       }
 
       res.status(201).json(
-        normalizarOcorrencia(data)
+        normalizarOcorrencia(
+          data
+        )
       );
 
     } catch (erro) {
@@ -431,7 +588,9 @@ app.post(
         error:
           'Erro interno ao salvar ocorrência.'
       });
+
     }
+
   }
 );
 
@@ -443,7 +602,9 @@ app.put(
   '/api/ocorrencias/:id',
   async (req, res) => {
 
-    if (!exigirSupabase(res)) {
+    if (
+      !exigirSupabase(res)
+    ) {
       return;
     }
 
@@ -461,16 +622,10 @@ app.put(
           error:
             'ID inválido.'
         });
+
       }
 
       const alteracao = {};
-
-      /*
-       * Só altera o que foi enviado.
-       *
-       * Assim editar o texto não apaga
-       * a hora ou a frente.
-       */
 
       if (
         req.body?.texto !== undefined
@@ -488,10 +643,12 @@ app.put(
             error:
               'O texto da ocorrência não pode ficar vazio.'
           });
+
         }
 
         alteracao.texto =
           texto;
+
       }
 
       if (
@@ -503,6 +660,7 @@ app.put(
             req.body.hora,
             20
           );
+
       }
 
       if (
@@ -513,6 +671,7 @@ app.put(
           frenteSegura(
             req.body.frente
           );
+
       }
 
       if (
@@ -524,6 +683,7 @@ app.put(
           error:
             'Nenhum campo para atualizar.'
         });
+
       }
 
       const {
@@ -531,8 +691,13 @@ app.put(
         error
       } = await supa
         .from(TABLE)
-        .update(alteracao)
-        .eq('id', id)
+        .update(
+          alteracao
+        )
+        .eq(
+          'id',
+          id
+        )
         .select(
           'id,hora,frente,texto,turno,unidade,created_at'
         )
@@ -549,10 +714,13 @@ app.put(
           error:
             'Erro ao atualizar ocorrência.'
         });
+
       }
 
       res.json(
-        normalizarOcorrencia(data)
+        normalizarOcorrencia(
+          data
+        )
       );
 
     } catch (erro) {
@@ -566,7 +734,9 @@ app.put(
         error:
           'Erro interno ao atualizar ocorrência.'
       });
+
     }
+
   }
 );
 
@@ -578,7 +748,9 @@ app.delete(
   '/api/ocorrencias/:id',
   async (req, res) => {
 
-    if (!exigirSupabase(res)) {
+    if (
+      !exigirSupabase(res)
+    ) {
       return;
     }
 
@@ -596,6 +768,7 @@ app.delete(
           error:
             'ID inválido.'
         });
+
       }
 
       const {
@@ -603,7 +776,10 @@ app.delete(
       } = await supa
         .from(TABLE)
         .delete()
-        .eq('id', id);
+        .eq(
+          'id',
+          id
+        );
 
       if (error) {
 
@@ -616,6 +792,7 @@ app.delete(
           error:
             'Erro ao excluir ocorrência.'
         });
+
       }
 
       res.json({
@@ -633,7 +810,9 @@ app.delete(
         error:
           'Erro interno ao excluir ocorrência.'
       });
+
     }
+
   }
 );
 
@@ -645,7 +824,9 @@ app.delete(
   '/api/ocorrencias',
   async (req, res) => {
 
-    if (!exigirSupabase(res)) {
+    if (
+      !exigirSupabase(res)
+    ) {
       return;
     }
 
@@ -672,6 +853,7 @@ app.delete(
           error:
             'Erro ao limpar ocorrências.'
         });
+
       }
 
       res.json({
@@ -689,7 +871,9 @@ app.delete(
         error:
           'Erro interno ao limpar ocorrências.'
       });
+
     }
+
   }
 );
 
@@ -697,63 +881,51 @@ app.delete(
    PREPARAR OCORRÊNCIAS PARA IA
 ========================================================= */
 
-/*
- * ATENÇÃO:
- *
- * Aqui NÃO existe mais:
- *
- * .slice(0, 120)
- *
- * Portanto, todas as ocorrências enviadas
- * pelo frontend serão consideradas.
- */
-
 function prepararOcorrenciasIA(
   ocorrencias
 ) {
 
   if (
-    !Array.isArray(ocorrencias)
+    !Array.isArray(
+      ocorrencias
+    )
   ) {
     return [];
   }
 
   return ocorrencias
-    .map(item => ({
+    .map(
+      item => ({
 
-      hora:
-        textoSeguro(
-          item?.hora,
-          20
-        ),
+        hora:
+          textoSeguro(
+            item?.hora,
+            20
+          ),
 
-      frente:
-        frenteSegura(
-          item?.frente
-        ),
+        frente:
+          frenteSegura(
+            item?.frente
+          ),
 
-      texto:
-        textoSeguro(
-          item?.texto,
-          10000
-        )
+        texto:
+          textoSeguro(
+            item?.texto,
+            10000
+          )
 
-    }))
+      })
+    )
     .filter(
-      item => item.texto
+      item =>
+        item.texto
     );
+
 }
 
 /* =========================================================
    AGRUPAMENTO POR FRENTE
 ========================================================= */
-
-/*
- * Fazemos o agrupamento no servidor.
- *
- * Isso ajuda a IA e também garante que a estrutura
- * das informações chegue organizada.
- */
 
 function agruparPorFrente(
   ocorrencias
@@ -762,23 +934,30 @@ function agruparPorFrente(
   const grupos = {};
 
   for (
-    const ocorrencia of ocorrencias
+    const ocorrencia
+    of ocorrencias
   ) {
 
     const frente =
       ocorrencia.frente ||
       'GERAL';
 
-    if (!grupos[frente]) {
+    if (
+      !grupos[frente]
+    ) {
+
       grupos[frente] = [];
+
     }
 
     grupos[frente].push(
       ocorrencia
     );
+
   }
 
   return grupos;
+
 }
 
 function gerarContextoPorFrente(
@@ -801,7 +980,10 @@ function gerarContextoPorFrente(
         const lista =
           itens
             .map(
-              (item, index) =>
+              (
+                item,
+                index
+              ) =>
                 `${index + 1}. [${item.hora || '-'}] ${item.texto}`
             )
             .join('\n');
@@ -815,6 +997,42 @@ ${lista}
       }
     )
     .join('\n\n');
+
+}
+
+/* =========================================================
+   ESTATÍSTICAS DO TURNO
+========================================================= */
+
+function gerarEstatisticas(
+  ocorrencias
+) {
+
+  const grupos =
+    agruparPorFrente(
+      ocorrencias
+    );
+
+  const frentes =
+    Object.keys(
+      grupos
+    );
+
+  return {
+
+    total:
+      ocorrencias.length,
+
+    frentes:
+      frentes.length,
+
+    listaFrentes:
+      frentes,
+
+    grupos
+
+  };
+
 }
 
 /* =========================================================
@@ -824,9 +1042,8 @@ ${lista}
 const SYSTEM_IA = `
 Você é o copiloto operacional do CTT Diário de Turno da unidade MANDU.
 
-Sua função é transformar as ocorrências reais do turno em uma
-mensagem objetiva, organizada e pronta para ser enviada no
-grupo de WhatsApp da gerência.
+Sua função é transformar as ocorrências reais do turno em comunicação
+operacional objetiva, técnica e pronta para WhatsApp.
 
 REGRA PRINCIPAL:
 
@@ -845,9 +1062,12 @@ NÃO invente:
 - fatos;
 - ações que não estejam sustentadas pelas ocorrências.
 
-Quando fizer uma sugestão sua, identifique como SUGESTÃO.
+Quando fizer uma sugestão sua, identifique claramente como:
 
-A mensagem deve ter linguagem:
+*SUGESTÃO:*
+
+A linguagem deve ser:
+
 - profissional;
 - técnica;
 - direta;
@@ -857,7 +1077,7 @@ A mensagem deve ter linguagem:
 
 NÃO faça introdução longa.
 
-NÃO escreva explicações sobre como você analisou.
+NÃO explique como você analisou.
 
 NÃO diga que você é uma IA.
 
@@ -865,73 +1085,35 @@ NÃO use linguagem acadêmica.
 
 NÃO repita a mesma informação várias vezes.
 
-IMPORTANTE:
-
 As ocorrências devem ser organizadas POR FRENTE.
 
-Cada frente deve possuir seus próprios tópicos.
-
 Quando uma informação não estiver vinculada a uma frente específica,
-utilize a categoria GERAL.
+utilize GERAL.
 
-Estrutura obrigatória:
+Priorize:
 
-*📋 DIÁRIO DE TURNO — MANDU*
-
-*FRENTE 501*
-• Ocorrência relevante...
-• Ocorrência relevante...
-
-*FRENTE 502*
-• Ocorrência relevante...
-• Ocorrência relevante...
-
-E assim por diante somente para as frentes que possuem ocorrências.
-
-Depois das frentes, faça:
-
-*⚠️ PONTOS DE ATENÇÃO*
-• ...
-
-*🚨 RISCOS / IMPACTOS*
-• ...
-
-*🎯 AÇÕES / ACOMPANHAMENTOS*
-• ...
-
-Se não houver informação suficiente para alguma dessas categorias,
-não invente.
-
-Pode escrever:
-
-• Sem ponto adicional identificado nas ocorrências registradas.
-
-A mensagem deve estar pronta para COPIAR E COLAR no WhatsApp.
-
-Use *asteriscos* para negrito no WhatsApp.
-
-Exemplo:
-
-*FRENTE 503*
-• 02 trações em manutenção, conforme registro do turno.
-• Ponto de atenção para continuidade operacional.
-
-Não transforme sugestão em fato.
-
-Priorize fatos registrados e impactos claramente relacionados
-às ocorrências.
+1. continuidade operacional;
+2. paradas;
+3. manutenção;
+4. equipamentos;
+5. rendimento;
+6. transporte;
+7. gargalos;
+8. riscos;
+9. pendências;
+10. ações necessárias.
 
 Se houver ocorrências repetidas sobre o mesmo assunto,
-consolide-as em um único tópico, mantendo a informação importante.
+consolide-as sem perder informações importantes.
 
-Se houver horários diferentes que sejam importantes,
+Se houver horários diferentes relevantes,
 preserve-os.
 
-Se uma frente tiver muitas ocorrências,
-priorize as mais relevantes e consolide as semelhantes.
+Nunca transforme uma hipótese em fato.
 
-O objetivo é gerar uma comunicação gerencial curta,
-clara e acionável.
+Nunca crie números ausentes.
+
+Use *asteriscos* para negrito no WhatsApp.
 `;
 
 /* =========================================================
@@ -943,11 +1125,14 @@ async function chamarIA(
   opcoes = {}
 ) {
 
-  if (!OPENROUTER_API_KEY) {
+  if (
+    !OPENROUTER_API_KEY
+  ) {
 
     throw new Error(
       'OPENROUTER_API_KEY não configurada no Render.'
     );
+
   }
 
   const {
@@ -955,35 +1140,30 @@ async function chamarIA(
     temperature = 0.1
   } = opcoes;
 
-  /*
-   * NÃO existe limite artificial de quantidade
-   * de ocorrências aqui.
-   *
-   * O limite abaixo é apenas para evitar mensagens
-   * absurdamente gigantes no histórico da conversa.
-   */
-
   const mensagensProcessadas =
     Array.isArray(messages)
       ? messages
-          .map(msg => ({
+          .map(
+            msg => ({
 
-            role:
-              msg?.role === 'system'
-                ? 'system'
-                : msg?.role === 'assistant'
-                  ? 'assistant'
-                  : 'user',
+              role:
+                msg?.role === 'system'
+                  ? 'system'
+                  : msg?.role === 'assistant'
+                    ? 'assistant'
+                    : 'user',
 
-            content:
-              textoSeguro(
-                msg?.content,
-                100000
-              )
+              content:
+                textoSeguro(
+                  msg?.content,
+                  100000
+                )
 
-          }))
+            })
+          )
           .filter(
-            msg => msg.content
+            msg =>
+              msg.content
           )
       : [];
 
@@ -1006,25 +1186,14 @@ async function chamarIA(
         2500
       ),
 
-    /*
-     * Raciocínio mínimo.
-     *
-     * A prioridade aqui é resposta operacional rápida.
-     */
-
     reasoning: {
-      effort: 'minimal'
+      effort:
+        'minimal'
     }
 
   };
 
   let ultimoErro = null;
-
-  /*
-   * Máximo de duas tentativas.
-   *
-   * Evita ficar martelando o pool gratuito.
-   */
 
   for (
     let tentativa = 1;
@@ -1039,7 +1208,8 @@ async function chamarIA(
           OPENROUTER_URL,
           {
 
-            method: 'POST',
+            method:
+              'POST',
 
             headers: {
 
@@ -1058,7 +1228,9 @@ async function chamarIA(
             },
 
             body:
-              JSON.stringify(body)
+              JSON.stringify(
+                body
+              )
 
           }
         );
@@ -1080,7 +1252,9 @@ async function chamarIA(
          SUCESSO
       ----------------------------------------- */
 
-      if (resposta.ok) {
+      if (
+        resposta.ok
+      ) {
 
         const mensagem =
           dados
@@ -1091,10 +1265,6 @@ async function chamarIA(
         let conteudo =
           mensagem?.content;
 
-        /*
-         * Alguns modelos podem retornar partes.
-         */
-
         if (
           Array.isArray(
             conteudo
@@ -1103,21 +1273,25 @@ async function chamarIA(
 
           conteudo =
             conteudo
-              .map(parte => {
+              .map(
+                parte => {
 
-                if (
-                  typeof parte ===
-                  'string'
-                ) {
-                  return parte;
+                  if (
+                    typeof parte ===
+                    'string'
+                  ) {
+
+                    return parte;
+
+                  }
+
+                  return (
+                    parte?.text ||
+                    ''
+                  );
+
                 }
-
-                return (
-                  parte?.text ||
-                  ''
-                );
-
-              })
+              )
               .join('');
 
         }
@@ -1136,6 +1310,7 @@ async function chamarIA(
               .choices
               .at(0)
               .text;
+
         }
 
         if (
@@ -1147,6 +1322,7 @@ async function chamarIA(
 
           conteudo =
             dados.output_text;
+
         }
 
         conteudo =
@@ -1155,13 +1331,13 @@ async function chamarIA(
             50000
           );
 
-        if (conteudo) {
-          return conteudo;
-        }
+        if (
+          conteudo
+        ) {
 
-        /*
-         * Não exibimos reasoning puro.
-         */
+          return conteudo;
+
+        }
 
         if (
           mensagem?.reasoning ||
@@ -1171,11 +1347,13 @@ async function chamarIA(
           throw new Error(
             'A IA utilizou raciocínio, mas não retornou resposta final.'
           );
+
         }
 
         throw new Error(
           'A IA não retornou conteúdo.'
         );
+
       }
 
       /* -----------------------------------------
@@ -1209,11 +1387,6 @@ async function chamarIA(
               'temporarily rate-limited upstream'
             )
         );
-
-      /*
-       * Retry apenas para rate limit
-       * do provedor gratuito.
-       */
 
       if (
         rateLimitUpstream &&
@@ -1255,6 +1428,7 @@ async function chamarIA(
         );
 
         continue;
+
       }
 
       ultimoErro =
@@ -1287,10 +1461,6 @@ async function chamarIA(
       ultimoErro =
         erro;
 
-      /*
-       * Pequeno retry para erro de rede.
-       */
-
       if (
         tentativa === 1 &&
         (
@@ -1320,10 +1490,13 @@ async function chamarIA(
         );
 
         continue;
+
       }
 
       break;
+
     }
+
   }
 
   throw (
@@ -1332,6 +1505,7 @@ async function chamarIA(
       'Não foi possível obter resposta da IA.'
     )
   );
+
 }
 
 /* =========================================================
@@ -1342,15 +1516,22 @@ app.post(
   '/organizar-ia',
   async (req, res) => {
 
-    if (!exigirIA(res)) {
+    if (
+      !exigirIA(res)
+    ) {
       return;
     }
 
     try {
 
+      const ocorrenciasBrutas =
+        await obterOcorrenciasIA(
+          req
+        );
+
       const ocorrencias =
         prepararOcorrenciasIA(
-          req.body?.ocorrencias
+          ocorrenciasBrutas
         );
 
       if (
@@ -1361,30 +1542,18 @@ app.post(
           error:
             'Não há ocorrências suficientes para organizar o turno.'
         });
-      }
 
-      /*
-       * Mantemos a ordem em que chegaram
-       * para preservar a sequência operacional.
-       */
+      }
 
       const contexto =
         gerarContextoPorFrente(
           ocorrencias
         );
 
-      const total =
-        ocorrencias.length;
-
-      const frentes =
-        [
-          ...new Set(
-            ocorrencias.map(
-              item =>
-                item.frente
-            )
-          )
-        ];
+      const estatisticas =
+        gerarEstatisticas(
+          ocorrencias
+        );
 
       const messages = [
 
@@ -1393,7 +1562,40 @@ app.post(
             'system',
 
           content:
-            SYSTEM_IA
+            `
+${SYSTEM_IA}
+
+Você está preparando o RESUMO GERENCIAL do turno.
+
+O resultado deve conter exatamente:
+
+*📋 DIÁRIO DE TURNO — MANDU*
+
+Depois:
+
+*FRENTE XXX*
+• fatos relevantes
+
+Depois:
+
+*⚠️ PONTOS DE ATENÇÃO*
+• ...
+
+Depois:
+
+*🚨 RISCOS / IMPACTOS*
+• ...
+
+Depois:
+
+*🎯 AÇÕES / ACOMPANHAMENTOS*
+• ...
+
+Somente inclua frentes que realmente possuem ocorrências.
+
+Se não houver informação suficiente para alguma seção,
+informe de forma curta que não houve registro adicional.
+`
         },
 
         {
@@ -1401,39 +1603,24 @@ app.post(
           role:
             'user',
 
-          content: `
-Organize as ocorrências completas do turno.
-
+          content:
+            `
 UNIDADE: MANDU
 
-TOTAL DE OCORRÊNCIAS: ${total}
+TOTAL DE OCORRÊNCIAS:
+${estatisticas.total}
 
-FRENTES IDENTIFICADAS:
-${frentes.join(', ')}
+TOTAL DE FRENTES:
+${estatisticas.frentes}
 
-OCORRÊNCIAS AGRUPADAS POR FRENTE:
+FRENTES:
+${estatisticas.listaFrentes.join(', ')}
+
+OCORRÊNCIAS:
 
 ${contexto}
 
-Gere agora a mensagem FINAL para o grupo da gerência.
-
-A mensagem deve:
-
-- separar claramente cada frente;
-- colocar as ocorrências daquela frente em tópicos;
-- consolidar ocorrências repetidas;
-- destacar pontos de atenção;
-- destacar riscos e impactos;
-- destacar ações e acompanhamentos;
-- usar *negrito* no padrão WhatsApp;
-- ser objetiva;
-- estar pronta para copiar e colar.
-
-NÃO coloque comentários fora da mensagem.
-
-NÃO explique o que você fez.
-
-ENTREGUE SOMENTE A MENSAGEM FINAL.
+Gere somente a mensagem final pronta para WhatsApp.
 `
         }
 
@@ -1443,8 +1630,11 @@ ENTREGUE SOMENTE A MENSAGEM FINAL.
         await chamarIA(
           messages,
           {
-            maxTokens: 1800,
-            temperature: 0.1
+            maxTokens:
+              1800,
+
+            temperature:
+              0.1
           }
         );
 
@@ -1466,9 +1656,7 @@ ENTREGUE SOMENTE A MENSAGEM FINAL.
       const status =
         mensagem
           .toLowerCase()
-          .includes(
-            'rate'
-          )
+          .includes('rate')
           ? 429
           : 500;
 
@@ -1476,7 +1664,355 @@ ENTREGUE SOMENTE A MENSAGEM FINAL.
         error:
           mensagem
       });
+
     }
+
+  }
+);
+
+/* =========================================================
+   FECHAR TURNO
+========================================================= */
+
+app.post(
+  '/fechar-turno',
+  async (req, res) => {
+
+    if (
+      !exigirIA(res)
+    ) {
+      return;
+    }
+
+    try {
+
+      const ocorrenciasBrutas =
+        await obterOcorrenciasIA(
+          req
+        );
+
+      const ocorrencias =
+        prepararOcorrenciasIA(
+          ocorrenciasBrutas
+        );
+
+      if (
+        !ocorrencias.length
+      ) {
+
+        return res.status(400).json({
+          error:
+            'Não há ocorrências registradas para fechar o turno.'
+        });
+
+      }
+
+      const estatisticas =
+        gerarEstatisticas(
+          ocorrencias
+        );
+
+      const contexto =
+        gerarContextoPorFrente(
+          ocorrencias
+        );
+
+      /* -----------------------------------------
+         RESUMO GERENCIAL
+      ----------------------------------------- */
+
+      const gerencialMessages = [
+
+        {
+
+          role:
+            'system',
+
+          content:
+            `
+${SYSTEM_IA}
+
+Gere um FECHAMENTO GERENCIAL completo do turno.
+
+Estrutura:
+
+*📋 FECHAMENTO DE TURNO — MANDU*
+
+*OCORRÊNCIAS POR FRENTE*
+Organize os principais fatos por frente.
+
+*⚠️ PRINCIPAIS PROBLEMAS*
+Consolide os problemas registrados.
+
+*🔁 PROBLEMAS RECORRENTES*
+Identifique somente recorrências realmente presentes
+nas ocorrências.
+
+*🚨 RISCOS / IMPACTOS*
+Mostre os riscos ou impactos sustentados pelos registros.
+
+*📌 PENDÊNCIAS*
+Liste assuntos que ficaram sem conclusão ou acompanhamento.
+
+*🎯 PLANO DE AÇÃO*
+Liste ações ou acompanhamentos sustentados pelos fatos.
+
+Quando algo for recomendação da IA, escreva:
+
+*SUGESTÃO:*
+
+Não invente dados.
+`
+        },
+
+        {
+
+          role:
+            'user',
+
+          content:
+            `
+UNIDADE: MANDU
+
+TOTAL:
+${estatisticas.total}
+
+FRENTES:
+${estatisticas.listaFrentes.join(', ')}
+
+OCORRÊNCIAS COMPLETAS:
+
+${contexto}
+
+Faça o fechamento gerencial.
+`
+        }
+
+      ];
+
+      const gerencial =
+        await chamarIA(
+          gerencialMessages,
+          {
+            maxTokens:
+              2200,
+
+            temperature:
+              0.1
+          }
+        );
+
+      /* -----------------------------------------
+         RESUMO EXECUTIVO
+      ----------------------------------------- */
+
+      const executivoMessages = [
+
+        {
+
+          role:
+            'system',
+
+          content:
+            `
+Você é o copiloto operacional do CTT MANDU.
+
+Crie um RESUMO EXECUTIVO extremamente objetivo
+para um grupo de gestão.
+
+Use WhatsApp.
+
+Estrutura:
+
+*⚡ RESUMO EXECUTIVO — MANDU*
+
+*STATUS DO TURNO*
+• ...
+
+*PRINCIPAIS PONTOS*
+• ...
+
+*RISCOS*
+• ...
+
+*PRÓXIMOS ACOMPANHAMENTOS*
+• ...
+
+Seja curto.
+
+Não invente números.
+
+Não invente fatos.
+
+Não faça análise acadêmica.
+
+Quando recomendar algo que não esteja explicitamente
+registrado, identifique como *SUGESTÃO:*.
+`
+        },
+
+        {
+
+          role:
+            'user',
+
+          content:
+            `
+OCORRÊNCIAS DO TURNO:
+
+${contexto}
+
+Gere somente o resumo executivo.
+`
+        }
+
+      ];
+
+      const executivo =
+        await chamarIA(
+          executivoMessages,
+          {
+            maxTokens:
+              1000,
+
+            temperature:
+              0.1
+          }
+        );
+
+      /* -----------------------------------------
+         FECHAMENTO OPERACIONAL
+      ----------------------------------------- */
+
+      const fechamentoMessages = [
+
+        {
+
+          role:
+            'system',
+
+          content:
+            `
+Você é o copiloto de fechamento operacional
+do CTT Diário de Turno MANDU.
+
+Faça uma consolidação detalhada do turno.
+
+Objetivo:
+deixar registrado o que aconteceu,
+o que permaneceu pendente,
+o que precisa ser acompanhado
+e quais informações devem ser confirmadas.
+
+Organize:
+
+*🧠 FECHAMENTO OPERACIONAL*
+
+*1. OCORRÊNCIAS RELEVANTES*
+
+*2. PROBLEMAS RECORRENTES*
+
+*3. GARGALOS / RESTRIÇÕES*
+
+*4. RISCOS PARA CONTINUIDADE*
+
+*5. PENDÊNCIAS*
+
+*6. ACOMPANHAMENTOS*
+
+*7. DADOS QUE PRECISAM SER CONFIRMADOS*
+
+*8. SUGESTÕES*
+
+Não invente dados.
+
+Não transforme sugestão em fato.
+
+Se não houver informação para um item,
+escreva:
+
+• Sem registro suficiente.
+`
+        },
+
+        {
+
+          role:
+            'user',
+
+          content:
+            `
+UNIDADE: MANDU
+
+TOTAL DE OCORRÊNCIAS:
+${estatisticas.total}
+
+FRENTES:
+${estatisticas.listaFrentes.join(', ')}
+
+OCORRÊNCIAS:
+
+${contexto}
+
+Faça o fechamento operacional.
+`
+        }
+
+      ];
+
+      const fechamento =
+        await chamarIA(
+          fechamentoMessages,
+          {
+            maxTokens:
+              2200,
+
+            temperature:
+              0.1
+          }
+        );
+
+      res.json({
+
+        gerencial,
+
+        executivo,
+
+        fechamento,
+
+        total:
+          estatisticas.total,
+
+        frentes:
+          estatisticas.frentes
+
+      });
+
+    } catch (erro) {
+
+      console.error(
+        'Erro /fechar-turno:',
+        erro
+      );
+
+      const mensagem =
+        erro?.message ||
+        'Erro ao fechar o turno com IA.';
+
+      const status =
+        mensagem
+          .toLowerCase()
+          .includes('rate')
+          ? 429
+          : 500;
+
+      res.status(status).json({
+        error:
+          mensagem
+      });
+
+    }
+
   }
 );
 
@@ -1488,15 +2024,22 @@ app.post(
   '/chat-ia',
   async (req, res) => {
 
-    if (!exigirIA(res)) {
+    if (
+      !exigirIA(res)
+    ) {
       return;
     }
 
     try {
 
+      const ocorrenciasBrutas =
+        await obterOcorrenciasIA(
+          req
+        );
+
       const ocorrencias =
         prepararOcorrenciasIA(
-          req.body?.ocorrencias
+          ocorrenciasBrutas
         );
 
       const pergunta =
@@ -1511,21 +2054,23 @@ app.post(
         )
           ? req.body.historico
               .slice(-10)
-              .map(msg => ({
+              .map(
+                msg => ({
 
-                role:
-                  msg?.role ===
-                  'assistant'
-                    ? 'assistant'
-                    : 'user',
+                  role:
+                    msg?.role ===
+                    'assistant'
+                      ? 'assistant'
+                      : 'user',
 
-                content:
-                  textoSeguro(
-                    msg?.content,
-                    10000
-                  )
+                  content:
+                    textoSeguro(
+                      msg?.content,
+                      10000
+                    )
 
-              }))
+                })
+              )
               .filter(
                 msg =>
                   msg.content
@@ -1538,6 +2083,7 @@ app.post(
           error:
             'Digite uma pergunta.'
         });
+
       }
 
       if (
@@ -1548,10 +2094,16 @@ app.post(
           error:
             'Ainda não existem ocorrências suficientes para uma análise.'
         });
+
       }
 
       const contexto =
         gerarContextoPorFrente(
+          ocorrencias
+        );
+
+      const estatisticas =
+        gerarEstatisticas(
           ocorrencias
         );
 
@@ -1562,7 +2114,8 @@ app.post(
           role:
             'system',
 
-          content: `
+          content:
+            `
 ${SYSTEM_IA}
 
 Você está respondendo perguntas sobre o turno inteiro.
@@ -1570,6 +2123,7 @@ Você está respondendo perguntas sobre o turno inteiro.
 Analise todas as frentes.
 
 Pode analisar:
+
 - problemas repetidos;
 - riscos;
 - manutenção;
@@ -1586,16 +2140,22 @@ Pode analisar:
 Não determine uma decisão como fato.
 
 Quando recomendar alguma ação,
-identifique como SUGESTÃO.
+identifique como:
 
-Se uma decisão depender de dados que
-não foram fornecidos, diga quais dados
-precisam ser confirmados.
+*SUGESTÃO:*
 
-Nunca invente capacidade,
-produtividade, distância,
-quantidade de equipamentos
-ou disponibilidade.
+Se uma decisão depender de dados que não foram fornecidos,
+diga quais dados precisam ser confirmados.
+
+Nunca invente:
+- capacidade;
+- produtividade;
+- distância;
+- quantidade de equipamentos;
+- disponibilidade;
+- produção;
+- tempos;
+- metas.
 `
         },
 
@@ -1606,8 +2166,20 @@ ou disponibilidade.
           role:
             'user',
 
-          content: `
-OCORRÊNCIAS COMPLETAS DO TURNO:
+          content:
+            `
+CONTEXTO ATUAL DO TURNO
+
+UNIDADE:
+MANDU
+
+TOTAL DE OCORRÊNCIAS:
+${estatisticas.total}
+
+FRENTES:
+${estatisticas.listaFrentes.join(', ')}
+
+OCORRÊNCIAS:
 
 ${contexto}
 
@@ -1617,15 +2189,19 @@ ${pergunta}
 
 Responda diretamente.
 
-Se possível, entregue:
+Quando fizer sentido, organize em:
 
-1. LEITURA DO CENÁRIO
-2. IMPACTO OPERACIONAL
-3. SUGESTÃO DE AÇÃO
-4. O QUE CONFIRMAR
+*🔎 LEITURA DO CENÁRIO*
 
-Se não houver dados suficientes,
-diga claramente.
+*⚠️ IMPACTO OPERACIONAL*
+
+*🎯 SUGESTÃO DE AÇÃO*
+
+*📌 O QUE CONFIRMAR*
+
+Não force essas quatro seções quando não forem necessárias.
+
+Seja objetivo e operacional.
 `
         }
 
@@ -1635,8 +2211,11 @@ diga claramente.
         await chamarIA(
           messages,
           {
-            maxTokens: 1200,
-            temperature: 0.15
+            maxTokens:
+              1400,
+
+            temperature:
+              0.15
           }
         );
 
@@ -1651,12 +2230,24 @@ diga claramente.
         erro
       );
 
-      res.status(500).json({
+      const mensagem =
+        erro?.message ||
+        'Erro ao consultar a IA.';
+
+      const status =
+        mensagem
+          .toLowerCase()
+          .includes('rate')
+          ? 429
+          : 500;
+
+      res.status(status).json({
         error:
-          erro?.message ||
-          'Erro ao consultar a IA.'
+          mensagem
       });
+
     }
+
   }
 );
 
@@ -1672,6 +2263,7 @@ app.use(
       error:
         'Rota da API não encontrada.'
     });
+
   }
 );
 
@@ -1695,13 +2287,18 @@ app.use(
     if (
       res.headersSent
     ) {
-      return next(erro);
+
+      return next(
+        erro
+      );
+
     }
 
     res.status(500).json({
       error:
         'Erro interno do servidor.'
     });
+
   }
 );
 
@@ -1742,7 +2339,16 @@ app.listen(
     );
 
     console.log(
-      'Organização: por frente + mensagem WhatsApp'
+      'IA: organização por frente'
     );
+
+    console.log(
+      'IA: fechamento de turno'
+    );
+
+    console.log(
+      'IA: chat operacional'
+    );
+
   }
 );

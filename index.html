@@ -1,734 +1,846 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CTT - Diário de Turno</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
-
-body{
-  background:#080c1a;
-  color:#fff;
-  min-height:100vh;
-  padding-bottom:110px
-}
-
-body::before{
-  content:'';
-  position:fixed;
-  top:0;
-  left:0;
-  right:0;
-  height:320px;
-  background:radial-gradient(600px 300px at 50% 0%,rgba(0,230,118,.18),transparent);
-  pointer-events:none;
-  z-index:0
-}
-
-.header{
-  position:sticky;
-  top:0;
-  z-index:10;
-  padding:20px 18px 16px;
-  background:rgba(8,12,26,.85);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,.07)
-}
-
-.header h1{
-  font-size:20px;
-  font-weight:800;
-  letter-spacing:-.3px;
-  display:flex;
-  align-items:center;
-  gap:10px
-}
-
-.header h1 i{
-  width:36px;
-  height:36px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#00e676,#00b894);
-  border-radius:12px;
-  color:#06281a;
-  font-size:18px
-}
-
-.sub{
-  font-size:12px;
-  opacity:.55;
-  margin-top:8px;
-  display:flex;
-  justify-content:space-between
-}
-
-.badge-turno{
-  background:#00e676;
-  color:#06281a;
-  padding:4px 12px;
-  border-radius:100px;
-  font-size:11px;
-  font-weight:800
-}
-
-.hero-mic{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:28px 20px 10px;
-  position:relative;
-  z-index:1
-}
-
-.mic-wrap{position:relative}
-
-#btnMic{
-  width:132px;
-  height:132px;
-  border-radius:44px;
-  border:none;
-  background:linear-gradient(135deg,#00e676 0%,#00c853 100%);
-  color:#06281a;
-  font-size:48px;
-  cursor:pointer;
-  box-shadow:0 20px 60px rgba(0,230,118,.35);
-  transition:.25s;
-  position:relative;
-  z-index:2;
-  user-select:none;
-  -webkit-user-select:none
-}
-
-#btnMic.gravando{
-  background:linear-gradient(135deg,#ff5252,#ff1744);
-  color:#fff;
-  box-shadow:0 20px 60px rgba(255,82,82,.4);
-  animation:pulse 1.4s infinite;
-  border-radius:50%
-}
-
-@keyframes pulse{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.05)}
-}
-
-.ring{
-  position:absolute;
-  inset:-6px;
-  border-radius:50px;
-  border:2px solid rgba(0,230,118,.4);
-  opacity:0;
-  pointer-events:none
-}
-
-.gravando ~.ring{animation:ringPulse 1.8s infinite}
-.ring.r2{animation-delay:.6s}
-.ring.r3{animation-delay:1.2s}
-
-@keyframes ringPulse{
-  0%{
-    transform:scale(.95);
-    opacity:.8;
-    border-radius:50px
-  }
-  100%{
-    transform:scale(1.35);
-    opacity:0;
-    border-radius:60px
-  }
-}
-
-#statusMic{
-  margin-top:18px;
-  font-size:14px;
-  font-weight:600;
-  text-align:center;
-  opacity:.9;
-  min-height:20px
-}
-
-#silenceBar{
-  width:200px;
-  height:4px;
-  background:rgba(255,255,255,.1);
-  border-radius:100px;
-  margin-top:10px;
-  overflow:hidden;
-  display:none
-}
-
-#silenceFill{
-  height:100%;
-  background:#00e676;
-  border-radius:100px;
-  transition:width 1s linear;
-  width:100%
-}
-
-.tip{
-  margin:16px;
-  background:rgba(0,176,255,.07);
-  border:1px solid rgba(0,176,255,.15);
-  padding:13px 15px;
-  border-radius:16px;
-  font-size:12.5px;
-  line-height:1.6;
-  position:relative;
-  z-index:1
-}
-
-.tip b{color:#4dd0ff}
-
-#transcricaoTemp{
-  margin:0 16px;
-  padding:14px 16px;
-  background:rgba(0,230,118,.06);
-  border:1px dashed rgba(0,230,118,.35);
-  border-radius:16px;
-  font-size:14px;
-  display:none;
-  position:relative;
-  z-index:1
-}
-
-#manualAdd{
-  display:flex;
-  gap:8px;
-  padding:14px 16px 0;
-  position:relative;
-  z-index:1
-}
-
-#manualAdd input{
-  flex:1;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);
-  color:#fff;
-  padding:14px 16px;
-  border-radius:14px;
-  font-size:14px;
-  outline:none
-}
-
-#manualAdd input:focus{border-color:#00e676}
-
-#manualAdd button{
-  background:#fff;
-  color:#080c1a;
-  border:none;
-  width:52px;
-  border-radius:14px;
-  font-size:18px;
-  cursor:pointer
-}
-
-.filtros{
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  padding:14px 16px 4px;
-  scrollbar-width:none;
-  position:relative;
-  z-index:1
-}
-
-.filtros::-webkit-scrollbar{display:none}
-
-.filtros button{
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.08);
-  color:#fff;
-  padding:10px 18px;
-  border-radius:100px;
-  font-size:13px;
-  font-weight:600;
-  white-space:nowrap;
-  cursor:pointer
-}
-
-.filtros button.ativo{
-  background:#fff;
-  color:#080c1a;
-  font-weight:800
-}
-
-.section-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 18px 10px;
-  position:relative;
-  z-index:1
-}
-
-.section-head h3{
-  font-size:13px;
-  font-weight:700;
-  opacity:.5;
-  text-transform:uppercase;
-  letter-spacing:1px
-}
-
-.btn-limpar{
-  background:rgba(255,82,82,.14);
-  border:1px solid rgba(255,82,82,.3);
-  color:#ff5252;
-  padding:8px 14px;
-  border-radius:100px;
-  font-size:12px;
-  font-weight:800;
-  cursor:pointer
-}
-
-#lista{
-  padding:0 16px;
-  position:relative;
-  z-index:1
-}
-
-.card{
-  background:rgba(255,255,255,.04);
-  backdrop-filter:blur(10px);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:18px;
-  padding:15px;
-  margin-bottom:10px;
-  display:flex;
-  gap:13px;
-  animation:in .35s ease
-}
-
-@keyframes in{
-  from{
-    opacity:0;
-    transform:translateY(10px)
-  }
-  to{
-    opacity:1;
-    transform:translateY(0)
-  }
-}
-
-.meta{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-  align-items:flex-start;
-  min-width:68px
-}
-
-.hora{
-  font-size:11px;
-  font-weight:800;
-  background:rgba(0,176,255,.15);
-  color:#4dd0ff;
-  padding:5px 10px;
-  border-radius:100px
-}
-
-.frente{
-  font-size:10px;
-  font-weight:800;
-  background:#00e676;
-  color:#06281a;
-  padding:4px 10px;
-  border-radius:100px
-}
-
-.card p{
-  font-size:14px;
-  line-height:1.5;
-  flex:1
-}
-
-.acts{
-  display:flex;
-  flex-direction:column;
-  gap:4px
-}
-
-/* BOTÕES DAS OCORRÊNCIAS */
-.acts button{
-  width:36px;
-  height:36px;
-  border:none;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  font-size:15px;
-  transition:.2s
-}
-
-.acts .e{
-  background:rgba(77,208,255,.16);
-  color:#4dd0ff;
-  border:1px solid rgba(77,208,255,.35)
-}
-
-.acts .e:hover{
-  background:#4dd0ff;
-  color:#080c1a
-}
-
-.acts .d{
-  background:rgba(255,82,82,.16);
-  color:#ff5252;
-  border:1px solid rgba(255,82,82,.35)
-}
-
-.acts .d:hover{
-  background:#ff5252;
-  color:#fff
-}
-
-.empty{
-  text-align:center;
-  padding:40px 20px;
-  opacity:.3;
-  font-size:13px
-}
-
-.bottom{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  padding:14px 16px calc(14px + env(safe-area-inset-bottom));
-  background:rgba(8,12,26,.92);
-  backdrop-filter:blur(20px);
-  border-top:1px solid rgba(255,255,255,.07);
-  z-index:20
-}
-
-.btn-organizar{
-  width:100%;
-  padding:18px;
-  border:none;
-  border-radius:18px;
-  background:linear-gradient(135deg,#7c4dff,#00b0ff);
-  color:#fff;
-  font-weight:800;
-  font-size:16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  box-shadow:0 12px 35px rgba(124,77,255,.4);
-  cursor:pointer
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.9);
-  backdrop-filter:blur(10px);
-  display:none;
-  align-items:flex-end;
-  justify-content:center;
-  z-index:100
-}
-
-.modal.show{display:flex}
-
-.sheet{
-  background:#121a32;
-  border-radius:28px 28px 0 0;
-  width:100%;
-  max-width:520px;
-  max-height:88vh;
-  overflow:auto;
-  padding:24px 20px calc(24px + env(safe-area-inset-bottom));
-  animation:up .35s ease
-}
-
-@keyframes up{
-  from{
-    transform:translateY(60px);
-    opacity:0
-  }
-  to{
-    transform:translateY(0);
-    opacity:1
-  }
-}
-
-.sheet pre{
-  white-space:pre-wrap;
-  font-size:13.5px;
-  line-height:1.7;
-  background:#080c1a;
-  padding:18px;
-  border-radius:16px;
-  margin:16px 0;
-  border:1px solid rgba(255,255,255,.06)
-}
-
-.edit-area textarea{
-  width:100%;
-  background:#080c1a;
-  border:1px solid rgba(255,255,255,.12);
-  color:#fff;
-  padding:14px;
-  border-radius:14px;
-  font-size:15px;
-  min-height:100px;
-  margin:12px 0;
-  outline:none
-}
-
-.row2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px
-}
-
-.btn{
-  padding:15px;
-  border-radius:14px;
-  border:none;
-  font-weight:800;
-  font-size:14px;
-  cursor:pointer
-}
-
-.btn-s{
-  background:#00e676;
-  color:#06281a
-}
-
-.btn-c{
-  background:rgba(255,255,255,.1);
-  color:#fff
-}
-
-.btn-copy{
-  width:100%;
-  background:#00e676;
-  color:#06281a;
-  padding:17px;
-  border-radius:16px;
-  border:none;
-  font-weight:800;
-  font-size:15px;
-  margin-top:6px;
-  cursor:pointer
-}
-
-.stats{
-  display:flex;
-  gap:10px;
-  padding:0 16px;
-  position:relative;
-  z-index:1
-}
-
-.stat{
-  flex:1;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;
-  padding:12px;
-  text-align:center
-}
-
-.stat b{
-  font-size:20px;
-  font-weight:800
-}
-
-.stat small{
-  font-size:10px;
-  opacity:.45;
-  text-transform:uppercase;
-  letter-spacing:.5px
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Diário de Turno - MANDU</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #080b0f;
+      color: #f2f5f7;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    /* HEADER */
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #172018;
+      border: 1px solid #314235;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      margin-top: 3px;
+      font-size: 11px;
+      color: #89939b;
+    }
+
+    .header-right {
+      text-align: right;
+    }
+
+    .date {
+      color: #9ca6ad;
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+
+    .turno {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #17251b;
+      border: 1px solid #31533a;
+      color: #79d58d;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    /* STATS */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      background: #10151a;
+      border: 1px solid #20282e;
+      border-radius: 13px;
+      padding: 12px 9px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .stat-label {
+      color: #7f8991;
+      font-size: 10px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    /* INPUT */
+
+    .input-box {
+      background: #10151a;
+      border: 1px solid #222b32;
+      border-radius: 15px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    #ocorrenciaInput {
+      width: 100%;
+      min-height: 46px;
+      resize: none;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    #ocorrenciaInput::placeholder {
+      color: #667078;
+    }
+
+    .btn-mic {
+      width: 48px;
+      min-width: 48px;
+      border: 0;
+      border-radius: 12px;
+      background: #172019;
+      color: #82dd96;
+      font-size: 20px;
+    }
+
+    .btn-mic.gravando {
+      background: #552020;
+      color: #ff8181;
+      animation: pulse 1s infinite;
+    }
+
+    .btn-add {
+      width: 48px;
+      min-width: 48px;
+      border: 0;
+      border-radius: 12px;
+      background: #70c982;
+      color: #07100a;
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: .45;
+      }
+    }
+
+    /* FILTERS */
+
+    .filters {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding-bottom: 3px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+
+    .filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter {
+      border: 1px solid #252e34;
+      background: #11161b;
+      color: #9ba5ac;
+      padding: 8px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .filter.active {
+      background: #193020;
+      color: #7cda91;
+      border-color: #356442;
+    }
+
+    /* SECTION */
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 2px 9px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #d8dee2;
+    }
+
+    .status {
+      font-size: 10px;
+      color: #667179;
+    }
+
+    /* CARDS */
+
+    .lista {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #677179;
+      padding: 35px 15px;
+      border: 1px dashed #242c31;
+      border-radius: 14px;
+      font-size: 12px;
+    }
+
+    .ocorrencia {
+      background: #10151a;
+      border: 1px solid #20282e;
+      border-radius: 14px;
+      padding: 11px;
+    }
+
+    .ocorrencia-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .hora {
+      font-size: 11px;
+      color: #758089;
+    }
+
+    .frente {
+      display: inline-flex;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: #18261c;
+      color: #83d991;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .texto {
+      font-size: 14px;
+      line-height: 1.45;
+      color: #e8ecef;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .acts {
+      display: flex;
+      gap: 5px;
+    }
+
+    .acts button {
+      border: 0;
+      width: 30px;
+      height: 28px;
+      border-radius: 8px;
+      background: #171d22;
+      color: #879198;
+    }
+
+    .acts .e:hover {
+      color: #80d78e;
+    }
+
+    .acts .d:hover {
+      color: #ff7777;
+    }
+
+    /* BOTTOM */
+
+    .bottom {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 14px 13px;
+      background: linear-gradient(
+        to top,
+        #080b0f 75%,
+        rgba(8,11,15,0)
+      );
+      z-index: 50;
+    }
+
+    .bottom-inner {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .btn-organizar {
+      width: 100%;
+      height: 50px;
+      border: 0;
+      border-radius: 14px;
+      background: #73ce84;
+      color: #071009;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .3px;
+    }
+
+    /* MODALS */
+
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .76);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      padding: 0;
+    }
+
+    .modal-bg.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 760px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #0e1317;
+      border: 1px solid #273037;
+      border-radius: 20px 20px 0 0;
+      padding: 16px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 9px;
+      background: #171d22;
+      color: #aab3b9;
+      font-size: 18px;
+    }
+
+    .ai-loading {
+      display: none;
+      padding: 20px;
+      text-align: center;
+      color: #8e999f;
+      font-size: 12px;
+    }
+
+    .ai-loading.show {
+      display: block;
+    }
+
+    .resumo {
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 13px;
+      color: #dfe5e8;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-height: 44px;
+      border-radius: 11px;
+      border: 1px solid #2b343a;
+      background: #151b20;
+      color: #d9dfe2;
+      font-weight: 800;
+      font-size: 11px;
+    }
+
+    .modal-actions .primary {
+      background: #73ce84;
+      border-color: #73ce84;
+      color: #071009;
+    }
+
+    /* CHAT */
+
+    .chat-context {
+      font-size: 11px;
+      color: #758087;
+      margin-bottom: 10px;
+    }
+
+    .chat-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 42vh;
+      overflow-y: auto;
+      padding: 4px 0 10px;
+    }
+
+    .chat-message {
+      max-width: 90%;
+      padding: 10px 11px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .chat-message.user {
+      align-self: flex-end;
+      background: #193020;
+      color: #dff5e3;
+    }
+
+    .chat-message.ai {
+      align-self: flex-start;
+      background: #171d22;
+      color: #e0e5e8;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-bottom: 9px;
+      scrollbar-width: none;
+    }
+
+    .quick-actions::-webkit-scrollbar {
+      display: none;
+    }
+
+    .quick {
+      white-space: nowrap;
+      border: 1px solid #293238;
+      background: #141a1f;
+      color: #aeb7bd;
+      border-radius: 999px;
+      padding: 7px 9px;
+      font-size: 10px;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 7px;
+    }
+
+    #chatInput {
+      flex: 1;
+      min-width: 0;
+      min-height: 45px;
+      border-radius: 11px;
+      border: 1px solid #293238;
+      background: #10151a;
+      color: #fff;
+      outline: none;
+      padding: 10px;
+      resize: none;
+    }
+
+    .chat-send {
+      width: 45px;
+      border: 0;
+      border-radius: 11px;
+      background: #73ce84;
+      color: #071009;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    /* EDIT */
+
+    .edit-grid {
+      display: grid;
+      gap: 9px;
+    }
+
+    .field-label {
+      color: #7f8990;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .field {
+      width: 100%;
+      background: #10151a;
+      border: 1px solid #293238;
+      border-radius: 10px;
+      color: #fff;
+      padding: 11px;
+      outline: none;
+    }
+
+    textarea.field {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    @media (min-width: 700px) {
+      .modal-bg {
+        align-items: center;
+        padding: 20px;
+      }
+
+      .modal {
+        border-radius: 18px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="header">
-  <h1><i class="fa-solid fa-tractor"></i> Diário de Turno - MANDU</h1>
-  <div class="sub">
-    <span id="dataHoje"></span>
-    <span class="badge-turno" id="turnoAuto"></span>
-  </div>
-</div>
+<div class="app">
 
-<div class="stats" style="margin-top:14px">
-  <div class="stat">
-    <b id="stTotal">0</b><br>
-    <small>Ocorrências</small>
-  </div>
+  <header class="header">
+    <div class="brand">
+      <div class="brand-icon">🚜</div>
 
-  <div class="stat">
-    <b id="stFrentes">0</b><br>
-    <small>Frentes</small>
-  </div>
+      <div>
+        <div class="brand-title">Diário de Turno - MANDU</div>
+        <div class="brand-subtitle">Registro operacional</div>
+      </div>
+    </div>
 
-  <div class="stat">
-    <b id="stUltima">--:--</b><br>
-    <small>Última</small>
-  </div>
-</div>
+    <div class="header-right">
+      <div class="date" id="dataAtual">--/--/----</div>
+      <div class="turno" id="turnoAtual">TURNO --</div>
+    </div>
+  </header>
 
-<div class="hero-mic">
+  <section class="stats">
+    <div class="stat">
+      <div class="stat-value" id="statOcorrencias">0</div>
+      <div class="stat-label">Ocorrências</div>
+    </div>
 
-  <div class="mic-wrap">
-    <button id="btnMic">
-      <i class="fa-solid fa-microphone"></i>
-    </button>
+    <div class="stat">
+      <div class="stat-value" id="statFrentes">0</div>
+      <div class="stat-label">Frentes</div>
+    </div>
 
-    <div class="ring"></div>
-    <div class="ring r2"></div>
-    <div class="ring r3"></div>
-  </div>
+    <div class="stat">
+      <div class="stat-value" id="statHora">--:--</div>
+      <div class="stat-label">Último registro</div>
+    </div>
+  </section>
 
-  <div id="statusMic">
-    Mantenha pressionado para falar
-  </div>
+  <section class="input-box">
 
-  <div id="silenceBar">
-    <div id="silenceFill"></div>
-  </div>
+    <div class="input-row">
 
-</div>
-
-<div class="tip">
-  <i class="fa-solid fa-lightbulb" style="color:#ffeb3b"></i>
-  Segure o botão verde para falar e solte quando terminar:
-  <b>"vinte e três e quinze... frente 502... acolhedora quebrou"</b>.
-</div>
-
-<div id="transcricaoTemp"></div>
-
-<div id="manualAdd">
-  <input id="textoManual" placeholder="Digite: 23:15 502 acolhedora quebrou">
-  <button onclick="addManual()">
-    <i class="fa-solid fa-plus"></i>
-  </button>
-</div>
-
-<div class="filtros">
-
-  <button class="ativo" onclick="filtrar('TODAS',this)">
-    Todas
-  </button>
-
-  <button onclick="filtrar('FRENTE 501',this)">
-    501
-  </button>
-
-  <button onclick="filtrar('FRENTE 502',this)">
-    502
-  </button>
-
-  <button onclick="filtrar('FRENTE 503',this)">
-    503
-  </button>
-
-  <button onclick="filtrar('FRENTE 504',this)">
-    504
-  </button>
-
-  <button onclick="filtrar('FRENTE 505',this)">
-    505
-  </button>
-
-  <button onclick="filtrar('FRENTE 506',this)">
-    506
-  </button>
-
-</div>
-
-<div class="section-head">
-
-  <h3>Tempo real</h3>
-
-  <button class="btn-limpar" onclick="limparTudo()">
-    Novo turno
-  </button>
-
-</div>
-
-<div id="lista"></div>
-
-<div class="bottom">
-
-  <button class="btn-organizar" onclick="organizar()">
-    <i class="fa-solid fa-wand-magic-sparkles"></i>
-    ORGANIZAR TURNO
-  </button>
-
-</div>
-
-<div id="modalOrg"
-     class="modal"
-     onclick="if(event.target.id==='modalOrg')this.classList.remove('show')">
-
-  <div class="sheet">
-
-    <h3 style="font-size:17px">
-      <i class="fa-solid fa-clipboard-check" style="color:#7c4dff"></i>
-      Resumo por frente
-    </h3>
-
-    <p style="font-size:12px;opacity:.55;margin-top:4px">
-      Pronto para copiar e colar
-    </p>
-
-    <pre id="textoOrganizado"></pre>
-
-    <button class="btn-copy" onclick="copiarTexto()">
-      <i class="fa-solid fa-copy"></i>
-      COPIAR TEXTO
-    </button>
-
-    <button
-      class="btn btn-c"
-      style="width:100%;margin-top:10px"
-      onclick="document.getElementById('modalOrg').classList.remove('show')">
-
-      Fechar
-
-    </button>
-
-  </div>
-
-</div>
-
-<div id="modalEdit" class="modal">
-
-  <div class="sheet edit-area">
-
-    <h3 style="font-size:17px">
-      <i class="fa-solid fa-pen" style="color:#4dd0ff"></i>
-      Editar
-    </h3>
-
-    <textarea id="editTexto"></textarea>
-
-    <div class="row2">
-
-      <button class="btn btn-s" onclick="salvarEdit()">
-        Salvar
-      </button>
+      <div class="input-main">
+        <textarea
+          id="ocorrenciaInput"
+          rows="1"
+          placeholder="Digite a ocorrência..."
+        ></textarea>
+      </div>
 
       <button
-        class="btn btn-c"
-        onclick="document.getElementById('modalEdit').classList.remove('show')">
+        class="btn-mic"
+        id="btnMic"
+        title="Falar ocorrência"
+      >🎙️</button>
 
-        Cancelar
+      <button
+        class="btn-add"
+        id="btnAdd"
+        title="Adicionar ocorrência"
+      >+</button>
 
+    </div>
+
+  </section>
+
+  <div class="filters">
+    <button class="filter active" data-filter="TODAS">Todas</button>
+    <button class="filter" data-filter="501">501</button>
+    <button class="filter" data-filter="502">502</button>
+    <button class="filter" data-filter="503">503</button>
+    <button class="filter" data-filter="504">504</button>
+    <button class="filter" data-filter="505">505</button>
+    <button class="filter" data-filter="506">506</button>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">Tempo real</div>
+    <div class="status" id="statusSistema">Conectando...</div>
+  </div>
+
+  <section class="lista" id="listaOcorrencias"></section>
+
+</div>
+
+<div class="bottom">
+  <div class="bottom-inner">
+    <button class="btn-organizar" id="btnOrganizar">
+      ORGANIZAR TURNO
+    </button>
+  </div>
+</div>
+
+<!-- MODAL ORGANIZAÇÃO -->
+
+<div class="modal-bg" id="modalOrganizar">
+
+  <div class="modal">
+
+    <div class="modal-header">
+      <div class="modal-title">Resumo do turno</div>
+
+      <button class="modal-close" onclick="fecharModal('modalOrganizar')">
+        ×
+      </button>
+    </div>
+
+    <div class="ai-loading" id="aiLoading">
+      IA analisando as ocorrências do turno...
+    </div>
+
+    <div class="resumo" id="resumoIA"></div>
+
+    <div class="modal-actions">
+
+      <button id="btnCopiarResumo">
+        COPIAR
+      </button>
+
+      <button class="primary" id="btnAbrirChat">
+        💬 CONVERSAR COM A IA
+      </button>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button id="btnNovoTurno">
+        NOVO TURNO
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL CHAT -->
+
+<div class="modal-bg" id="modalChat">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <div class="modal-title">
+        💬 Visão geral do turno
+      </div>
+
+      <button class="modal-close" onclick="fecharModal('modalChat')">
+        ×
+      </button>
+
+    </div>
+
+    <div class="chat-context">
+      A IA está analisando todas as ocorrências do turno, sem limitar a uma única frente.
+    </div>
+
+    <div class="quick-actions">
+
+      <button class="quick" data-question="Quais foram os problemas que mais se repetiram neste turno?">
+        🔎 Problemas repetidos
+      </button>
+
+      <button class="quick" data-question="Quais são os principais riscos operacionais para a continuidade do turno?">
+        ⚠️ Principais riscos
+      </button>
+
+      <button class="quick" data-question="Com base nas ocorrências, onde estão os principais pontos para melhorar rendimento?">
+        🚜 Melhorar rendimento
+      </button>
+
+      <button class="quick" data-question="O que aparece nas ocorrências que pode ajudar a reduzir o ciclo do malhador?">
+        ⏱️ Reduzir ciclo
+      </button>
+
+      <button class="quick" data-question="Quais ações podem evitar a repetição dos problemas identificados?">
+        🔧 Evitar recorrência
+      </button>
+
+      <button class="quick" data-question="Monte um plano de ação objetivo para o próximo turno com base nas ocorrências.">
+        📋 Plano de ação
+      </button>
+
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="chat-input-row">
+
+      <textarea
+        id="chatInput"
+        rows="1"
+        placeholder="Pergunte sobre o turno..."
+      ></textarea>
+
+      <button class="chat-send" id="btnChatSend">
+        ➤
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL EDITAR -->
+
+<div class="modal-bg" id="modalEditar">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <div class="modal-title">
+        Editar ocorrência
+      </div>
+
+      <button class="modal-close" onclick="fecharModal('modalEditar')">
+        ×
+      </button>
+
+    </div>
+
+    <div class="edit-grid">
+
+      <div>
+        <div class="field-label">Hora</div>
+        <input class="field" id="editHora">
+      </div>
+
+      <div>
+        <div class="field-label">Frente</div>
+        <input class="field" id="editFrente">
+      </div>
+
+      <div>
+        <div class="field-label">Ocorrência</div>
+        <textarea class="field" id="editTexto"></textarea>
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button class="primary" id="btnSalvarEdicao">
+        SALVAR ALTERAÇÃO
       </button>
 
     </div>
@@ -739,1010 +851,924 @@ body::before{
 
 <script>
 
-const SUPABASE_URL = 'https://ecrpiuhsbhuqcxbbpqfh.supabase.co';
+  let ocorrencias = [];
+  let filtroAtual = 'TODAS';
+  let ocorrenciaEditando = null;
 
-const SUPABASE_KEY =
-  'sb_publishable_I7Hw7KieW3VNFqb9LYrFoQ_tFWWABwl';
+  let chatHistorico = [];
 
-const TABLE = 'ocorrencias_mandu';
+  /* =========================
+     UTILIDADES
+  ========================= */
 
-const supa = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY,
-  {
-    auth:{
-      persistSession:false,
-      autoRefreshToken:false,
-      detectSessionInUrl:false
-    }
+  function escapeHTML(texto) {
+    return String(texto ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
-);
 
-const API_URL =
-  'https://ocorrencias-mandu.onrender.com/organizar-ia';
+  function getHoraAtual() {
+    return new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 
-let ocorrencias = [];
+  function getTurnoAuto() {
 
-let filtroAtual = 'TODAS';
-let editId = null;
+    const hora = new Date().getHours();
 
-let rec = null;
-let gravando = false;
-let wantRestart = true;
-
-let silenceTimer = null;
-let silenceCountdown = null;
-
-let finalBuffer = '';
-
-
-// =========================================================
-// TURNO
-// =========================================================
-
-function getTurnoAuto(){
-
-  const h = new Date().getHours();
-
-  if(h >= 6 && h < 14)
-    return 'TURNO A';
-
-  if(h >= 14 && h < 22)
-    return 'TURNO B';
-
-  return 'TURNO C';
-}
-
-
-// =========================================================
-// CABEÇALHO
-// =========================================================
-
-document.getElementById('dataHoje').innerText =
-  new Date().toLocaleDateString(
-    'pt-BR',
-    {
-      weekday:'long',
-      day:'2-digit',
-      month:'2-digit'
+    if (hora >= 6 && hora < 14) {
+      return 'TURNO A';
     }
-  );
 
-document.getElementById('turnoAuto').innerText =
-  getTurnoAuto();
+    if (hora >= 14 && hora < 22) {
+      return 'TURNO B';
+    }
 
+    return 'TURNO C';
+  }
 
-// =========================================================
-// DETECTAR HORÁRIO
-// =========================================================
+  function atualizarCabecalho() {
 
-function detectarHorario(texto){
+    const agora = new Date();
 
-  let t = texto.toLowerCase();
+    document.getElementById('dataAtual').textContent =
+      agora.toLocaleDateString('pt-BR');
 
-  let m =
-    t.match(/(\d{1,2})[:h](\d{2})/);
-
-  if(m){
-
-    return (
-      String(m[1]).padStart(2,'0')
-      + ':'
-      + m[2]
-    );
+    document.getElementById('turnoAtual').textContent =
+      getTurnoAuto();
 
   }
 
-  return null;
-}
+  function fecharModal(id) {
+    document.getElementById(id).classList.remove('show');
+  }
 
+  function abrirModal(id) {
+    document.getElementById(id).classList.add('show');
+  }
 
-// =========================================================
-// DETECTAR FRENTE
-// =========================================================
+  /* =========================
+     API
+  ========================= */
 
-function detectarFrente(texto){
+  async function api(url, options = {}) {
 
-  const t = texto.toLowerCase();
+    const resposta = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
 
-  const mp = {
-    'um':'1',
-    'dois':'2',
-    'tres':'3',
-    'três':'3',
-    'quatro':'4',
-    'cinco':'5',
-    'seis':'6'
-  };
+    let dados = null;
 
-  let m =
-    t.match(/quinhent\w*\s*e?\s*(\w+)/);
-
-  if(m && mp[m[1]])
-    return 'FRENTE 50' + mp[m[1]];
-
-  m =
-    t.match(/\b50\s*([1-6])\b/);
-
-  if(m)
-    return 'FRENTE 50' + m[1];
-
-  m =
-    t.match(/\b50([1-6])\b/);
-
-  if(m)
-    return 'FRENTE 50' + m[1];
-
-  m =
-    t.match(/frente\s*([1-6])\b/);
-
-  if(m)
-    return 'FRENTE 50' + m[1];
-
-  return 'GERAL';
-}
-
-
-// =========================================================
-// LIMPAR CABEÇALHO
-// =========================================================
-
-function limparCabecalho(texto){
-
-  let t = texto;
-
-  t =
-    t.replace(
-      /^\s*(às|as)?\s*\d{1,2}[:h]\d{2}\s*[,.\-]?\s*/i,
-      ''
-    );
-
-  t =
-    t.replace(
-      /frente\s*(quinhent\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,
-      ''
-    );
-
-  return t.trim();
-}
-
-
-// =========================================================
-// CORREÇÃO LEVE
-// =========================================================
-
-function correcaoLeve(texto){
-
-  let t = texto.trim();
-
-  const fx = [
-    [/colhedera/gi,'colhedora'],
-    [/caminhao/gi,'caminhão'],
-    [/manutencao/gi,'manutenção']
-  ];
-
-  fx.forEach(
-    ([r,p]) => t = t.replace(r,p)
-  );
-
-  if(t)
-    t =
-      t.charAt(0).toUpperCase()
-      + t.slice(1);
-
-  if(
-    t &&
-    !/[.!?]$/.test(t)
-  )
-    t += '.';
-
-  return t;
-}
-
-
-// =========================================================
-// HORA ATUAL
-// =========================================================
-
-function horaAgora(){
-
-  return new Date().toLocaleTimeString(
-    'pt-BR',
-    {
-      hour:'2-digit',
-      minute:'2-digit'
+    try {
+      dados = await resposta.json();
+    } catch (_) {
+      dados = {};
     }
-  );
 
-}
+    if (!resposta.ok) {
+      throw new Error(
+        dados.error ||
+        dados.message ||
+        `Erro HTTP ${resposta.status}`
+      );
+    }
 
+    return dados;
+  }
 
-// =========================================================
-// CARREGAR DO SUPABASE
-// =========================================================
+  /* =========================
+     CARREGAR OCORRÊNCIAS
+  ========================= */
 
-async function loadSupa(){
+  async function loadSupa() {
 
-  try{
+    try {
 
-    const {
-      data,
-      error
-    } =
-      await supa
-        .from(TABLE)
-        .select('*')
-        .order(
-          'created_at',
-          {
-            ascending:false
-          }
-        )
-        .limit(500);
+      const dados = await api('/api/ocorrencias');
 
-    if(error){
+      ocorrencias = Array.isArray(dados)
+        ? dados
+        : (dados.ocorrencias || []);
 
-      console.error(
-        'Erro Supabase:',
-        error
+      render();
+
+      document.getElementById('statusSistema').textContent =
+        'Online';
+
+    } catch (erro) {
+
+      console.error(erro);
+
+      document.getElementById('statusSistema').textContent =
+        'Erro de conexão';
+
+    }
+
+  }
+
+  /* =========================
+     RENDER
+  ========================= */
+
+  function render() {
+
+    const lista = document.getElementById('listaOcorrencias');
+
+    let dados = [...ocorrencias];
+
+    if (filtroAtual !== 'TODAS') {
+
+      dados = dados.filter(item =>
+        String(item.frente || '').replace(/\D/g, '') === filtroAtual
       );
 
-      document.getElementById('lista').innerHTML =
-        '<div class="empty">ERRO SUPABASE: '
-        + error.message
-        + '</div>';
+    }
+
+    if (!dados.length) {
+
+      lista.innerHTML = `
+        <div class="empty">
+          Nenhuma ocorrência registrada.
+        </div>
+      `;
+
+    } else {
+
+      lista.innerHTML = dados.map(item => {
+
+        const frente = item.frente || 'GERAL';
+
+        return `
+          <article class="ocorrencia">
+
+            <div class="ocorrencia-top">
+
+              <div class="meta">
+
+                <span class="hora">
+                  ${escapeHTML(item.hora || '--:--')}
+                </span>
+
+                <span class="frente">
+                  FRENTE ${escapeHTML(frente)}
+                </span>
+
+              </div>
+
+              <div class="acts">
+
+                <button
+                  class="e"
+                  title="Editar"
+                  onclick="editarOcorrencia('${item.id}')"
+                >
+                  ✎
+                </button>
+
+                <button
+                  class="d"
+                  title="Excluir"
+                  onclick="excluirOcorrencia('${item.id}')"
+                >
+                  ×
+                </button>
+
+              </div>
+
+            </div>
+
+            <div class="texto">
+              ${escapeHTML(item.texto || '')}
+            </div>
+
+          </article>
+        `;
+
+      }).join('');
+
+    }
+
+    atualizarStats();
+
+  }
+
+  function atualizarStats() {
+
+    document.getElementById('statOcorrencias').textContent =
+      ocorrencias.length;
+
+    const frentes = new Set(
+      ocorrencias
+        .map(item => String(item.frente || '').trim())
+        .filter(Boolean)
+        .filter(frente => frente !== 'GERAL')
+    );
+
+    document.getElementById('statFrentes').textContent =
+      frentes.size;
+
+    if (ocorrencias.length) {
+
+      document.getElementById('statHora').textContent =
+        ocorrencias[0].hora || '--:--';
+
+    } else {
+
+      document.getElementById('statHora').textContent =
+        '--:--';
+
+    }
+
+  }
+
+  /* =========================
+     ADICIONAR
+  ========================= */
+
+  async function addOcorrencia() {
+
+    const input =
+      document.getElementById('ocorrenciaInput');
+
+    const texto = input.value.trim();
+
+    if (!texto) return;
+
+    let frente = 'GERAL';
+
+    const match = texto.match(
+      /\b(?:frente|f)\s*[-:]?\s*(50[1-6])\b/i
+    );
+
+    if (match) {
+      frente = match[1];
+    }
+
+    try {
+
+      document.getElementById('statusSistema').textContent =
+        'Salvando...';
+
+      await api('/api/ocorrencias', {
+
+        method: 'POST',
+
+        body: JSON.stringify({
+          hora: getHoraAtual(),
+          frente,
+          texto,
+          turno: getTurnoAuto(),
+          unidade: 'MANDU'
+        })
+
+      });
+
+      input.value = '';
+
+      await loadSupa();
+
+    } catch (erro) {
+
+      console.error(erro);
+
+      alert('Não foi possível salvar a ocorrência.');
+
+    }
+
+  }
+
+  document.getElementById('btnAdd')
+    .addEventListener('click', addOcorrencia);
+
+  document.getElementById('ocorrenciaInput')
+    .addEventListener('keydown', function(event) {
+
+      if (
+        event.key === 'Enter' &&
+        !event.shiftKey
+      ) {
+
+        event.preventDefault();
+
+        addOcorrencia();
+
+      }
+
+    });
+
+  /* =========================
+     FILTROS
+  ========================= */
+
+  document.querySelectorAll('.filter')
+    .forEach(botao => {
+
+      botao.addEventListener('click', function() {
+
+        document
+          .querySelectorAll('.filter')
+          .forEach(item => item.classList.remove('active'));
+
+        this.classList.add('active');
+
+        filtroAtual =
+          this.dataset.filter;
+
+        render();
+
+      });
+
+    });
+
+  /* =========================
+     EXCLUIR
+  ========================= */
+
+  async function excluirOcorrencia(id) {
+
+    if (!confirm('Excluir esta ocorrência?')) {
+      return;
+    }
+
+    try {
+
+      await api(
+        `/api/ocorrencias/${encodeURIComponent(id)}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      await loadSupa();
+
+    } catch (erro) {
+
+      console.error(erro);
+
+      alert('Não foi possível excluir.');
+
+    }
+
+  }
+
+  /* =========================
+     EDITAR
+  ========================= */
+
+  function editarOcorrencia(id) {
+
+    const item =
+      ocorrencias.find(x => String(x.id) === String(id));
+
+    if (!item) return;
+
+    ocorrenciaEditando = id;
+
+    document.getElementById('editHora').value =
+      item.hora || '';
+
+    document.getElementById('editFrente').value =
+      item.frente || '';
+
+    document.getElementById('editTexto').value =
+      item.texto || '';
+
+    abrirModal('modalEditar');
+
+  }
+
+  document.getElementById('btnSalvarEdicao')
+    .addEventListener('click', async function() {
+
+      if (!ocorrenciaEditando) return;
+
+      const hora =
+        document.getElementById('editHora').value.trim();
+
+      const frente =
+        document.getElementById('editFrente').value.trim() || 'GERAL';
+
+      const texto =
+        document.getElementById('editTexto').value.trim();
+
+      if (!texto) {
+
+        alert('Digite a ocorrência.');
+
+        return;
+
+      }
+
+      try {
+
+        await api(
+          `/api/ocorrencias/${encodeURIComponent(ocorrenciaEditando)}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify({
+              hora,
+              frente,
+              texto
+            })
+          }
+        );
+
+        fecharModal('modalEditar');
+
+        ocorrenciaEditando = null;
+
+        await loadSupa();
+
+      } catch (erro) {
+
+        console.error(erro);
+
+        alert('Não foi possível salvar a alteração.');
+
+      }
+
+    });
+
+  /* =========================
+     ORGANIZAR TURNO
+  ========================= */
+
+  document.getElementById('btnOrganizar')
+    .addEventListener('click', organizarTurno);
+
+  async function organizarTurno() {
+
+    abrirModal('modalOrganizar');
+
+    const loading =
+      document.getElementById('aiLoading');
+
+    const resumo =
+      document.getElementById('resumoIA');
+
+    loading.classList.add('show');
+
+    resumo.textContent = '';
+
+    if (!ocorrencias.length) {
+
+      loading.classList.remove('show');
+
+      resumo.textContent =
+        'Não existem ocorrências suficientes para organizar o turno.';
 
       return;
 
     }
 
-    ocorrencias =
-      (data || []).map(
-        d => ({
-          id:d.id,
-          hora:d.hora,
-          frente:d.frente,
-          texto:d.texto,
-          turno:d.turno,
-          unidade:d.unidade,
-          created_at:d.created_at
+    try {
+
+      const resposta = await api('/organizar-ia', {
+
+        method: 'POST',
+
+        body: JSON.stringify({
+
+          ocorrencias: ocorrencias
+            .slice()
+            .reverse()
+            .map(item => ({
+              hora: item.hora,
+              frente: item.frente,
+              texto: item.texto
+            }))
+
         })
-      );
 
-    render();
+      });
 
-  }catch(error){
+      resumo.textContent =
+        resposta.resumo ||
+        resposta.resultado ||
+        resposta.text ||
+        'A IA não retornou um resumo.';
 
-    console.error(
-      'Erro ao atualizar lista:',
-      error
-    );
+    } catch (erro) {
 
-  }
+      console.error(erro);
 
-}
+      resumo.textContent =
+        'Não foi possível organizar o turno pela IA.\n\n' +
+        erro.message;
 
+    } finally {
 
-// =========================================================
-// ADICIONAR OCORRÊNCIA
-// =========================================================
+      loading.classList.remove('show');
 
-async function addOcorrencia(bruto){
-
-  if(!bruto || !bruto.trim())
-    return;
-
-  const hora =
-    detectarHorario(bruto)
-    || horaAgora();
-
-  const frente =
-    detectarFrente(bruto);
-
-  const texto =
-    correcaoLeve(
-      limparCabecalho(bruto)
-    );
-
-  if(!texto || texto === '.')
-    return;
-
-  const {
-    data,
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .insert([
-        {
-          hora,
-          frente,
-          texto,
-          turno:getTurnoAuto(),
-          unidade:'MANDU'
-        }
-      ])
-      .select('*')
-      .single();
-
-  if(error){
-
-    console.error(
-      'Erro ao inserir:',
-      error
-    );
-
-    alert(
-      'Erro ao inserir: '
-      + error.message
-    );
-
-    return;
+    }
 
   }
 
-  // Atualiza imediatamente com o que está no banco
-  await loadSupa();
+  /* =========================
+     COPIAR RESUMO
+  ========================= */
 
-}
+  document.getElementById('btnCopiarResumo')
+    .addEventListener('click', async function() {
 
+      const texto =
+        document.getElementById('resumoIA').textContent;
 
-// =========================================================
-// ADICIONAR MANUAL
-// =========================================================
+      if (!texto) return;
 
-async function addManual(){
+      try {
 
-  const i =
-    document.getElementById(
-      'textoManual'
-    );
+        await navigator.clipboard.writeText(texto);
 
-  const texto =
-    i.value.trim();
+        const original = this.textContent;
 
-  if(!texto)
-    return;
+        this.textContent = 'COPIADO ✓';
 
-  i.value = '';
+        setTimeout(() => {
+          this.textContent = original;
+        }, 1500);
 
-  await addOcorrencia(texto);
+      } catch (erro) {
 
-}
-
-
-// =========================================================
-// DELETAR
-// =========================================================
-
-async function deletar(id){
-
-  if(
-    !confirm(
-      'Deseja excluir este registro?'
-    )
-  )
-    return;
-
-  const {
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .delete()
-      .eq('id',id);
-
-  if(error){
-
-    console.error(
-      'Erro ao deletar:',
-      error
-    );
-
-    alert(
-      'Erro ao deletar: '
-      + error.message
-    );
-
-    return;
-
-  }
-
-  // Atualiza imediatamente após excluir
-  await loadSupa();
-
-}
-
-
-// =========================================================
-// NOVO TURNO
-// =========================================================
-
-async function limparTudo(){
-
-  if(!ocorrencias.length){
-
-    await loadSupa();
-
-    return;
-
-  }
-
-  if(
-    !confirm(
-      'Deseja iniciar um novo turno e limpar todas as ocorrências atuais?'
-    )
-  )
-    return;
-
-  const {
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .delete()
-      .neq(
-        'id',
-        '00000000-0000-0000-0000-000000000000'
-      );
-
-  if(error){
-
-    console.error(
-      'Erro ao iniciar novo turno:',
-      error
-    );
-
-    alert(
-      'Erro ao limpar: '
-      + error.message
-    );
-
-    return;
-
-  }
-
-  // Atualiza imediatamente após limpar
-  await loadSupa();
-
-}
-
-
-// =========================================================
-// FILTRO
-// =========================================================
-
-function filtrar(f,b){
-
-  filtroAtual = f;
-
-  document
-    .querySelectorAll(
-      '.filtros button'
-    )
-    .forEach(
-      x => x.classList.remove('ativo')
-    );
-
-  b.classList.add('ativo');
-
-  render();
-
-}
-
-
-// =========================================================
-// EDITAR
-// =========================================================
-
-function abrirEdit(id){
-
-  editId = id;
-
-  const o =
-    ocorrencias.find(
-      x => String(x.id) === String(id)
-    );
-
-  if(!o)
-    return;
-
-  document.getElementById(
-    'editTexto'
-  ).value = o.texto;
-
-  document.getElementById(
-    'modalEdit'
-  ).classList.add('show');
-
-}
-
-
-// =========================================================
-// SALVAR EDIÇÃO
-// =========================================================
-
-async function salvarEdit(){
-
-  const v =
-    document
-      .getElementById('editTexto')
-      .value
-      .trim();
-
-  if(!v)
-    return;
-
-  const {
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .update({
-        texto:correcaoLeve(v)
-      })
-      .eq('id',editId);
-
-  if(error){
-
-    console.error(
-      'Erro ao editar:',
-      error
-    );
-
-    alert(
-      'Erro ao editar: '
-      + error.message
-    );
-
-    return;
-
-  }
-
-  document
-    .getElementById('modalEdit')
-    .classList.remove('show');
-
-  // Atualiza imediatamente após editar
-  await loadSupa();
-
-}
-
-
-// =========================================================
-// RENDER
-// =========================================================
-
-function render(){
-
-  const lista =
-    document.getElementById(
-      'lista'
-    );
-
-  let f =
-    filtroAtual === 'TODAS'
-      ? ocorrencias
-      : ocorrencias.filter(
-          o => o.frente === filtroAtual
-        );
-
-  document.getElementById(
-    'stTotal'
-  ).innerText =
-    ocorrencias.length;
-
-  document.getElementById(
-    'stFrentes'
-  ).innerText =
-    new Set(
-      ocorrencias.map(
-        o => o.frente
-      )
-    ).size;
-
-  document.getElementById(
-    'stUltima'
-  ).innerText =
-    ocorrencias.length
-      ? ocorrencias[0].hora
-      : '--:--';
-
-  if(!f.length){
-
-    lista.innerHTML =
-      '<div class="empty">Nenhuma ocorrência registrada.</div>';
-
-    return;
-
-  }
-
-  lista.innerHTML =
-    f.map(o => `
-
-      <div class="card">
-
-        <div class="meta">
-
-          <span class="hora">
-            ${o.hora}
-          </span>
-
-          <span class="frente">
-            ${String(o.frente).replace('FRENTE ','')}
-          </span>
-
-        </div>
-
-        <p>
-          ${o.texto}
-        </p>
-
-        <div class="acts">
-
-          <button
-            class="e"
-            onclick="abrirEdit('${o.id}')"
-            title="Editar">
-
-            <i class="fa-solid fa-pen"></i>
-
-          </button>
-
-          <button
-            class="d"
-            onclick="deletar('${o.id}')"
-            title="Excluir">
-
-            <i class="fa-solid fa-trash"></i>
-
-          </button>
-
-        </div>
-
-      </div>
-
-    `).join('');
-
-}
-
-
-// =========================================================
-// MICROFONE
-// =========================================================
-
-const btnMic =
-  document.getElementById('btnMic');
-
-const statusMic =
-  document.getElementById('statusMic');
-
-const tempDiv =
-  document.getElementById(
-    'transcricaoTemp'
-  );
-
-
-function iniciarGravacao(){
-
-  if(gravando)
-    return;
-
-  wantRestart = true;
-
-  try{
-    rec.start();
-  }catch(e){}
-
-}
-
-
-function pararTudo(){
-
-  if(!gravando)
-    return;
-
-  gravando = false;
-  wantRestart = false;
-
-  try{
-    rec.stop();
-  }catch(e){}
-
-  btnMic.classList.remove(
-    'gravando'
-  );
-
-  btnMic.innerHTML =
-    '<i class="fa-solid fa-microphone"></i>';
-
-  statusMic.innerText =
-    'Mantenha pressionado para falar';
-
-  tempDiv.style.display =
-    'none';
-
-  if(finalBuffer.trim()){
-
-    addOcorrencia(
-      finalBuffer.trim()
-    );
-
-    finalBuffer = '';
-
-  }
-
-}
-
-
-if(
-  'webkitSpeechRecognition' in window
-  ||
-  'SpeechRecognition' in window
-){
-
-  const SR =
-    window.SpeechRecognition
-    ||
-    window.webkitSpeechRecognition;
-
-  rec = new SR();
-
-  rec.lang = 'pt-BR';
-
-  rec.interimResults = true;
-
-  rec.continuous = true;
-
-
-  rec.onstart = () => {
-
-    gravando = true;
-
-    finalBuffer = '';
-
-    btnMic.classList.add(
-      'gravando'
-    );
-
-    btnMic.innerHTML =
-      '<i class="fa-solid fa-stop"></i>';
-
-    statusMic.innerText =
-      'Ouvindo... solte para registrar';
-
-    tempDiv.style.display =
-      'block';
-
-    tempDiv.innerText =
-      '...';
-
-  };
-
-
-  rec.onresult = (e) => {
-
-    let interim = '';
-
-    for(
-      let i = e.resultIndex;
-      i < e.results.length;
-      i++
-    ){
-
-      let tr =
-        e.results[i][0].transcript;
-
-      if(
-        e.results[i].isFinal
-      ){
-
-        finalBuffer +=
-          tr + ' ';
-
-      }else{
-
-        interim += tr;
+        alert('Não foi possível copiar.');
 
       }
 
-    }
+    });
 
-    tempDiv.innerText =
-      (
-        finalBuffer + interim
-      ).trim()
-      || '...';
+  /* =========================
+     NOVO TURNO
+  ========================= */
 
-  };
+  document.getElementById('btnNovoTurno')
+    .addEventListener('click', async function() {
 
+      if (!confirm(
+        'Isso irá apagar todas as ocorrências atuais. Deseja iniciar um novo turno?'
+      )) {
+        return;
+      }
 
-  rec.onend = () => {
+      try {
 
-    if(
-      gravando &&
-      wantRestart
-    ){
+        await api('/api/ocorrencias', {
+          method: 'DELETE'
+        });
 
-      try{
-        rec.start();
-      }catch(e){}
+        fecharModal('modalOrganizar');
 
-    }
+        chatHistorico = [];
 
-  };
+        document.getElementById('chatMessages').innerHTML = '';
 
+        await loadSupa();
 
-  btnMic.addEventListener(
-    'mousedown',
-    iniciarGravacao
-  );
+      } catch (erro) {
 
-  btnMic.addEventListener(
-    'mouseup',
-    pararTudo
-  );
+        console.error(erro);
 
-  btnMic.addEventListener(
-    'mouseleave',
-    pararTudo
-  );
+        alert('Não foi possível iniciar um novo turno.');
 
+      }
 
-  btnMic.addEventListener(
-    'touchstart',
-    (e) => {
+    });
 
-      e.preventDefault();
+  /* =========================
+     CHAT IA
+  ========================= */
 
-      iniciarGravacao();
+  document.getElementById('btnAbrirChat')
+    .addEventListener('click', function() {
 
-    }
-  );
+      fecharModal('modalOrganizar');
 
+      abrirModal('modalChat');
 
-  btnMic.addEventListener(
-    'touchend',
-    (e) => {
+      if (!chatHistorico.length) {
 
-      e.preventDefault();
+        adicionarMensagemChat(
+          'ai',
+          'Estou analisando o turno como um todo. Pode me perguntar sobre problemas recorrentes, riscos, rendimento, ciclo, equipamentos ou plano de ação.'
+        );
 
-      pararTudo();
+      }
 
-    }
-  );
+    });
 
-}else{
+  function adicionarMensagemChat(tipo, texto) {
 
-  statusMic.innerText =
-    'Reconhecimento de voz não suportado neste navegador.';
+    const container =
+      document.getElementById('chatMessages');
 
-}
+    const div =
+      document.createElement('div');
 
+    div.className =
+      `chat-message ${tipo}`;
 
-// =========================================================
-// ORGANIZAR TURNO
-// =========================================================
+    div.textContent = texto;
 
-async function organizar(){
+    container.appendChild(div);
 
-  if(!ocorrencias.length){
-
-    alert(
-      'Adicione pelo menos uma ocorrência antes de organizar.'
-    );
-
-    return;
+    container.scrollTop =
+      container.scrollHeight;
 
   }
 
-  document.getElementById(
-    'textoOrganizado'
-  ).innerText =
-    'Processando IA... por favor aguarde';
+  async function enviarPergunta(perguntaForcada = null) {
 
-  document.getElementById(
-    'modalOrg'
-  ).classList.add('show');
+    const input =
+      document.getElementById('chatInput');
 
+    const pergunta =
+      (perguntaForcada || input.value).trim();
 
-  try{
+    if (!pergunta) return;
 
-    const r =
-      await fetch(
-        API_URL,
-        {
-          method:'POST',
+    input.value = '';
 
-          headers:{
-            'Content-Type':
-              'application/json'
-          },
+    adicionarMensagemChat('user', pergunta);
 
-          body:
-            JSON.stringify({
-              ocorrencias:
-                ocorrencias
-                  .slice()
-                  .reverse()
-            })
-        }
+    const carregando =
+      document.createElement('div');
+
+    carregando.className =
+      'chat-message ai';
+
+    carregando.textContent =
+      'Analisando o turno...';
+
+    document
+      .getElementById('chatMessages')
+      .appendChild(carregando);
+
+    try {
+
+      const resposta = await api('/chat-ia', {
+
+        method: 'POST',
+
+        body: JSON.stringify({
+
+          ocorrencias: ocorrencias
+            .slice()
+            .reverse()
+            .map(item => ({
+              hora: item.hora,
+              frente: item.frente,
+              texto: item.texto
+            })),
+
+          pergunta,
+
+          historico: chatHistorico.slice(-8)
+
+        })
+
+      });
+
+      carregando.remove();
+
+      const texto =
+        resposta.resposta ||
+        resposta.resultado ||
+        resposta.text ||
+        'Não consegui gerar uma resposta.';
+
+      adicionarMensagemChat('ai', texto);
+
+      chatHistorico.push({
+        role: 'user',
+        content: pergunta
+      });
+
+      chatHistorico.push({
+        role: 'assistant',
+        content: texto
+      });
+
+      if (chatHistorico.length > 8) {
+        chatHistorico =
+          chatHistorico.slice(-8);
+      }
+
+    } catch (erro) {
+
+      carregando.remove();
+
+      adicionarMensagemChat(
+        'ai',
+        'Não foi possível consultar a IA.\n\n' +
+        erro.message
       );
 
-
-    const data =
-      await r.json();
-
-
-    document.getElementById(
-      'textoOrganizado'
-    ).innerText =
-      data.texto
-      ||
-      'Ocorreu um erro ao formatar os dados.';
-
-
-  }catch(e){
-
-    document.getElementById(
-      'textoOrganizado'
-    ).innerText =
-      'Erro ao conectar ao servidor backend: '
-      + e.message;
+    }
 
   }
 
-}
+  document.getElementById('btnChatSend')
+    .addEventListener('click', function() {
+      enviarPergunta();
+    });
 
+  document.getElementById('chatInput')
+    .addEventListener('keydown', function(event) {
 
-// =========================================================
-// COPIAR
-// =========================================================
+      if (
+        event.key === 'Enter' &&
+        !event.shiftKey
+      ) {
 
-function copiarTexto(){
+        event.preventDefault();
 
-  navigator.clipboard.writeText(
-    document.getElementById(
-      'textoOrganizado'
-    ).innerText
-  );
+        enviarPergunta();
 
-  alert(
-    'Resumo copiado com sucesso!'
-  );
+      }
 
-}
+    });
 
+  document.querySelectorAll('.quick')
+    .forEach(botao => {
 
-// =========================================================
-// TEMPO REAL SUPABASE
-// =========================================================
+      botao.addEventListener('click', function() {
 
-supa
-  .channel('rt-mandu')
-  .on(
-    'postgres_changes',
-    {
-      event:'*',
-      schema:'public',
-      table:TABLE
-    },
-    () => {
+        enviarPergunta(
+          this.dataset.question
+        );
 
-      // Se o banco mudar por outro dispositivo,
-      // também atualiza automaticamente.
-      loadSupa();
+      });
+
+    });
+
+  /* =========================
+     MICROFONE
+  ========================= */
+
+  let recognition = null;
+  let gravando = false;
+
+  const btnMic =
+    document.getElementById('btnMic');
+
+  const input =
+    document.getElementById('ocorrenciaInput');
+
+  if (
+    'webkitSpeechRecognition' in window ||
+    'SpeechRecognition' in window
+  ) {
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    recognition =
+      new SpeechRecognition();
+
+    recognition.lang =
+      'pt-BR';
+
+    recognition.continuous =
+      false;
+
+    recognition.interimResults =
+      false;
+
+    recognition.onstart = function() {
+
+      gravando = true;
+
+      btnMic.classList.add('gravando');
+
+      btnMic.textContent = '⏺️';
+
+    };
+
+    recognition.onresult = function(event) {
+
+      const texto =
+        event.results[0][0].transcript;
+
+      input.value =
+        input.value
+          ? input.value + ' ' + texto
+          : texto;
+
+    };
+
+    recognition.onerror = function(event) {
+
+      console.error(event);
+
+    };
+
+    recognition.onend = function() {
+
+      gravando = false;
+
+      btnMic.classList.remove('gravando');
+
+      btnMic.textContent = '🎙️';
+
+    };
+
+  } else {
+
+    btnMic.style.display = 'none';
+
+  }
+
+  btnMic.addEventListener('click', function() {
+
+    if (!recognition) return;
+
+    if (gravando) {
+
+      recognition.stop();
+
+    } else {
+
+      recognition.start();
 
     }
-  )
-  .subscribe();
 
+  });
 
-// =========================================================
-// CARGA INICIAL
-// =========================================================
+  /* =========================
+     ATUALIZAÇÃO AUTOMÁTICA
+     SEM EXPOR SUPABASE
+  ========================= */
 
-loadSupa();
+  let ultimaAssinatura = '';
+
+  async function atualizarAutomaticamente() {
+
+    try {
+
+      const resposta =
+        await fetch('/api/ocorrencias');
+
+      if (!resposta.ok) return;
+
+      const dados =
+        await resposta.json();
+
+      const novaLista =
+        Array.isArray(dados)
+          ? dados
+          : (dados.ocorrencias || []);
+
+      const assinatura =
+        novaLista
+          .map(item =>
+            `${item.id}|${item.hora}|${item.frente}|${item.texto}`
+          )
+          .join('||');
+
+      if (assinatura !== ultimaAssinatura) {
+
+        ultimaAssinatura = assinatura;
+
+        ocorrencias = novaLista;
+
+        render();
+
+      }
+
+      document.getElementById('statusSistema').textContent =
+        'Online';
+
+    } catch (erro) {
+
+      document.getElementById('statusSistema').textContent =
+        'Reconectando...';
+
+    }
+
+  }
+
+  /* =========================
+     INICIALIZAÇÃO
+  ========================= */
+
+  atualizarCabecalho();
+
+  loadSupa();
+
+  setInterval(atualizarCabecalho, 30000);
+
+  // Atualização automática do turno.
+  // Não usa Supabase diretamente no navegador.
+  setInterval(atualizarAutomaticamente, 4000);
 
 </script>
 

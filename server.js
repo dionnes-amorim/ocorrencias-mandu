@@ -22,44 +22,33 @@ const SUPABASE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ||
   process.env.SUPABASE_ANON_KEY;
 
-const OPENROUTER_API_KEY =
-  process.env.OPENROUTER_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 const TABLE = 'ocorrencias_mandu';
 
 
 // =========================================================
-// VALIDAÇÃO
-// =========================================================
-
-if (!SUPABASE_URL) {
-  console.error('ERRO: SUPABASE_URL não configurada.');
-}
-
-if (!SUPABASE_KEY) {
-  console.error(
-    'ERRO: chave do Supabase não configurada.'
-  );
-}
-
-if (!OPENROUTER_API_KEY) {
-  console.warn(
-    'AVISO: OPENROUTER_API_KEY não configurada.'
-  );
-}
-
-
-// =========================================================
-// SUPABASE
+// CLIENTE SUPABASE
 // =========================================================
 
 const supabase =
   SUPABASE_URL && SUPABASE_KEY
-    ? createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      )
+    ? createClient(SUPABASE_URL, SUPABASE_KEY)
     : null;
+
+
+// =========================================================
+// LOG INICIAL
+// =========================================================
+
+console.log('==========================================');
+console.log('CTT DIÁRIO DE TURNO - MANDU');
+console.log('==========================================');
+console.log('Supabase:', Boolean(supabase));
+console.log('OpenRouter:', Boolean(OPENROUTER_API_KEY));
+console.log('Tabela:', TABLE);
+console.log('Porta:', PORT);
+console.log('==========================================');
 
 
 // =========================================================
@@ -68,22 +57,12 @@ const supabase =
 
 app.get('/api/status', (req, res) => {
 
-  return res.json({
-
+  res.json({
     online: true,
-
-    supabase:
-      Boolean(supabase),
-
-    openrouter:
-      Boolean(OPENROUTER_API_KEY),
-
-    tabela:
-      TABLE,
-
-    timestamp:
-      new Date().toISOString()
-
+    supabase: Boolean(supabase),
+    openrouter: Boolean(OPENROUTER_API_KEY),
+    tabela: TABLE,
+    timestamp: new Date().toISOString()
   });
 
 });
@@ -94,54 +73,119 @@ app.get('/api/status', (req, res) => {
 // =========================================================
 
 app.post('/organizar-ia', async (req, res) => {
+
   try {
+
+    // -------------------------------------------------------
+    // VERIFICAR OPENROUTER
+    // -------------------------------------------------------
+
     if (!OPENROUTER_API_KEY) {
+
       return res.status(500).json({
-        texto: 'OPENROUTER_API_KEY não configurada no Render.'
+        texto:
+          'OPENROUTER_API_KEY não configurada no Render.'
       });
+
     }
+
+
+    // -------------------------------------------------------
+    // RECEBER OCORRÊNCIAS
+    // -------------------------------------------------------
 
     const ocorrencias = Array.isArray(req.body?.ocorrencias)
       ? req.body.ocorrencias
       : [];
 
-    if (!ocorrencias.length) {
+
+    if (ocorrencias.length === 0) {
+
       return res.status(400).json({
-        texto: 'Nenhuma ocorrência foi enviada.'
+        texto:
+          'Nenhuma ocorrência foi enviada para organização.'
       });
+
     }
+
+
+    // -------------------------------------------------------
+    // PREPARAR DADOS
+    // -------------------------------------------------------
 
     const material = ocorrencias
       .map((o) => {
+
+        const hora =
+          typeof o.hora === 'string'
+            ? o.hora.trim()
+            : '--:--';
+
+        const frente =
+          typeof o.frente === 'string'
+            ? o.frente.trim()
+            : 'GERAL';
+
+        const texto =
+          typeof o.texto === 'string'
+            ? o.texto.trim()
+            : '';
+
+        const turno =
+          typeof o.turno === 'string'
+            ? o.turno.trim()
+            : '';
+
+        const unidade =
+          typeof o.unidade === 'string'
+            ? o.unidade.trim()
+            : 'MANDU';
+
         return [
-          `Horário: ${o.hora || '--:--'}`,
-          `Frente: ${o.frente || 'GERAL'}`,
-          `Turno: ${o.turno || 'Não informado'}`,
-          `Unidade: ${o.unidade || 'MANDU'}`,
-          `Ocorrência: ${o.texto || ''}`
+          `Horário: ${hora}`,
+          `Frente: ${frente}`,
+          `Turno: ${turno || 'Não informado'}`,
+          `Unidade: ${unidade}`,
+          `Ocorrência: ${texto}`
         ].join('\n');
+
       })
+      .filter(Boolean)
       .join('\n\n');
+
+
+    // -------------------------------------------------------
+    // PROMPT
+    // -------------------------------------------------------
 
     const prompt = `
 Você é responsável por organizar o Diário de Turno do CTT da unidade Mandu.
 
-Transforme as ocorrências abaixo em um relatório operacional profissional.
+Transforme as ocorrências operacionais abaixo em um relatório profissional, objetivo e fácil de ler.
 
 REGRAS:
-- Corrija erros de português.
-- Corrija erros óbvios de transcrição.
+
 - Não invente informações.
 - Não invente números.
 - Não invente horários.
 - Não invente causas.
+- Não invente ações.
+- Não invente equipamentos.
+- Não invente pessoas.
 - Não altere os números das frentes.
 - Preserve os fatos registrados.
+- Corrija erros de português.
+- Corrija erros óbvios de transcrição.
 - Agrupe ocorrências da mesma frente.
 - Mantenha os horários.
-- Seja objetivo e técnico.
-- Destaque manutenção, parada, indisponibilidade, atraso e riscos somente quando estiverem registrados.
-- Não faça comentários que não estejam sustentados pelas ocorrências.
+- Destaque manutenção, parada, indisponibilidade, atraso ou risco somente quando essas informações estiverem registradas.
+- Não transforme possibilidade em fato.
+- Não faça previsões.
+- Não faça julgamentos sobre a operação.
+- Use linguagem técnica e profissional.
+- Seja objetivo.
+- Não explique o que você fez.
+- Entregue somente o relatório.
 
 FORMATO:
 
@@ -156,32 +200,48 @@ CTT - DIÁRIO DE TURNO | MANDU
 [GERAL]
 - HH:MM — ocorrência.
 
-Ao final, caso existam informações suficientes:
+Se houver informações relevantes, ao final:
 
 PONTOS DE ATENÇÃO
-- ponto relevante.
+- ponto operacional relevante.
 
-Entregue somente o relatório final.
+Só inclua pontos de atenção que estejam claramente presentes nas ocorrências.
 
 OCORRÊNCIAS:
 
 ${material}
 `;
 
-    const response = await fetch(
+
+    // -------------------------------------------------------
+    // CHAMADA OPENROUTER
+    // -------------------------------------------------------
+
+    console.log(
+      `Enviando ${ocorrencias.length} ocorrência(s) para OpenRouter...`
+    );
+
+
+    const resposta = await fetch(
       'https://openrouter.ai/api/v1/chat/completions',
       {
         method: 'POST',
 
         headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://ocorrencias-mandu.onrender.com',
-          'X-Title': 'CTT Diário de Turno - Mandu'
+
+          'HTTP-Referer':
+            'https://ocorrencias-mandu.onrender.com',
+
+          'X-Title':
+            'CTT Diário de Turno - Mandu'
         },
 
         body: JSON.stringify({
-          model: 'google/gemma-4-31b-it:free',
+
+          model:
+            'google/gemma-4-31b-it:free',
 
           messages: [
             {
@@ -193,22 +253,32 @@ ${material}
           temperature: 0.2,
 
           max_tokens: 2000
+
         })
       }
     );
 
-    const data = await response.json();
+
+    // -------------------------------------------------------
+    // LER RESPOSTA
+    // -------------------------------------------------------
+
+    const data = await resposta.json();
+
 
     console.log(
-      'Resposta OpenRouter:',
-      JSON.stringify(data)
+      'Status OpenRouter:',
+      resposta.status
     );
 
-    if (!response.ok) {
+
+    if (!resposta.ok) {
+
       console.error(
-        'Erro OpenRouter:',
+        'Resposta de erro OpenRouter:',
         JSON.stringify(data)
       );
+
 
       return res.status(500).json({
         texto:
@@ -219,377 +289,62 @@ ${material}
             'erro desconhecido'
           )
       });
+
     }
 
+
+    // -------------------------------------------------------
+    // EXTRAIR TEXTO
+    // -------------------------------------------------------
+
     const texto =
-      data?.choices?.[0]?.message?.content ||
-      data?.choices?.[0]?.text ||
-      data?.output?.[0]?.content?.[0]?.text ||
+      data?.choices?.[0]?.message?.content?.trim() ||
+      data?.choices?.[0]?.text?.trim() ||
       '';
 
-    if (!texto || !texto.trim()) {
+
+    if (!texto) {
+
       console.error(
         'OpenRouter respondeu sem texto:',
         JSON.stringify(data)
       );
 
+
       return res.status(500).json({
         texto:
           'A IA respondeu, mas não retornou texto. Verifique os logs do Render.'
       });
+
     }
+
+
+    console.log(
+      'Relatório gerado com sucesso.'
+    );
+
 
     return res.json({
       success: true,
-      texto: texto.trim()
-    });
-
-  } catch (error) {
-
-    console.error(
-      'Erro /organizar-ia:',
-      error
-    );
-
-    return res.status(500).json({
-      texto:
-        'Erro ao organizar as ocorrências com IA: ' +
-        (error?.message || 'erro desconhecido')
-    });
-  }
-});
-
-  try {
-
-    // -----------------------------------------------------
-    // VERIFICA OPENROUTER
-    // -----------------------------------------------------
-
-    if (!OPENROUTER_API_KEY) {
-
-      return res.status(500).json({
-
-        texto:
-          'OpenRouter não configurado no servidor. Verifique a OPENROUTER_API_KEY no Render.'
-
-      });
-
-    }
-
-
-    // -----------------------------------------------------
-    // RECEBE OCORRÊNCIAS
-    // -----------------------------------------------------
-
-    const ocorrencias =
-      Array.isArray(req.body?.ocorrencias)
-        ? req.body.ocorrencias
-        : [];
-
-
-    if (!ocorrencias.length) {
-
-      return res.status(400).json({
-
-        texto:
-          'Nenhuma ocorrência foi enviada para organização.'
-
-      });
-
-    }
-
-
-    // -----------------------------------------------------
-    // NORMALIZA DADOS
-    // -----------------------------------------------------
-
-    const dados = ocorrencias
-
-      .map((o, index) => ({
-
-        ordem:
-          index + 1,
-
-        hora:
-          typeof o.hora === 'string'
-            ? o.hora.trim()
-            : '',
-
-        frente:
-          typeof o.frente === 'string'
-            ? o.frente.trim()
-            : 'GERAL',
-
-        texto:
-          typeof o.texto === 'string'
-            ? o.texto.trim()
-            : '',
-
-        turno:
-          typeof o.turno === 'string'
-            ? o.turno.trim()
-            : '',
-
-        unidade:
-          typeof o.unidade === 'string'
-            ? o.unidade.trim()
-            : 'MANDU'
-
-      }))
-
-      .filter(o => o.texto);
-
-
-    if (!dados.length) {
-
-      return res.status(400).json({
-
-        texto:
-          'As ocorrências enviadas não possuem textos válidos.'
-
-      });
-
-    }
-
-
-    // -----------------------------------------------------
-    // MONTA OCORRÊNCIAS
-    // -----------------------------------------------------
-
-    const material = dados
-
-      .map(o => {
-
-        return [
-          `Horário: ${o.hora || '--:--'}`,
-          `Frente: ${o.frente}`,
-          `Turno: ${o.turno || 'Não informado'}`,
-          `Unidade: ${o.unidade || 'MANDU'}`,
-          `Ocorrência: ${o.texto}`
-        ].join('\n');
-
-      })
-
-      .join('\n\n');
-
-
-    // =====================================================
-    // PROMPT
-    // =====================================================
-
-    const systemPrompt = `
-Você é um assistente especializado em organizar
-Diários de Turno de uma operação agrícola e logística.
-
-Sua função é transformar ocorrências operacionais
-brutas em um relatório profissional para comunicação
-com supervisão e gerência.
-
-REGRAS OBRIGATÓRIAS:
-
-- Não invente informações.
-- Não invente números.
-- Não invente horários.
-- Não invente causas.
-- Não invente ações.
-- Não invente equipamentos.
-- Não invente pessoas.
-- Não altere números de frente.
-- Preserve os fatos registrados.
-- Corrija erros de português e transcrição.
-- Organize as informações de forma clara.
-- Agrupe ocorrências da mesma frente.
-- Preserve os horários quando existirem.
-- Destaque manutenção, parada, indisponibilidade,
-  atraso, risco operacional e retomada quando isso
-  estiver explicitamente registrado.
-- Não transforme possibilidade em fato.
-- Não faça previsões.
-- Não faça comentários sobre a qualidade da operação.
-- Use linguagem técnica, objetiva e profissional.
-- Evite textos longos desnecessários.
-- Não explique o processo de organização.
-- Entregue somente o relatório final.
-
-FORMATO:
-
-CTT - DIÁRIO DE TURNO | MANDU
-
-[Frente / área]
-- HH:MM — ocorrência.
-
-[Outra frente / área]
-- HH:MM — ocorrência.
-
-[GERAL]
-- HH:MM — ocorrência.
-
-Ao final, se existirem informações suficientes,
-adicione:
-
-PONTOS DE ATENÇÃO
-- ponto relevante identificado diretamente nas ocorrências.
-
-Não crie pontos de atenção que não estejam presentes
-nos registros.
-`;
-
-
-    const userPrompt = `
-OCORRÊNCIAS DO TURNO:
-
-${material}
-`;
-
-
-    // =====================================================
-    // CHAMADA OPENROUTER
-    // =====================================================
-
-    const response =
-      await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-
-          method: 'POST',
-
-          headers: {
-
-            'Authorization':
-              `Bearer ${OPENROUTER_API_KEY}`,
-
-            'Content-Type':
-              'application/json',
-
-            'HTTP-Referer':
-              'https://ocorrencias-mandu.onrender.com',
-
-            'X-Title':
-              'CTT Diário de Turno - Mandu'
-
-          },
-
-          body: JSON.stringify({
-
-            model:
-              'openrouter/free',
-
-            messages: [
-
-              {
-                role:
-                  'system',
-
-                content:
-                  systemPrompt
-              },
-
-              {
-                role:
-                  'user',
-
-                content:
-                  userPrompt
-              }
-
-            ],
-
-            temperature:
-              0.2,
-
-            max_tokens:
-              2500
-
-          })
-
-        }
-      );
-
-
-    // =====================================================
-    // LÊ RESPOSTA
-    // =====================================================
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      console.error(
-        'Erro OpenRouter:',
-        JSON.stringify(data)
-      );
-
-
-      return res.status(500).json({
-
-        texto:
-          'Erro ao acessar a IA: ' +
-          (
-            data?.error?.message ||
-            'erro desconhecido no OpenRouter'
-          )
-
-      });
-
-    }
-
-
-    const textoIA =
-      data?.choices?.[0]?.message?.content?.trim();
-
-
-    if (!textoIA) {
-
-      console.error(
-        'OpenRouter não retornou texto:',
-        JSON.stringify(data)
-      );
-
-
-      return res.status(500).json({
-
-        texto:
-          'A IA não retornou um relatório válido.'
-
-      });
-
-    }
-
-
-    // =====================================================
-    // RETORNO PARA O INDEX
-    // =====================================================
-
-    return res.json({
-
-      success:
-        true,
-
-      texto:
-        textoIA
-
+      texto
     });
 
 
   } catch (error) {
 
     console.error(
-      'Erro /organizar-ia:',
+      'ERRO /organizar-ia:',
       error
     );
 
 
     return res.status(500).json({
-
       texto:
         'Erro ao organizar as ocorrências com IA: ' +
         (
           error?.message ||
           'erro desconhecido'
         )
-
     });
 
   }
@@ -608,33 +363,23 @@ app.get('/api/ocorrencias', async (req, res) => {
     if (!supabase) {
 
       return res.status(500).json({
-
         error:
           'Supabase não configurado no servidor.'
-
       });
 
     }
 
 
-    const {
-      data,
-      error
-    } =
+    const { data, error } =
       await supabase
-
         .from(TABLE)
-
         .select('*')
-
         .order(
           'created_at',
           {
-            ascending:
-              false
+            ascending: false
           }
         )
-
         .limit(500);
 
 
@@ -647,18 +392,14 @@ app.get('/api/ocorrencias', async (req, res) => {
 
 
       return res.status(500).json({
-
         error:
           'Erro ao carregar ocorrências.'
-
       });
 
     }
 
 
-    return res.json(
-      data || []
-    );
+    return res.json(data || []);
 
 
   } catch (error) {
@@ -670,10 +411,8 @@ app.get('/api/ocorrencias', async (req, res) => {
 
 
     return res.status(500).json({
-
       error:
         'Erro interno do servidor.'
-
     });
 
   }
@@ -692,10 +431,8 @@ app.post('/api/ocorrencias', async (req, res) => {
     if (!supabase) {
 
       return res.status(500).json({
-
         error:
           'Supabase não configurado no servidor.'
-
       });
 
     }
@@ -716,10 +453,8 @@ app.post('/api/ocorrencias', async (req, res) => {
     ) {
 
       return res.status(400).json({
-
         error:
           'O campo texto é obrigatório.'
-
       });
 
     }
@@ -743,7 +478,8 @@ app.post('/api/ocorrencias', async (req, res) => {
         texto.trim(),
 
       turno:
-        typeof turno === 'string'
+        typeof turno === 'string' &&
+        turno.trim()
           ? turno.trim()
           : null,
 
@@ -756,20 +492,11 @@ app.post('/api/ocorrencias', async (req, res) => {
     };
 
 
-    const {
-      data,
-      error
-    } =
+    const { data, error } =
       await supabase
-
         .from(TABLE)
-
-        .insert([
-          registro
-        ])
-
+        .insert([registro])
         .select('*')
-
         .single();
 
 
@@ -782,22 +509,16 @@ app.post('/api/ocorrencias', async (req, res) => {
 
 
       return res.status(500).json({
-
         error:
           'Erro ao salvar ocorrência.'
-
       });
 
     }
 
 
     return res.status(201).json({
-
-      success:
-        true,
-
+      success: true,
       data
-
     });
 
 
@@ -810,10 +531,8 @@ app.post('/api/ocorrencias', async (req, res) => {
 
 
     return res.status(500).json({
-
       error:
-        'Erro interno ao salvar ocorrência.'
-
+        'Erro interno do servidor.'
     });
 
   }
@@ -832,45 +551,31 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
     if (!supabase) {
 
       return res.status(500).json({
-
         error:
           'Supabase não configurado no servidor.'
-
       });
 
     }
 
 
-    const {
-      id
-    } = req.params;
+    const { id } = req.params;
 
 
     if (!id) {
 
       return res.status(400).json({
-
         error:
           'ID não informado.'
-
       });
 
     }
 
 
-    const {
-      error
-    } =
+    const { error } =
       await supabase
-
         .from(TABLE)
-
         .delete()
-
-        .eq(
-          'id',
-          id
-        );
+        .eq('id', id);
 
 
     if (error) {
@@ -882,22 +587,16 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 
 
       return res.status(500).json({
-
         error:
           'Erro ao excluir ocorrência.'
-
       });
 
     }
 
 
     return res.json({
-
-      success:
-        true,
-
+      success: true,
       id
-
     });
 
 
@@ -910,10 +609,8 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 
 
     return res.status(500).json({
-
       error:
-        'Erro interno ao excluir ocorrência.'
-
+        'Erro interno do servidor.'
     });
 
   }
@@ -925,37 +622,30 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 // ERRO GLOBAL
 // =========================================================
 
-app.use(
-  (err, req, res, next) => {
+app.use((err, req, res, next) => {
 
-    console.error(
-      'Erro não tratado:',
-      err
-    );
+  console.error(
+    'Erro não tratado:',
+    err
+  );
 
 
-    return res.status(500).json({
+  return res.status(500).json({
+    error:
+      'Erro interno do servidor.'
+  });
 
-      error:
-        'Erro interno do servidor.'
-
-    });
-
-  }
-);
+});
 
 
 // =========================================================
 // SERVIDOR
 // =========================================================
 
-app.listen(
-  PORT,
-  () => {
+app.listen(PORT, () => {
 
-    console.log(
-      `Servidor rodando na porta ${PORT}`
-    );
+  console.log(
+    `Servidor rodando na porta ${PORT}`
+  );
 
-  }
-);
+});

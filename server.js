@@ -34,10 +34,9 @@ const OPENROUTER_URL =
   'https://openrouter.ai/api/v1/chat/completions';
 
 /*
- * IMPORTANTE:
- * Não coloque nenhuma chave diretamente neste arquivo.
+ * Roteador gratuito da OpenRouter.
  *
- * Tudo deve ficar nas Environment Variables do Render.
+ * Não deixar chave de API no frontend.
  */
 
 const AI_MODEL = 'openrouter/free';
@@ -70,14 +69,21 @@ app.disable('x-powered-by');
 
 app.use(
   express.json({
-    limit: '1mb'
+    /*
+     * Não limitamos artificialmente a quantidade
+     * de ocorrências.
+     *
+     * O limite existe somente para evitar requisições
+     * absurdamente grandes que possam derrubar o servidor.
+     */
+    limit: '5mb'
   })
 );
 
 app.use(
   express.urlencoded({
     extended: false,
-    limit: '100kb'
+    limit: '1mb'
   })
 );
 
@@ -101,8 +107,14 @@ app.get('/', (req, res) => {
    FUNÇÕES AUXILIARES
 ========================================================= */
 
-function textoSeguro(valor, limite = 2000) {
-  if (valor === undefined || valor === null) {
+function textoSeguro(
+  valor,
+  limite = 10000
+) {
+  if (
+    valor === undefined ||
+    valor === null
+  ) {
     return '';
   }
 
@@ -113,19 +125,27 @@ function textoSeguro(valor, limite = 2000) {
 }
 
 function frenteSegura(valor) {
-  const frente = textoSeguro(valor, 30);
+  const frente =
+    textoSeguro(valor, 50);
 
   return frente || 'GERAL';
 }
 
 function turnoAtual() {
-  const hora = new Date().getHours();
+  const hora =
+    new Date().getHours();
 
-  if (hora >= 6 && hora < 14) {
+  if (
+    hora >= 6 &&
+    hora < 14
+  ) {
     return 'TURNO A';
   }
 
-  if (hora >= 14 && hora < 22) {
+  if (
+    hora >= 14 &&
+    hora < 22
+  ) {
     return 'TURNO B';
   }
 
@@ -147,11 +167,16 @@ function normalizarOcorrencia(item) {
   return {
     id: item.id,
     hora: item.hora || '',
-    frente: item.frente || 'GERAL',
-    texto: item.texto || '',
-    turno: item.turno || '',
-    unidade: item.unidade || 'MANDU',
-    created_at: item.created_at || null
+    frente:
+      item.frente || 'GERAL',
+    texto:
+      item.texto || '',
+    turno:
+      item.turno || '',
+    unidade:
+      item.unidade || 'MANDU',
+    created_at:
+      item.created_at || null
   };
 }
 
@@ -159,45 +184,65 @@ function normalizarOcorrencia(item) {
    STATUS
 ========================================================= */
 
-app.get('/api/status', async (req, res) => {
-  let supabaseStatus = 'ERRO';
+app.get(
+  '/api/status',
+  async (req, res) => {
 
-  if (supa) {
-    try {
-      const { error } = await supa
-        .from(TABLE)
-        .select('id')
-        .limit(1);
+    let supabaseStatus =
+      'ERRO';
+
+    if (supa) {
+
+      try {
+
+        const { error } =
+          await supa
+            .from(TABLE)
+            .select('id')
+            .limit(1);
+
+        supabaseStatus =
+          error
+            ? 'ERRO'
+            : 'OK';
+
+      } catch {
+
+        supabaseStatus =
+          'ERRO';
+      }
+
+    } else {
 
       supabaseStatus =
-        error ? 'ERRO' : 'OK';
-
-    } catch {
-      supabaseStatus = 'ERRO';
+        'NÃO CONFIGURADO';
     }
-  } else {
-    supabaseStatus = 'NÃO CONFIGURADO';
-  }
 
-  res.json({
-    status: 'online',
-    servidor: 'OK',
-    supabase: supabaseStatus,
-    openrouter: OPENROUTER_API_KEY
-      ? 'OK'
-      : 'NÃO CONFIGURADO',
-    modelo: AI_MODEL,
-    unidade: 'MANDU',
-    timestamp: new Date().toISOString()
-  });
-});
+    res.json({
+      status: 'online',
+      servidor: 'OK',
+      supabase:
+        supabaseStatus,
+      openrouter:
+        OPENROUTER_API_KEY
+          ? 'OK'
+          : 'NÃO CONFIGURADO',
+      modelo: AI_MODEL,
+      unidade: 'MANDU',
+      timestamp:
+        new Date().toISOString()
+    });
+  }
+);
 
 /* =========================================================
-   VERIFICAÇÃO DE CONFIGURAÇÃO
+   VERIFICAÇÕES
 ========================================================= */
 
 function exigirSupabase(res) {
+
   if (!supa) {
+
     res.status(500).json({
       error:
         'Supabase não configurado no Render.'
@@ -210,7 +255,9 @@ function exigirSupabase(res) {
 }
 
 function exigirIA(res) {
+
   if (!OPENROUTER_API_KEY) {
+
     res.status(500).json({
       error:
         'OPENROUTER_API_KEY não configurada no Render.'
@@ -226,146 +273,167 @@ function exigirIA(res) {
    GET OCORRÊNCIAS
 ========================================================= */
 
-app.get('/api/ocorrencias', async (req, res) => {
-  if (!exigirSupabase(res)) {
-    return;
-  }
+app.get(
+  '/api/ocorrencias',
+  async (req, res) => {
 
-  try {
-    const { data, error } = await supa
-      .from(TABLE)
-      .select(
-        'id,hora,frente,texto,turno,unidade,created_at'
-      )
-      .order(
-        'created_at',
-        {
-          ascending: false
-        }
-      )
-      .limit(500);
-
-    if (error) {
-      console.error(
-        'Erro Supabase GET:',
-        error
-      );
-
-      return res.status(500).json({
-        error:
-          'Erro ao carregar ocorrências.'
-      });
+    if (!exigirSupabase(res)) {
+      return;
     }
 
-    res.json(
-      (data || []).map(normalizarOcorrencia)
-    );
+    try {
 
-  } catch (erro) {
-    console.error(
-      'Erro /api/ocorrencias:',
-      erro
-    );
+      const {
+        data,
+        error
+      } = await supa
+        .from(TABLE)
+        .select(
+          'id,hora,frente,texto,turno,unidade,created_at'
+        )
+        .order(
+          'created_at',
+          {
+            ascending: false
+          }
+        );
 
-    res.status(500).json({
-      error:
-        'Erro interno ao carregar ocorrências.'
-    });
+      if (error) {
+
+        console.error(
+          'Erro Supabase GET:',
+          error
+        );
+
+        return res.status(500).json({
+          error:
+            'Erro ao carregar ocorrências.'
+        });
+      }
+
+      res.json(
+        (data || [])
+          .map(normalizarOcorrencia)
+      );
+
+    } catch (erro) {
+
+      console.error(
+        'Erro /api/ocorrencias:',
+        erro
+      );
+
+      res.status(500).json({
+        error:
+          'Erro interno ao carregar ocorrências.'
+      });
+    }
   }
-});
+);
 
 /* =========================================================
    POST OCORRÊNCIA
 ========================================================= */
 
-app.post('/api/ocorrencias', async (req, res) => {
-  if (!exigirSupabase(res)) {
-    return;
-  }
+app.post(
+  '/api/ocorrencias',
+  async (req, res) => {
 
-  try {
-    const texto = textoSeguro(
-      req.body?.texto,
-      2000
-    );
-
-    if (!texto) {
-      return res.status(400).json({
-        error:
-          'Digite uma ocorrência.'
-      });
+    if (!exigirSupabase(res)) {
+      return;
     }
 
-    const hora =
-      textoSeguro(
-        req.body?.hora,
-        20
-      ) || horaAtual();
+    try {
 
-    const frente =
-      frenteSegura(
-        req.body?.frente
-      );
+      const texto =
+        textoSeguro(
+          req.body?.texto,
+          10000
+        );
 
-    const turno =
-      textoSeguro(
-        req.body?.turno,
-        30
-      ) || turnoAtual();
+      if (!texto) {
 
-    const unidade =
-      textoSeguro(
-        req.body?.unidade,
-        30
-      ) || 'MANDU';
+        return res.status(400).json({
+          error:
+            'Digite uma ocorrência.'
+        });
+      }
 
-    const novaOcorrencia = {
-      hora,
-      frente,
-      texto,
-      turno,
-      unidade
-    };
+      const hora =
+        textoSeguro(
+          req.body?.hora,
+          20
+        ) || horaAtual();
 
-    const {
-      data,
-      error
-    } = await supa
-      .from(TABLE)
-      .insert(novaOcorrencia)
-      .select(
-        'id,hora,frente,texto,turno,unidade,created_at'
-      )
-      .single();
+      const frente =
+        frenteSegura(
+          req.body?.frente
+        );
 
-    if (error) {
-      console.error(
-        'Erro Supabase INSERT:',
+      const turno =
+        textoSeguro(
+          req.body?.turno,
+          30
+        ) || turnoAtual();
+
+      const unidade =
+        textoSeguro(
+          req.body?.unidade,
+          30
+        ) || 'MANDU';
+
+      const novaOcorrencia = {
+        hora,
+        frente,
+        texto,
+        turno,
+        unidade
+      };
+
+      const {
+        data,
         error
+      } = await supa
+        .from(TABLE)
+        .insert(
+          novaOcorrencia
+        )
+        .select(
+          'id,hora,frente,texto,turno,unidade,created_at'
+        )
+        .single();
+
+      if (error) {
+
+        console.error(
+          'Erro Supabase INSERT:',
+          error
+        );
+
+        return res.status(500).json({
+          error:
+            'Erro ao salvar ocorrência.'
+        });
+      }
+
+      res.status(201).json(
+        normalizarOcorrencia(data)
       );
 
-      return res.status(500).json({
+    } catch (erro) {
+
+      console.error(
+        'Erro POST ocorrência:',
+        erro
+      );
+
+      res.status(500).json({
         error:
-          'Erro ao salvar ocorrência.'
+          'Erro interno ao salvar ocorrência.'
       });
     }
-
-    res.status(201).json(
-      normalizarOcorrencia(data)
-    );
-
-  } catch (erro) {
-    console.error(
-      'Erro POST ocorrência:',
-      erro
-    );
-
-    res.status(500).json({
-      error:
-        'Erro interno ao salvar ocorrência.'
-    });
   }
-});
+);
 
 /* =========================================================
    PUT OCORRÊNCIA
@@ -380,6 +448,7 @@ app.put(
     }
 
     try {
+
       const id =
         textoSeguro(
           req.params.id,
@@ -387,42 +456,48 @@ app.put(
         );
 
       if (!id) {
+
         return res.status(400).json({
-          error: 'ID inválido.'
+          error:
+            'ID inválido.'
         });
       }
 
-      /*
-       * IMPORTANTE:
-       * Só altera o que realmente foi enviado.
-       *
-       * Assim, ao editar somente o texto,
-       * não perdemos hora nem frente.
-       */
-
       const alteracao = {};
+
+      /*
+       * Só altera o que foi enviado.
+       *
+       * Assim editar o texto não apaga
+       * a hora ou a frente.
+       */
 
       if (
         req.body?.texto !== undefined
       ) {
-        const texto = textoSeguro(
-          req.body.texto,
-          2000
-        );
+
+        const texto =
+          textoSeguro(
+            req.body.texto,
+            10000
+          );
 
         if (!texto) {
+
           return res.status(400).json({
             error:
               'O texto da ocorrência não pode ficar vazio.'
           });
         }
 
-        alteracao.texto = texto;
+        alteracao.texto =
+          texto;
       }
 
       if (
         req.body?.hora !== undefined
       ) {
+
         alteracao.hora =
           textoSeguro(
             req.body.hora,
@@ -433,6 +508,7 @@ app.put(
       if (
         req.body?.frente !== undefined
       ) {
+
         alteracao.frente =
           frenteSegura(
             req.body.frente
@@ -440,8 +516,10 @@ app.put(
       }
 
       if (
-        Object.keys(alteracao).length === 0
+        Object.keys(alteracao)
+          .length === 0
       ) {
+
         return res.status(400).json({
           error:
             'Nenhum campo para atualizar.'
@@ -461,6 +539,7 @@ app.put(
         .single();
 
       if (error) {
+
         console.error(
           'Erro Supabase UPDATE:',
           error
@@ -477,6 +556,7 @@ app.put(
       );
 
     } catch (erro) {
+
       console.error(
         'Erro PUT ocorrência:',
         erro
@@ -503,6 +583,7 @@ app.delete(
     }
 
     try {
+
       const id =
         textoSeguro(
           req.params.id,
@@ -510,8 +591,10 @@ app.delete(
         );
 
       if (!id) {
+
         return res.status(400).json({
-          error: 'ID inválido.'
+          error:
+            'ID inválido.'
         });
       }
 
@@ -523,6 +606,7 @@ app.delete(
         .eq('id', id);
 
       if (error) {
+
         console.error(
           'Erro Supabase DELETE:',
           error
@@ -539,6 +623,7 @@ app.delete(
       });
 
     } catch (erro) {
+
       console.error(
         'Erro DELETE ocorrência:',
         erro
@@ -553,7 +638,7 @@ app.delete(
 );
 
 /* =========================================================
-   DELETE TODAS
+   DELETE TODAS AS OCORRÊNCIAS
 ========================================================= */
 
 app.delete(
@@ -565,11 +650,6 @@ app.delete(
     }
 
     try {
-      /*
-       * UUID impossível de existir.
-       * Mantemos o filtro porque o Supabase
-       * exige uma condição no DELETE.
-       */
 
       const {
         error
@@ -582,6 +662,7 @@ app.delete(
         );
 
       if (error) {
+
         console.error(
           'Erro Supabase DELETE ALL:',
           error
@@ -598,6 +679,7 @@ app.delete(
       });
 
     } catch (erro) {
+
       console.error(
         'Erro limpar ocorrências:',
         erro
@@ -612,20 +694,33 @@ app.delete(
 );
 
 /* =========================================================
-   PREPARAÇÃO DO CONTEXTO DA IA
+   PREPARAR OCORRÊNCIAS PARA IA
 ========================================================= */
 
+/*
+ * ATENÇÃO:
+ *
+ * Aqui NÃO existe mais:
+ *
+ * .slice(0, 120)
+ *
+ * Portanto, todas as ocorrências enviadas
+ * pelo frontend serão consideradas.
+ */
+
 function prepararOcorrenciasIA(
-  ocorrencias,
-  limite = 120
+  ocorrencias
 ) {
-  if (!Array.isArray(ocorrencias)) {
+
+  if (
+    !Array.isArray(ocorrencias)
+  ) {
     return [];
   }
 
   return ocorrencias
-    .slice(0, limite)
     .map(item => ({
+
       hora:
         textoSeguro(
           item?.hora,
@@ -640,58 +735,203 @@ function prepararOcorrenciasIA(
       texto:
         textoSeguro(
           item?.texto,
-          600
+          10000
         )
+
     }))
-    .filter(item => item.texto);
+    .filter(
+      item => item.texto
+    );
 }
 
 /* =========================================================
-   PROMPT BASE
+   AGRUPAMENTO POR FRENTE
+========================================================= */
+
+/*
+ * Fazemos o agrupamento no servidor.
+ *
+ * Isso ajuda a IA e também garante que a estrutura
+ * das informações chegue organizada.
+ */
+
+function agruparPorFrente(
+  ocorrencias
+) {
+
+  const grupos = {};
+
+  for (
+    const ocorrencia of ocorrencias
+  ) {
+
+    const frente =
+      ocorrencia.frente ||
+      'GERAL';
+
+    if (!grupos[frente]) {
+      grupos[frente] = [];
+    }
+
+    grupos[frente].push(
+      ocorrencia
+    );
+  }
+
+  return grupos;
+}
+
+function gerarContextoPorFrente(
+  ocorrencias
+) {
+
+  const grupos =
+    agruparPorFrente(
+      ocorrencias
+    );
+
+  return Object.entries(
+    grupos
+  )
+    .map(
+      (
+        [frente, itens]
+      ) => {
+
+        const lista =
+          itens
+            .map(
+              (item, index) =>
+                `${index + 1}. [${item.hora || '-'}] ${item.texto}`
+            )
+            .join('\n');
+
+        return `
+FRENTE ${frente}
+
+${lista}
+        `.trim();
+
+      }
+    )
+    .join('\n\n');
+}
+
+/* =========================================================
+   PROMPT PRINCIPAL DA IA
 ========================================================= */
 
 const SYSTEM_IA = `
 Você é o copiloto operacional do CTT Diário de Turno da unidade MANDU.
 
-Analise somente os dados fornecidos.
+Sua função é transformar as ocorrências reais do turno em uma
+mensagem objetiva, organizada e pronta para ser enviada no
+grupo de WhatsApp da gerência.
+
+REGRA PRINCIPAL:
+
+Analise SOMENTE as informações fornecidas.
 
 NÃO invente:
 - números;
+- produção;
 - capacidades;
 - disponibilidade;
 - causas;
-- produção;
-- metas;
-- tempos;
 - equipamentos;
+- tempos;
+- metas;
 - pessoas;
-- fatos.
+- fatos;
+- ações que não estejam sustentadas pelas ocorrências.
 
-Quando fizer uma sugestão, deixe claro que é SUGESTÃO.
+Quando fizer uma sugestão sua, identifique como SUGESTÃO.
 
-Responda de forma:
-- objetiva;
+A mensagem deve ter linguagem:
+- profissional;
 - técnica;
 - direta;
-- curta;
-- prática;
-- orientada à operação.
+- gerencial;
+- objetiva;
+- adequada para WhatsApp.
 
-Priorize:
-1. principais ocorrências;
-2. problemas repetidos;
-3. riscos;
-4. impacto operacional;
-5. pontos de atenção;
-6. ação recomendada.
+NÃO faça introdução longa.
 
-Não repita desnecessariamente as ocorrências.
+NÃO escreva explicações sobre como você analisou.
 
-Não faça introduções longas.
+NÃO diga que você é uma IA.
 
-Use títulos curtos e bullets quando ajudar.
+NÃO use linguagem acadêmica.
 
-Pense como um copiloto operacional apoiando a tomada de decisão do gestor.
+NÃO repita a mesma informação várias vezes.
+
+IMPORTANTE:
+
+As ocorrências devem ser organizadas POR FRENTE.
+
+Cada frente deve possuir seus próprios tópicos.
+
+Quando uma informação não estiver vinculada a uma frente específica,
+utilize a categoria GERAL.
+
+Estrutura obrigatória:
+
+*📋 DIÁRIO DE TURNO — MANDU*
+
+*FRENTE 501*
+• Ocorrência relevante...
+• Ocorrência relevante...
+
+*FRENTE 502*
+• Ocorrência relevante...
+• Ocorrência relevante...
+
+E assim por diante somente para as frentes que possuem ocorrências.
+
+Depois das frentes, faça:
+
+*⚠️ PONTOS DE ATENÇÃO*
+• ...
+
+*🚨 RISCOS / IMPACTOS*
+• ...
+
+*🎯 AÇÕES / ACOMPANHAMENTOS*
+• ...
+
+Se não houver informação suficiente para alguma dessas categorias,
+não invente.
+
+Pode escrever:
+
+• Sem ponto adicional identificado nas ocorrências registradas.
+
+A mensagem deve estar pronta para COPIAR E COLAR no WhatsApp.
+
+Use *asteriscos* para negrito no WhatsApp.
+
+Exemplo:
+
+*FRENTE 503*
+• 02 trações em manutenção, conforme registro do turno.
+• Ponto de atenção para continuidade operacional.
+
+Não transforme sugestão em fato.
+
+Priorize fatos registrados e impactos claramente relacionados
+às ocorrências.
+
+Se houver ocorrências repetidas sobre o mesmo assunto,
+consolide-as em um único tópico, mantendo a informação importante.
+
+Se houver horários diferentes que sejam importantes,
+preserve-os.
+
+Se uma frente tiver muitas ocorrências,
+priorize as mais relevantes e consolide as semelhantes.
+
+O objetivo é gerar uma comunicação gerencial curta,
+clara e acionável.
 `;
 
 /* =========================================================
@@ -704,26 +944,30 @@ async function chamarIA(
 ) {
 
   if (!OPENROUTER_API_KEY) {
+
     throw new Error(
       'OPENROUTER_API_KEY não configurada no Render.'
     );
   }
 
   const {
-    maxTokens = 600,
+    maxTokens = 1200,
     temperature = 0.1
   } = opcoes;
 
   /*
-   * Limita o tamanho das mensagens.
-   * Isso reduz custo, latência e consumo de contexto.
+   * NÃO existe limite artificial de quantidade
+   * de ocorrências aqui.
+   *
+   * O limite abaixo é apenas para evitar mensagens
+   * absurdamente gigantes no histórico da conversa.
    */
 
   const mensagensProcessadas =
     Array.isArray(messages)
       ? messages
-          .slice(-10)
           .map(msg => ({
+
             role:
               msg?.role === 'system'
                 ? 'system'
@@ -734,51 +978,52 @@ async function chamarIA(
             content:
               textoSeguro(
                 msg?.content,
-                12000
+                100000
               )
+
           }))
-          .filter(msg => msg.content)
+          .filter(
+            msg => msg.content
+          )
       : [];
 
-  /*
-   * MÍNIMO DE RACIOCÍNIO.
-   *
-   * effort=minimal reduz o espaço dedicado
-   * a raciocínio nos modelos compatíveis.
-   *
-   * Não usamos include_reasoning.
-   * Portanto o frontend recebe somente a resposta.
-   */
-
   const body = {
-    model: AI_MODEL,
 
-    messages: mensagensProcessadas,
+    model:
+      AI_MODEL,
+
+    messages:
+      mensagensProcessadas,
 
     temperature,
 
     max_completion_tokens:
       Math.min(
         Math.max(
-          Number(maxTokens) || 600,
-          100
+          Number(maxTokens) || 1200,
+          200
         ),
-        1200
+        2500
       ),
+
+    /*
+     * Raciocínio mínimo.
+     *
+     * A prioridade aqui é resposta operacional rápida.
+     */
 
     reasoning: {
       effort: 'minimal'
     }
+
   };
 
-  let ultimaResposta = null;
   let ultimoErro = null;
 
   /*
-   * No máximo 2 tentativas.
+   * Máximo de duas tentativas.
    *
-   * A segunda tentativa só acontece
-   * para rate limit do provedor upstream.
+   * Evita ficar martelando o pool gratuito.
    */
 
   for (
@@ -789,88 +1034,117 @@ async function chamarIA(
 
     try {
 
-      const resposta = await fetch(
-        OPENROUTER_URL,
-        {
-          method: 'POST',
+      const resposta =
+        await fetch(
+          OPENROUTER_URL,
+          {
 
-          headers: {
-            Authorization:
-              `Bearer ${OPENROUTER_API_KEY}`,
+            method: 'POST',
 
-            'Content-Type':
-              'application/json',
+            headers: {
 
-            'HTTP-Referer':
-              'https://ocorrencias-mandu.onrender.com',
+              Authorization:
+                `Bearer ${OPENROUTER_API_KEY}`,
 
-            'X-Title':
-              'CTT Diário de Turno - MANDU'
-          },
+              'Content-Type':
+                'application/json',
 
-          body:
-            JSON.stringify(body)
-        }
-      );
+              'HTTP-Referer':
+                'https://ocorrencias-mandu.onrender.com',
 
-      ultimaResposta = resposta;
+              'X-Title':
+                'CTT Diário de Turno - MANDU'
+
+            },
+
+            body:
+              JSON.stringify(body)
+
+          }
+        );
 
       let dados = {};
 
       try {
+
         dados =
           await resposta.json();
+
       } catch {
+
         dados = {};
+
       }
+
+      /* -----------------------------------------
+         SUCESSO
+      ----------------------------------------- */
 
       if (resposta.ok) {
 
         const mensagem =
-          dados?.choices?.[0]?.message;
+          dados
+            ?.choices
+            ?.at(0)
+            ?.message;
 
         let conteudo =
           mensagem?.content;
 
         /*
-         * Alguns modelos podem retornar content
-         * como array de partes.
+         * Alguns modelos podem retornar partes.
          */
 
         if (
-          Array.isArray(conteudo)
+          Array.isArray(
+            conteudo
+          )
         ) {
+
           conteudo =
             conteudo
               .map(parte => {
+
                 if (
-                  typeof parte === 'string'
+                  typeof parte ===
+                  'string'
                 ) {
                   return parte;
                 }
 
-                return parte?.text || '';
+                return (
+                  parte?.text ||
+                  ''
+                );
+
               })
               .join('');
-        }
 
-        /*
-         * Fallback para APIs compatíveis.
-         */
+        }
 
         if (
           !conteudo &&
-          typeof dados?.choices?.[0]
-            ?.text === 'string'
+          typeof dados
+            ?.choices
+            ?.at(0)
+            ?.text ===
+            'string'
         ) {
+
           conteudo =
-            dados.choices[0].text;
+            dados
+              .choices
+              .at(0)
+              .text;
         }
 
         if (
           !conteudo &&
-          typeof dados?.output_text === 'string'
+          typeof dados
+            ?.output_text ===
+            'string'
         ) {
+
           conteudo =
             dados.output_text;
         }
@@ -878,7 +1152,7 @@ async function chamarIA(
         conteudo =
           textoSeguro(
             conteudo,
-            12000
+            50000
           );
 
         if (conteudo) {
@@ -886,18 +1160,14 @@ async function chamarIA(
         }
 
         /*
-         * Se o modelo retornou apenas reasoning
-         * e nenhum conteúdo final, não mostramos
-         * o raciocínio ao usuário.
+         * Não exibimos reasoning puro.
          */
 
-        const temReasoning =
-          Boolean(
-            mensagem?.reasoning ||
-            mensagem?.reasoning_details
-          );
+        if (
+          mensagem?.reasoning ||
+          mensagem?.reasoning_details
+        ) {
 
-        if (temReasoning) {
           throw new Error(
             'A IA utilizou raciocínio, mas não retornou resposta final.'
           );
@@ -908,6 +1178,10 @@ async function chamarIA(
         );
       }
 
+      /* -----------------------------------------
+         ERRO
+      ----------------------------------------- */
+
       const erro =
         dados?.error || {};
 
@@ -916,16 +1190,20 @@ async function chamarIA(
         `OpenRouter retornou HTTP ${resposta.status}`;
 
       const limitSource =
-        erro?.metadata?.limit_source ||
+        erro
+          ?.metadata
+          ?.limit_source ||
         '';
 
-      const upstream429 =
+      const rateLimitUpstream =
         resposta.status === 429 &&
         (
           limitSource ===
             'upstream_provider_shared_pool' ||
 
-          String(mensagemErro)
+          String(
+            mensagemErro
+          )
             .toLowerCase()
             .includes(
               'temporarily rate-limited upstream'
@@ -933,12 +1211,12 @@ async function chamarIA(
         );
 
       /*
-       * Rate limit upstream:
-       * espera um pouco e tenta novamente.
+       * Retry apenas para rate limit
+       * do provedor gratuito.
        */
 
       if (
-        upstream429 &&
+        rateLimitUpstream &&
         tentativa === 1
       ) {
 
@@ -948,19 +1226,23 @@ async function chamarIA(
 
         const retryAfter =
           Number(
-            resposta.headers.get(
-              'retry-after'
-            )
+            resposta
+              .headers
+              .get(
+                'retry-after'
+              )
           );
 
         const espera =
-          Number.isFinite(retryAfter)
+          Number.isFinite(
+            retryAfter
+          )
             ? Math.min(
                 Math.max(
                   retryAfter * 1000,
                   700
                 ),
-                2500
+                3000
               )
             : 1200;
 
@@ -1002,10 +1284,11 @@ async function chamarIA(
 
     } catch (erro) {
 
-      ultimoErro = erro;
+      ultimoErro =
+        erro;
 
       /*
-       * Se foi erro de rede, tenta mais uma vez.
+       * Pequeno retry para erro de rede.
        */
 
       if (
@@ -1043,17 +1326,16 @@ async function chamarIA(
     }
   }
 
-  if (ultimoErro) {
-    throw ultimoErro;
-  }
-
-  throw new Error(
-    'Não foi possível obter resposta da IA.'
+  throw (
+    ultimoErro ||
+    new Error(
+      'Não foi possível obter resposta da IA.'
+    )
   );
 }
 
 /* =========================================================
-   ORGANIZAR TURNO COM IA
+   ORGANIZAR TURNO
 ========================================================= */
 
 app.post(
@@ -1068,11 +1350,13 @@ app.post(
 
       const ocorrencias =
         prepararOcorrenciasIA(
-          req.body?.ocorrencias,
-          120
+          req.body?.ocorrencias
         );
 
-      if (!ocorrencias.length) {
+      if (
+        !ocorrencias.length
+      ) {
+
         return res.status(400).json({
           error:
             'Não há ocorrências suficientes para organizar o turno.'
@@ -1080,62 +1364,76 @@ app.post(
       }
 
       /*
-       * Colocamos em ordem cronológica
-       * para facilitar a leitura da IA.
+       * Mantemos a ordem em que chegaram
+       * para preservar a sequência operacional.
        */
 
-      const ordemCronologica =
-        [...ocorrencias].reverse();
-
       const contexto =
-        ordemCronologica
-          .map((item, index) => {
+        gerarContextoPorFrente(
+          ocorrencias
+        );
 
-            return [
-              `${index + 1}.`,
-              `Hora: ${item.hora || '-'}`,
-              `Frente: ${item.frente}`,
-              `Ocorrência: ${item.texto}`
-            ].join(' | ');
+      const total =
+        ocorrencias.length;
 
-          })
-          .join('\n');
+      const frentes =
+        [
+          ...new Set(
+            ocorrencias.map(
+              item =>
+                item.frente
+            )
+          )
+        ];
 
       const messages = [
 
         {
-          role: 'system',
-          content: SYSTEM_IA
+          role:
+            'system',
+
+          content:
+            SYSTEM_IA
         },
 
         {
-          role: 'user',
+
+          role:
+            'user',
 
           content: `
-Organize o turno abaixo.
+Organize as ocorrências completas do turno.
 
 UNIDADE: MANDU
 
-OCORRÊNCIAS:
+TOTAL DE OCORRÊNCIAS: ${total}
+
+FRENTES IDENTIFICADAS:
+${frentes.join(', ')}
+
+OCORRÊNCIAS AGRUPADAS POR FRENTE:
+
 ${contexto}
 
-Entregue um resumo gerencial curto.
+Gere agora a mensagem FINAL para o grupo da gerência.
 
-Formato preferencial:
+A mensagem deve:
 
-RESUMO DO TURNO
-- ...
+- separar claramente cada frente;
+- colocar as ocorrências daquela frente em tópicos;
+- consolidar ocorrências repetidas;
+- destacar pontos de atenção;
+- destacar riscos e impactos;
+- destacar ações e acompanhamentos;
+- usar *negrito* no padrão WhatsApp;
+- ser objetiva;
+- estar pronta para copiar e colar.
 
-PONTOS DE ATENÇÃO
-- ...
+NÃO coloque comentários fora da mensagem.
 
-RISCOS
-- ...
+NÃO explique o que você fez.
 
-AÇÕES RECOMENDADAS
-- ...
-
-Não invente informações.
+ENTREGUE SOMENTE A MENSAGEM FINAL.
 `
         }
 
@@ -1145,7 +1443,7 @@ Não invente informações.
         await chamarIA(
           messages,
           {
-            maxTokens: 650,
+            maxTokens: 1800,
             temperature: 0.1
           }
         );
@@ -1175,7 +1473,8 @@ Não invente informações.
           : 500;
 
       res.status(status).json({
-        error: mensagem
+        error:
+          mensagem
       });
     }
   }
@@ -1197,14 +1496,13 @@ app.post(
 
       const ocorrencias =
         prepararOcorrenciasIA(
-          req.body?.ocorrencias,
-          120
+          req.body?.ocorrencias
         );
 
       const pergunta =
         textoSeguro(
           req.body?.pergunta,
-          2000
+          5000
         );
 
       const historico =
@@ -1212,32 +1510,40 @@ app.post(
           req.body?.historico
         )
           ? req.body.historico
-              .slice(-8)
+              .slice(-10)
               .map(msg => ({
+
                 role:
-                  msg?.role === 'assistant'
+                  msg?.role ===
+                  'assistant'
                     ? 'assistant'
                     : 'user',
 
                 content:
                   textoSeguro(
                     msg?.content,
-                    3000
+                    10000
                   )
+
               }))
               .filter(
-                msg => msg.content
+                msg =>
+                  msg.content
               )
           : [];
 
       if (!pergunta) {
+
         return res.status(400).json({
           error:
             'Digite uma pergunta.'
         });
       }
 
-      if (!ocorrencias.length) {
+      if (
+        !ocorrencias.length
+      ) {
+
         return res.status(400).json({
           error:
             'Ainda não existem ocorrências suficientes para uma análise.'
@@ -1245,28 +1551,23 @@ app.post(
       }
 
       const contexto =
-        [...ocorrencias]
-          .reverse()
-          .map((item, index) => {
-
-            return [
-              `${index + 1}.`,
-              `[${item.hora || '-'}]`,
-              `[${item.frente}]`,
-              item.texto
-            ].join(' ');
-
-          })
-          .join('\n');
+        gerarContextoPorFrente(
+          ocorrencias
+        );
 
       const messages = [
 
         {
-          role: 'system',
+
+          role:
+            'system',
+
           content: `
 ${SYSTEM_IA}
 
 Você está respondendo perguntas sobre o turno inteiro.
+
+Analise todas as frentes.
 
 Pode analisar:
 - problemas repetidos;
@@ -1282,27 +1583,31 @@ Pode analisar:
 - plano de ação;
 - possíveis deslocamentos de recursos.
 
-ATENÇÃO:
-
 Não determine uma decisão como fato.
 
-Quando recomendar alguma ação, escreva como sugestão.
+Quando recomendar alguma ação,
+identifique como SUGESTÃO.
 
-Se uma decisão depender de dados que não foram fornecidos,
-diga quais dados precisam ser confirmados.
+Se uma decisão depender de dados que
+não foram fornecidos, diga quais dados
+precisam ser confirmados.
 
-Nunca invente capacidade, produtividade, distância,
-quantidade de equipamentos ou disponibilidade.
+Nunca invente capacidade,
+produtividade, distância,
+quantidade de equipamentos
+ou disponibilidade.
 `
         },
 
         ...historico,
 
         {
-          role: 'user',
+
+          role:
+            'user',
 
           content: `
-OCORRÊNCIAS DO TURNO:
+OCORRÊNCIAS COMPLETAS DO TURNO:
 
 ${contexto}
 
@@ -1310,15 +1615,17 @@ PERGUNTA DO GESTOR:
 
 ${pergunta}
 
-Responda diretamente à pergunta.
+Responda diretamente.
 
 Se possível, entregue:
-1. leitura do cenário;
-2. impacto operacional;
-3. sugestão de ação;
-4. o que precisa ser confirmado.
 
-Se não houver dados suficientes, diga claramente.
+1. LEITURA DO CENÁRIO
+2. IMPACTO OPERACIONAL
+3. SUGESTÃO DE AÇÃO
+4. O QUE CONFIRMAR
+
+Se não houver dados suficientes,
+diga claramente.
 `
         }
 
@@ -1328,7 +1635,7 @@ Se não houver dados suficientes, diga claramente.
         await chamarIA(
           messages,
           {
-            maxTokens: 750,
+            maxTokens: 1200,
             temperature: 0.15
           }
         );
@@ -1344,12 +1651,10 @@ Se não houver dados suficientes, diga claramente.
         erro
       );
 
-      const mensagem =
-        erro?.message ||
-        'Erro ao consultar a IA.';
-
       res.status(500).json({
-        error: mensagem
+        error:
+          erro?.message ||
+          'Erro ao consultar a IA.'
       });
     }
   }
@@ -1362,6 +1667,7 @@ Se não houver dados suficientes, diga claramente.
 app.use(
   '/api',
   (req, res) => {
+
     res.status(404).json({
       error:
         'Rota da API não encontrada.'
@@ -1370,7 +1676,7 @@ app.use(
 );
 
 /* =========================================================
-   TRATAMENTO GLOBAL DE ERROS
+   ERRO GLOBAL
 ========================================================= */
 
 app.use(
@@ -1433,6 +1739,10 @@ app.listen(
 
     console.log(
       'Raciocínio IA: mínimo'
+    );
+
+    console.log(
+      'Organização: por frente + mensagem WhatsApp'
     );
   }
 );

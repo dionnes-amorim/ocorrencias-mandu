@@ -142,9 +142,7 @@ app.post('/organizar-ia', async (req, res) => {
     // -------------------------------------------------------
 
     const prompt = `
-Você é responsável por organizar o Diário de Turno do CTT da unidade Mandu.
-
-Transforme as ocorrências operacionais abaixo em um relatório profissional, objetivo e fácil de ler.
+Organize as ocorrências do Diário de Turno do CTT da unidade Mandu em um relatório profissional, objetivo e fácil de ler.
 
 REGRAS:
 
@@ -157,10 +155,11 @@ REGRAS:
 - Não invente pessoas.
 - Não altere os números das frentes.
 - Preserve os fatos registrados.
-- Corrija erros de português.
-- Corrija erros óbvios de transcrição.
+- Corrija apenas erros claros de português.
+- Não tente adivinhar palavras, equipamentos, nomes ou termos técnicos.
+- Se uma informação estiver ambígua, preserve o texto original em vez de inventar uma correção.
 - Agrupe ocorrências da mesma frente.
-- Mantenha os horários.
+- Mantenha os horários informados.
 - Destaque manutenção, parada, indisponibilidade, atraso ou risco somente quando essas informações estiverem registradas.
 - Não transforme possibilidade em fato.
 - Não faça previsões.
@@ -168,27 +167,46 @@ REGRAS:
 - Use linguagem técnica e profissional.
 - Seja objetivo.
 - Não explique o que você fez.
-- Entregue somente o relatório.
+- Não explique suas decisões.
+- Não faça análise extensa das ocorrências.
+- Entregue diretamente o relatório final.
 
 FORMATO:
 
 CTT - DIÁRIO DE TURNO | MANDU
 
-[Frente]
+[FRENTE 501]
 - HH:MM — ocorrência.
 
-[Outra Frente]
+[FRENTE 502]
+- HH:MM — ocorrência.
+
+[FRENTE 503]
+- HH:MM — ocorrência.
+
+[FRENTE 504]
+- HH:MM — ocorrência.
+
+[FRENTE 505]
+- HH:MM — ocorrência.
+
+[FRENTE 506]
 - HH:MM — ocorrência.
 
 [GERAL]
 - HH:MM — ocorrência.
 
-Se houver informações relevantes, ao final:
+Ao final, somente se houver informações claramente relevantes:
 
 PONTOS DE ATENÇÃO
 - ponto operacional relevante.
 
-Só inclua pontos de atenção que estejam claramente presentes nas ocorrências.
+Não crie pontos de atenção que não estejam presentes nas ocorrências.
+
+IMPORTANTE:
+Produza diretamente o relatório final.
+Não faça explicações antes do relatório.
+Não faça explicações depois do relatório.
 
 OCORRÊNCIAS:
 
@@ -211,8 +229,10 @@ ${material}
         headers: {
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
+
           'HTTP-Referer':
             'https://ocorrencias-mandu.onrender.com',
+
           'X-Title':
             'CTT Diário de Turno - Mandu'
         },
@@ -227,8 +247,13 @@ ${material}
             }
           ],
 
-          temperature: 0.2,
-          max_tokens: 2000
+          temperature: 0.1,
+
+          max_tokens: 3000,
+
+          reasoning: {
+            effort: 'low'
+          }
         })
       }
     );
@@ -245,8 +270,8 @@ ${material}
     );
 
     console.log(
-      'Resposta OpenRouter:',
-      JSON.stringify(data, null, 2)
+      'Finish reason:',
+      data?.choices?.[0]?.finish_reason
     );
 
     // -------------------------------------------------------
@@ -267,7 +292,8 @@ ${material}
         'erro desconhecido';
 
       return res.status(500).json({
-        texto: 'Erro OpenRouter: ' + mensagemErro
+        texto:
+          'Erro OpenRouter: ' + mensagemErro
       });
     }
 
@@ -281,19 +307,19 @@ ${material}
       '';
 
     // -------------------------------------------------------
-    // VALIDAR TEXTO
+    // VERIFICAR SE RECEBEU TEXTO
     // -------------------------------------------------------
 
     if (!texto) {
 
       console.error(
-        'OpenRouter respondeu sem texto:',
+        'OpenRouter não retornou conteúdo final:',
         JSON.stringify(data, null, 2)
       );
 
       return res.status(500).json({
         texto:
-          'A IA respondeu, mas não retornou texto. Verifique os logs do Render.'
+          'A IA não conseguiu gerar o relatório. Tente novamente.'
       });
     }
 
@@ -411,6 +437,7 @@ app.post('/api/ocorrencias', async (req, res) => {
       typeof texto !== 'string' ||
       !texto.trim()
     ) {
+
       return res.status(400).json({
         error:
           'O campo texto é obrigatório.'

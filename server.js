@@ -6,21 +6,16 @@ import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-const TABLE = 'ocorrencias_mandu';
-
 /* =========================================================
-   CAMINHOS
+   CONFIGURAÇÃO
 ========================================================= */
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* =========================================================
-   VARIÁVEIS DO RENDER
-========================================================= */
+const app = express();
+
+const PORT = process.env.PORT || 10000;
 
 const SUPABASE_URL =
   process.env.SUPABASE_URL;
@@ -33,40 +28,45 @@ const SUPABASE_KEY =
 const OPENROUTER_API_KEY =
   process.env.OPENROUTER_API_KEY;
 
-/* =========================================================
-   VALIDAÇÃO
-========================================================= */
+const TABLE = 'ocorrencias_mandu';
 
-if (!SUPABASE_URL) {
-  console.error(
-    'ERRO: SUPABASE_URL não configurada no Render.'
-  );
-}
+const OPENROUTER_URL =
+  'https://openrouter.ai/api/v1/chat/completions';
 
-if (!SUPABASE_KEY) {
-  console.error(
-    'ERRO: nenhuma chave do Supabase configurada no Render.'
-  );
-}
+/*
+ * IMPORTANTE:
+ * Não coloque nenhuma chave diretamente neste arquivo.
+ *
+ * Tudo deve ficar nas Environment Variables do Render.
+ */
 
-if (!OPENROUTER_API_KEY) {
-  console.error(
-    'ERRO: OPENROUTER_API_KEY não configurada no Render.'
-  );
-}
+const AI_MODEL = 'openrouter/free';
 
 /* =========================================================
    SUPABASE
 ========================================================= */
 
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+let supa = null;
+
+if (SUPABASE_URL && SUPABASE_KEY) {
+  supa = createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+}
 
 /* =========================================================
-   MIDDLEWARE
+   EXPRESS
 ========================================================= */
+
+app.disable('x-powered-by');
 
 app.use(
   express.json({
@@ -74,302 +74,506 @@ app.use(
   })
 );
 
+app.use(
+  express.urlencoded({
+    extended: false,
+    limit: '100kb'
+  })
+);
+
 /* =========================================================
-   INDEX
+   FRONTEND
 ========================================================= */
 
-app.get('/', (req, res) => {
+app.use(
+  express.static(__dirname, {
+    maxAge: '1h'
+  })
+);
 
+app.get('/', (req, res) => {
   res.sendFile(
     path.join(__dirname, 'index.html')
   );
-
 });
+
+/* =========================================================
+   FUNÇÕES AUXILIARES
+========================================================= */
+
+function textoSeguro(valor, limite = 2000) {
+  if (valor === undefined || valor === null) {
+    return '';
+  }
+
+  return String(valor)
+    .replace(/\u0000/g, '')
+    .trim()
+    .slice(0, limite);
+}
+
+function frenteSegura(valor) {
+  const frente = textoSeguro(valor, 30);
+
+  return frente || 'GERAL';
+}
+
+function turnoAtual() {
+  const hora = new Date().getHours();
+
+  if (hora >= 6 && hora < 14) {
+    return 'TURNO A';
+  }
+
+  if (hora >= 14 && hora < 22) {
+    return 'TURNO B';
+  }
+
+  return 'TURNO C';
+}
+
+function horaAtual() {
+  return new Intl.DateTimeFormat(
+    'pt-BR',
+    {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }
+  ).format(new Date());
+}
+
+function normalizarOcorrencia(item) {
+  return {
+    id: item.id,
+    hora: item.hora || '',
+    frente: item.frente || 'GERAL',
+    texto: item.texto || '',
+    turno: item.turno || '',
+    unidade: item.unidade || 'MANDU',
+    created_at: item.created_at || null
+  };
+}
 
 /* =========================================================
    STATUS
 ========================================================= */
 
 app.get('/api/status', async (req, res) => {
+  let supabaseStatus = 'ERRO';
 
-  try {
-
-    const { error } =
-      await supabase
+  if (supa) {
+    try {
+      const { error } = await supa
         .from(TABLE)
         .select('id')
         .limit(1);
 
-    if (error) {
-      throw error;
+      supabaseStatus =
+        error ? 'ERRO' : 'OK';
+
+    } catch {
+      supabaseStatus = 'ERRO';
     }
-
-    res.json({
-      ok: true,
-      supabase: true,
-      ia: Boolean(OPENROUTER_API_KEY),
-      tabela: TABLE
-    });
-
-  } catch (error) {
-
-    console.error(
-      'Erro status:',
-      error
-    );
-
-    res.status(500).json({
-      ok: false,
-      error: error.message
-    });
-
+  } else {
+    supabaseStatus = 'NÃO CONFIGURADO';
   }
 
+  res.json({
+    status: 'online',
+    servidor: 'OK',
+    supabase: supabaseStatus,
+    openrouter: OPENROUTER_API_KEY
+      ? 'OK'
+      : 'NÃO CONFIGURADO',
+    modelo: AI_MODEL,
+    unidade: 'MANDU',
+    timestamp: new Date().toISOString()
+  });
 });
 
 /* =========================================================
-   LISTAR OCORRÊNCIAS
+   VERIFICAÇÃO DE CONFIGURAÇÃO
+========================================================= */
+
+function exigirSupabase(res) {
+  if (!supa) {
+    res.status(500).json({
+      error:
+        'Supabase não configurado no Render.'
+    });
+
+    return false;
+  }
+
+  return true;
+}
+
+function exigirIA(res) {
+  if (!OPENROUTER_API_KEY) {
+    res.status(500).json({
+      error:
+        'OPENROUTER_API_KEY não configurada no Render.'
+    });
+
+    return false;
+  }
+
+  return true;
+}
+
+/* =========================================================
+   GET OCORRÊNCIAS
 ========================================================= */
 
 app.get('/api/ocorrencias', async (req, res) => {
+  if (!exigirSupabase(res)) {
+    return;
+  }
 
   try {
-
-    const { data, error } =
-      await supabase
-        .from(TABLE)
-        .select('*')
-        .order('created_at', {
+    const { data, error } = await supa
+      .from(TABLE)
+      .select(
+        'id,hora,frente,texto,turno,unidade,created_at'
+      )
+      .order(
+        'created_at',
+        {
           ascending: false
-        });
+        }
+      )
+      .limit(500);
 
     if (error) {
-      throw error;
+      console.error(
+        'Erro Supabase GET:',
+        error
+      );
+
+      return res.status(500).json({
+        error:
+          'Erro ao carregar ocorrências.'
+      });
     }
 
-    res.json(data || []);
+    res.json(
+      (data || []).map(normalizarOcorrencia)
+    );
 
-  } catch (error) {
-
+  } catch (erro) {
     console.error(
-      'Erro ao buscar ocorrências:',
-      error
+      'Erro /api/ocorrencias:',
+      erro
     );
 
     res.status(500).json({
       error:
-        'Não foi possível carregar as ocorrências.'
+        'Erro interno ao carregar ocorrências.'
     });
-
   }
-
 });
 
 /* =========================================================
-   CRIAR OCORRÊNCIA
+   POST OCORRÊNCIA
 ========================================================= */
 
 app.post('/api/ocorrencias', async (req, res) => {
+  if (!exigirSupabase(res)) {
+    return;
+  }
 
   try {
+    const texto = textoSeguro(
+      req.body?.texto,
+      2000
+    );
 
-    const {
+    if (!texto) {
+      return res.status(400).json({
+        error:
+          'Digite uma ocorrência.'
+      });
+    }
+
+    const hora =
+      textoSeguro(
+        req.body?.hora,
+        20
+      ) || horaAtual();
+
+    const frente =
+      frenteSegura(
+        req.body?.frente
+      );
+
+    const turno =
+      textoSeguro(
+        req.body?.turno,
+        30
+      ) || turnoAtual();
+
+    const unidade =
+      textoSeguro(
+        req.body?.unidade,
+        30
+      ) || 'MANDU';
+
+    const novaOcorrencia = {
       hora,
       frente,
       texto,
       turno,
       unidade
-    } = req.body;
-
-    if (
-      !texto ||
-      !String(texto).trim()
-    ) {
-
-      return res.status(400).json({
-        error:
-          'O texto da ocorrência é obrigatório.'
-      });
-
-    }
-
-    const registro = {
-
-      hora:
-        hora ||
-        new Date().toLocaleTimeString(
-          'pt-BR',
-          {
-            hour: '2-digit',
-            minute: '2-digit'
-          }
-        ),
-
-      frente:
-        frente ||
-        'GERAL',
-
-      texto:
-        String(texto).trim(),
-
-      turno:
-        turno || null,
-
-      unidade:
-        unidade || 'MANDU'
-
     };
 
-    const { data, error } =
-      await supabase
-        .from(TABLE)
-        .insert(registro)
-        .select()
-        .single();
+    const {
+      data,
+      error
+    } = await supa
+      .from(TABLE)
+      .insert(novaOcorrencia)
+      .select(
+        'id,hora,frente,texto,turno,unidade,created_at'
+      )
+      .single();
 
     if (error) {
-      throw error;
+      console.error(
+        'Erro Supabase INSERT:',
+        error
+      );
+
+      return res.status(500).json({
+        error:
+          'Erro ao salvar ocorrência.'
+      });
     }
 
-    res.status(201).json(data);
+    res.status(201).json(
+      normalizarOcorrencia(data)
+    );
 
-  } catch (error) {
-
+  } catch (erro) {
     console.error(
-      'Erro ao inserir ocorrência:',
-      error
+      'Erro POST ocorrência:',
+      erro
     );
 
     res.status(500).json({
       error:
-        'Não foi possível salvar a ocorrência.'
+        'Erro interno ao salvar ocorrência.'
     });
-
   }
-
 });
 
 /* =========================================================
-   EDITAR OCORRÊNCIA
+   PUT OCORRÊNCIA
 ========================================================= */
 
-app.put('/api/ocorrencias/:id', async (req, res) => {
+app.put(
+  '/api/ocorrencias/:id',
+  async (req, res) => {
 
-  try {
-
-    const { id } = req.params;
-
-    const {
-      hora,
-      frente,
-      texto
-    } = req.body;
-
-    if (
-      !texto ||
-      !String(texto).trim()
-    ) {
-
-      return res.status(400).json({
-        error:
-          'O texto da ocorrência é obrigatório.'
-      });
-
+    if (!exigirSupabase(res)) {
+      return;
     }
 
-    const alteracao = {
+    try {
+      const id =
+        textoSeguro(
+          req.params.id,
+          100
+        );
 
-      hora:
-        hora || null,
+      if (!id) {
+        return res.status(400).json({
+          error: 'ID inválido.'
+        });
+      }
 
-      frente:
-        frente || 'GERAL',
+      /*
+       * IMPORTANTE:
+       * Só altera o que realmente foi enviado.
+       *
+       * Assim, ao editar somente o texto,
+       * não perdemos hora nem frente.
+       */
 
-      texto:
-        String(texto).trim()
+      const alteracao = {};
 
-    };
+      if (
+        req.body?.texto !== undefined
+      ) {
+        const texto = textoSeguro(
+          req.body.texto,
+          2000
+        );
 
-    const { data, error } =
-      await supabase
+        if (!texto) {
+          return res.status(400).json({
+            error:
+              'O texto da ocorrência não pode ficar vazio.'
+          });
+        }
+
+        alteracao.texto = texto;
+      }
+
+      if (
+        req.body?.hora !== undefined
+      ) {
+        alteracao.hora =
+          textoSeguro(
+            req.body.hora,
+            20
+          );
+      }
+
+      if (
+        req.body?.frente !== undefined
+      ) {
+        alteracao.frente =
+          frenteSegura(
+            req.body.frente
+          );
+      }
+
+      if (
+        Object.keys(alteracao).length === 0
+      ) {
+        return res.status(400).json({
+          error:
+            'Nenhum campo para atualizar.'
+        });
+      }
+
+      const {
+        data,
+        error
+      } = await supa
         .from(TABLE)
         .update(alteracao)
         .eq('id', id)
-        .select()
+        .select(
+          'id,hora,frente,texto,turno,unidade,created_at'
+        )
         .single();
 
-    if (error) {
-      throw error;
+      if (error) {
+        console.error(
+          'Erro Supabase UPDATE:',
+          error
+        );
+
+        return res.status(500).json({
+          error:
+            'Erro ao atualizar ocorrência.'
+        });
+      }
+
+      res.json(
+        normalizarOcorrencia(data)
+      );
+
+    } catch (erro) {
+      console.error(
+        'Erro PUT ocorrência:',
+        erro
+      );
+
+      res.status(500).json({
+        error:
+          'Erro interno ao atualizar ocorrência.'
+      });
     }
-
-    res.json(data);
-
-  } catch (error) {
-
-    console.error(
-      'Erro ao editar ocorrência:',
-      error
-    );
-
-    res.status(500).json({
-      error:
-        'Não foi possível editar a ocorrência.'
-    });
-
   }
-
-});
+);
 
 /* =========================================================
-   EXCLUIR UMA OCORRÊNCIA
+   DELETE UMA OCORRÊNCIA
 ========================================================= */
 
-app.delete('/api/ocorrencias/:id', async (req, res) => {
+app.delete(
+  '/api/ocorrencias/:id',
+  async (req, res) => {
 
-  try {
+    if (!exigirSupabase(res)) {
+      return;
+    }
 
-    const { id } = req.params;
+    try {
+      const id =
+        textoSeguro(
+          req.params.id,
+          100
+        );
 
-    const { error } =
-      await supabase
+      if (!id) {
+        return res.status(400).json({
+          error: 'ID inválido.'
+        });
+      }
+
+      const {
+        error
+      } = await supa
         .from(TABLE)
         .delete()
         .eq('id', id);
 
-    if (error) {
-      throw error;
+      if (error) {
+        console.error(
+          'Erro Supabase DELETE:',
+          error
+        );
+
+        return res.status(500).json({
+          error:
+            'Erro ao excluir ocorrência.'
+        });
+      }
+
+      res.json({
+        ok: true
+      });
+
+    } catch (erro) {
+      console.error(
+        'Erro DELETE ocorrência:',
+        erro
+      );
+
+      res.status(500).json({
+        error:
+          'Erro interno ao excluir ocorrência.'
+      });
     }
-
-    res.json({
-      ok: true
-    });
-
-  } catch (error) {
-
-    console.error(
-      'Erro ao excluir ocorrência:',
-      error
-    );
-
-    res.status(500).json({
-      error:
-        'Não foi possível excluir a ocorrência.'
-    });
-
   }
-
-});
+);
 
 /* =========================================================
-   NOVO TURNO — LIMPAR TUDO
+   DELETE TODAS
 ========================================================= */
 
-app.delete('/api/ocorrencias', async (req, res) => {
+app.delete(
+  '/api/ocorrencias',
+  async (req, res) => {
 
-  try {
+    if (!exigirSupabase(res)) {
+      return;
+    }
 
-    const { error } =
-      await supabase
+    try {
+      /*
+       * UUID impossível de existir.
+       * Mantemos o filtro porque o Supabase
+       * exige uma condição no DELETE.
+       */
+
+      const {
+        error
+      } = await supa
         .from(TABLE)
         .delete()
         .neq(
@@ -377,34 +581,121 @@ app.delete('/api/ocorrencias', async (req, res) => {
           '00000000-0000-0000-0000-000000000000'
         );
 
-    if (error) {
-      throw error;
+      if (error) {
+        console.error(
+          'Erro Supabase DELETE ALL:',
+          error
+        );
+
+        return res.status(500).json({
+          error:
+            'Erro ao limpar ocorrências.'
+        });
+      }
+
+      res.json({
+        ok: true
+      });
+
+    } catch (erro) {
+      console.error(
+        'Erro limpar ocorrências:',
+        erro
+      );
+
+      res.status(500).json({
+        error:
+          'Erro interno ao limpar ocorrências.'
+      });
     }
-
-    res.json({
-      ok: true,
-      message:
-        'Turno limpo com sucesso.'
-    });
-
-  } catch (error) {
-
-    console.error(
-      'Erro ao limpar turno:',
-      error
-    );
-
-    res.status(500).json({
-      error:
-        'Não foi possível limpar o turno.'
-    });
-
   }
-
-});
+);
 
 /* =========================================================
-   FUNÇÃO DE CHAMADA À IA
+   PREPARAÇÃO DO CONTEXTO DA IA
+========================================================= */
+
+function prepararOcorrenciasIA(
+  ocorrencias,
+  limite = 120
+) {
+  if (!Array.isArray(ocorrencias)) {
+    return [];
+  }
+
+  return ocorrencias
+    .slice(0, limite)
+    .map(item => ({
+      hora:
+        textoSeguro(
+          item?.hora,
+          20
+        ),
+
+      frente:
+        frenteSegura(
+          item?.frente
+        ),
+
+      texto:
+        textoSeguro(
+          item?.texto,
+          600
+        )
+    }))
+    .filter(item => item.texto);
+}
+
+/* =========================================================
+   PROMPT BASE
+========================================================= */
+
+const SYSTEM_IA = `
+Você é o copiloto operacional do CTT Diário de Turno da unidade MANDU.
+
+Analise somente os dados fornecidos.
+
+NÃO invente:
+- números;
+- capacidades;
+- disponibilidade;
+- causas;
+- produção;
+- metas;
+- tempos;
+- equipamentos;
+- pessoas;
+- fatos.
+
+Quando fizer uma sugestão, deixe claro que é SUGESTÃO.
+
+Responda de forma:
+- objetiva;
+- técnica;
+- direta;
+- curta;
+- prática;
+- orientada à operação.
+
+Priorize:
+1. principais ocorrências;
+2. problemas repetidos;
+3. riscos;
+4. impacto operacional;
+5. pontos de atenção;
+6. ação recomendada.
+
+Não repita desnecessariamente as ocorrências.
+
+Não faça introduções longas.
+
+Use títulos curtos e bullets quando ajudar.
+
+Pense como um copiloto operacional apoiando a tomada de decisão do gestor.
+`;
+
+/* =========================================================
+   CHAMADA OPENROUTER
 ========================================================= */
 
 async function chamarIA(
@@ -413,408 +704,703 @@ async function chamarIA(
 ) {
 
   if (!OPENROUTER_API_KEY) {
-
     throw new Error(
       'OPENROUTER_API_KEY não configurada no Render.'
     );
-
   }
 
   const {
-    maxTokens = 700,
-    temperature = 0.1,
-    reasoningEffort = 'minimal'
+    maxTokens = 600,
+    temperature = 0.1
   } = opcoes;
 
-  const AI_MODEL =
-    'google/gemma-4-26b-a4b-it:free';
+  /*
+   * Limita o tamanho das mensagens.
+   * Isso reduz custo, latência e consumo de contexto.
+   */
 
-  const resposta =
-    await fetch(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
+  const mensagensProcessadas =
+    Array.isArray(messages)
+      ? messages
+          .slice(-10)
+          .map(msg => ({
+            role:
+              msg?.role === 'system'
+                ? 'system'
+                : msg?.role === 'assistant'
+                  ? 'assistant'
+                  : 'user',
 
-        method: 'POST',
+            content:
+              textoSeguro(
+                msg?.content,
+                12000
+              )
+          }))
+          .filter(msg => msg.content)
+      : [];
 
-        headers: {
+  /*
+   * MÍNIMO DE RACIOCÍNIO.
+   *
+   * effort=minimal reduz o espaço dedicado
+   * a raciocínio nos modelos compatíveis.
+   *
+   * Não usamos include_reasoning.
+   * Portanto o frontend recebe somente a resposta.
+   */
 
-          Authorization:
-            `Bearer ${OPENROUTER_API_KEY}`,
+  const body = {
+    model: AI_MODEL,
 
-          'Content-Type':
-            'application/json',
+    messages: mensagensProcessadas,
 
-          'HTTP-Referer':
-            'https://ocorrencias-mandu.onrender.com',
+    temperature,
 
-          'X-Title':
-            'CTT Diário de Turno - MANDU'
+    max_completion_tokens:
+      Math.min(
+        Math.max(
+          Number(maxTokens) || 600,
+          100
+        ),
+        1200
+      ),
 
-        },
+    reasoning: {
+      effort: 'minimal'
+    }
+  };
 
-        body: JSON.stringify({
+  let ultimaResposta = null;
+  let ultimoErro = null;
 
-          model:
-            AI_MODEL,
+  /*
+   * No máximo 2 tentativas.
+   *
+   * A segunda tentativa só acontece
+   * para rate limit do provedor upstream.
+   */
 
-          messages,
-
-          temperature,
-
-          max_completion_tokens:
-            maxTokens,
-
-          reasoning: {
-            effort:
-              reasoningEffort
-          }
-
-        })
-
-      }
-    );
-
-  const dados =
-    await resposta.json();
-
-  if (!resposta.ok) {
-
-    console.error(
-      'Erro OpenRouter:',
-      JSON.stringify(
-        dados,
-        null,
-        2
-      )
-    );
-
-    throw new Error(
-      dados?.error?.message ||
-      `OpenRouter retornou HTTP ${resposta.status}`
-    );
-
-  }
-
-  const conteudo =
-    dados?.choices?.[0]?.message?.content;
-
-  if (
-    conteudo === null ||
-    conteudo === undefined ||
-    conteudo === ''
+  for (
+    let tentativa = 1;
+    tentativa <= 2;
+    tentativa++
   ) {
 
-    throw new Error(
-      'A IA não retornou conteúdo.'
-    );
+    try {
 
+      const resposta = await fetch(
+        OPENROUTER_URL,
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization:
+              `Bearer ${OPENROUTER_API_KEY}`,
+
+            'Content-Type':
+              'application/json',
+
+            'HTTP-Referer':
+              'https://ocorrencias-mandu.onrender.com',
+
+            'X-Title':
+              'CTT Diário de Turno - MANDU'
+          },
+
+          body:
+            JSON.stringify(body)
+        }
+      );
+
+      ultimaResposta = resposta;
+
+      let dados = {};
+
+      try {
+        dados =
+          await resposta.json();
+      } catch {
+        dados = {};
+      }
+
+      if (resposta.ok) {
+
+        const mensagem =
+          dados?.choices?.[0]?.message;
+
+        let conteudo =
+          mensagem?.content;
+
+        /*
+         * Alguns modelos podem retornar content
+         * como array de partes.
+         */
+
+        if (
+          Array.isArray(conteudo)
+        ) {
+          conteudo =
+            conteudo
+              .map(parte => {
+                if (
+                  typeof parte === 'string'
+                ) {
+                  return parte;
+                }
+
+                return parte?.text || '';
+              })
+              .join('');
+        }
+
+        /*
+         * Fallback para APIs compatíveis.
+         */
+
+        if (
+          !conteudo &&
+          typeof dados?.choices?.[0]
+            ?.text === 'string'
+        ) {
+          conteudo =
+            dados.choices[0].text;
+        }
+
+        if (
+          !conteudo &&
+          typeof dados?.output_text === 'string'
+        ) {
+          conteudo =
+            dados.output_text;
+        }
+
+        conteudo =
+          textoSeguro(
+            conteudo,
+            12000
+          );
+
+        if (conteudo) {
+          return conteudo;
+        }
+
+        /*
+         * Se o modelo retornou apenas reasoning
+         * e nenhum conteúdo final, não mostramos
+         * o raciocínio ao usuário.
+         */
+
+        const temReasoning =
+          Boolean(
+            mensagem?.reasoning ||
+            mensagem?.reasoning_details
+          );
+
+        if (temReasoning) {
+          throw new Error(
+            'A IA utilizou raciocínio, mas não retornou resposta final.'
+          );
+        }
+
+        throw new Error(
+          'A IA não retornou conteúdo.'
+        );
+      }
+
+      const erro =
+        dados?.error || {};
+
+      const mensagemErro =
+        erro?.message ||
+        `OpenRouter retornou HTTP ${resposta.status}`;
+
+      const limitSource =
+        erro?.metadata?.limit_source ||
+        '';
+
+      const upstream429 =
+        resposta.status === 429 &&
+        (
+          limitSource ===
+            'upstream_provider_shared_pool' ||
+
+          String(mensagemErro)
+            .toLowerCase()
+            .includes(
+              'temporarily rate-limited upstream'
+            )
+        );
+
+      /*
+       * Rate limit upstream:
+       * espera um pouco e tenta novamente.
+       */
+
+      if (
+        upstream429 &&
+        tentativa === 1
+      ) {
+
+        console.warn(
+          'OpenRouter: provedor gratuito temporariamente limitado. Tentando novamente...'
+        );
+
+        const retryAfter =
+          Number(
+            resposta.headers.get(
+              'retry-after'
+            )
+          );
+
+        const espera =
+          Number.isFinite(retryAfter)
+            ? Math.min(
+                Math.max(
+                  retryAfter * 1000,
+                  700
+                ),
+                2500
+              )
+            : 1200;
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              espera
+            )
+        );
+
+        continue;
+      }
+
+      ultimoErro =
+        new Error(
+          mensagemErro
+        );
+
+      console.error(
+        'Erro OpenRouter:',
+        JSON.stringify(
+          {
+            status:
+              resposta.status,
+
+            mensagem:
+              mensagemErro,
+
+            limit_source:
+              limitSource
+          },
+          null,
+          2
+        )
+      );
+
+      break;
+
+    } catch (erro) {
+
+      ultimoErro = erro;
+
+      /*
+       * Se foi erro de rede, tenta mais uma vez.
+       */
+
+      if (
+        tentativa === 1 &&
+        (
+          erro?.name ===
+            'TypeError' ||
+
+          String(
+            erro?.message || ''
+          )
+            .toLowerCase()
+            .includes(
+              'fetch'
+            )
+        )
+      ) {
+
+        console.warn(
+          'Falha de rede ao chamar OpenRouter. Tentando novamente...'
+        );
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              800
+            )
+        );
+
+        continue;
+      }
+
+      break;
+    }
   }
 
-  return conteudo;
+  if (ultimoErro) {
+    throw ultimoErro;
+  }
 
+  throw new Error(
+    'Não foi possível obter resposta da IA.'
+  );
 }
 
 /* =========================================================
-   ORGANIZAR TURNO
+   ORGANIZAR TURNO COM IA
 ========================================================= */
 
-app.post('/organizar-ia', async (req, res) => {
+app.post(
+  '/organizar-ia',
+  async (req, res) => {
 
-  try {
-
-    const ocorrencias =
-      Array.isArray(req.body?.ocorrencias)
-        ? req.body.ocorrencias
-        : [];
-
-    if (!ocorrencias.length) {
-
-      return res.status(400).json({
-        error:
-          'Nenhuma ocorrência foi enviada.'
-      });
-
+    if (!exigirIA(res)) {
+      return;
     }
 
-    const contexto =
-      ocorrencias
-        .map(item => {
+    try {
 
-          return [
-            item.hora || '',
-            item.frente || 'GERAL',
-            item.texto || ''
-          ].join(' | ');
+      const ocorrencias =
+        prepararOcorrenciasIA(
+          req.body?.ocorrencias,
+          120
+        );
 
-        })
-        .join('\n');
+      if (!ocorrencias.length) {
+        return res.status(400).json({
+          error:
+            'Não há ocorrências suficientes para organizar o turno.'
+        });
+      }
 
-    const systemPrompt = `Você é o copiloto operacional do CTT Diário de Turno da unidade MANDU.
+      /*
+       * Colocamos em ordem cronológica
+       * para facilitar a leitura da IA.
+       */
 
-Sua função é organizar ocorrências operacionais reais de um turno.
+      const ordemCronologica =
+        [...ocorrencias].reverse();
 
-Analise somente as informações fornecidas.
+      const contexto =
+        ordemCronologica
+          .map((item, index) => {
 
-Não invente números, capacidades, causas ou fatos que não estejam nas ocorrências.
+            return [
+              `${index + 1}.`,
+              `Hora: ${item.hora || '-'}`,
+              `Frente: ${item.frente}`,
+              `Ocorrência: ${item.texto}`
+            ].join(' | ');
 
-Quando algo for uma sugestão sua, deixe claro que é sugestão.
+          })
+          .join('\n');
 
-Organize a resposta de forma objetiva e útil para gestão operacional.
+      const messages = [
 
-Priorize:
-1. principais ocorrências;
-2. problemas recorrentes;
-3. riscos para continuidade;
-4. impactos operacionais;
-5. pontos que precisam de acompanhamento;
-6. ações recomendadas para o próximo período.
+        {
+          role: 'system',
+          content: SYSTEM_IA
+        },
 
-Se houver informações suficientes, agrupe ocorrências relacionadas.
+        {
+          role: 'user',
 
-Não faça textos longos desnecessariamente.`;
+          content: `
+Organize o turno abaixo.
 
-    const userPrompt =
-      `OCORRÊNCIAS DO TURNO:
+UNIDADE: MANDU
+
+OCORRÊNCIAS:
+${contexto}
+
+Entregue um resumo gerencial curto.
+
+Formato preferencial:
+
+RESUMO DO TURNO
+- ...
+
+PONTOS DE ATENÇÃO
+- ...
+
+RISCOS
+- ...
+
+AÇÕES RECOMENDADAS
+- ...
+
+Não invente informações.
+`
+        }
+
+      ];
+
+      const resumo =
+        await chamarIA(
+          messages,
+          {
+            maxTokens: 650,
+            temperature: 0.1
+          }
+        );
+
+      res.json({
+        resumo
+      });
+
+    } catch (erro) {
+
+      console.error(
+        'Erro /organizar-ia:',
+        erro
+      );
+
+      const mensagem =
+        erro?.message ||
+        'Erro ao organizar o turno com IA.';
+
+      const status =
+        mensagem
+          .toLowerCase()
+          .includes(
+            'rate'
+          )
+          ? 429
+          : 500;
+
+      res.status(status).json({
+        error: mensagem
+      });
+    }
+  }
+);
+
+/* =========================================================
+   CHAT OPERACIONAL
+========================================================= */
+
+app.post(
+  '/chat-ia',
+  async (req, res) => {
+
+    if (!exigirIA(res)) {
+      return;
+    }
+
+    try {
+
+      const ocorrencias =
+        prepararOcorrenciasIA(
+          req.body?.ocorrencias,
+          120
+        );
+
+      const pergunta =
+        textoSeguro(
+          req.body?.pergunta,
+          2000
+        );
+
+      const historico =
+        Array.isArray(
+          req.body?.historico
+        )
+          ? req.body.historico
+              .slice(-8)
+              .map(msg => ({
+                role:
+                  msg?.role === 'assistant'
+                    ? 'assistant'
+                    : 'user',
+
+                content:
+                  textoSeguro(
+                    msg?.content,
+                    3000
+                  )
+              }))
+              .filter(
+                msg => msg.content
+              )
+          : [];
+
+      if (!pergunta) {
+        return res.status(400).json({
+          error:
+            'Digite uma pergunta.'
+        });
+      }
+
+      if (!ocorrencias.length) {
+        return res.status(400).json({
+          error:
+            'Ainda não existem ocorrências suficientes para uma análise.'
+        });
+      }
+
+      const contexto =
+        [...ocorrencias]
+          .reverse()
+          .map((item, index) => {
+
+            return [
+              `${index + 1}.`,
+              `[${item.hora || '-'}]`,
+              `[${item.frente}]`,
+              item.texto
+            ].join(' ');
+
+          })
+          .join('\n');
+
+      const messages = [
+
+        {
+          role: 'system',
+          content: `
+${SYSTEM_IA}
+
+Você está respondendo perguntas sobre o turno inteiro.
+
+Pode analisar:
+- problemas repetidos;
+- riscos;
+- manutenção;
+- transporte;
+- colhedoras;
+- trações;
+- ciclo;
+- rendimento;
+- continuidade operacional;
+- necessidade de acompanhamento;
+- plano de ação;
+- possíveis deslocamentos de recursos.
+
+ATENÇÃO:
+
+Não determine uma decisão como fato.
+
+Quando recomendar alguma ação, escreva como sugestão.
+
+Se uma decisão depender de dados que não foram fornecidos,
+diga quais dados precisam ser confirmados.
+
+Nunca invente capacidade, produtividade, distância,
+quantidade de equipamentos ou disponibilidade.
+`
+        },
+
+        ...historico,
+
+        {
+          role: 'user',
+
+          content: `
+OCORRÊNCIAS DO TURNO:
 
 ${contexto}
 
-Organize este turno em um resumo operacional objetivo.`;
+PERGUNTA DO GESTOR:
 
-    const resumo =
-      await chamarIA(
-        [
+${pergunta}
+
+Responda diretamente à pergunta.
+
+Se possível, entregue:
+1. leitura do cenário;
+2. impacto operacional;
+3. sugestão de ação;
+4. o que precisa ser confirmado.
+
+Se não houver dados suficientes, diga claramente.
+`
+        }
+
+      ];
+
+      const resposta =
+        await chamarIA(
+          messages,
           {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
+            maxTokens: 750,
+            temperature: 0.15
           }
-        ],
-        {
-          maxTokens: 850,
-          temperature: 0.1,
-          reasoningEffort: 'minimal'
-        }
+        );
+
+      res.json({
+        resposta
+      });
+
+    } catch (erro) {
+
+      console.error(
+        'Erro /chat-ia:',
+        erro
       );
 
-    res.json({
-      resumo
-    });
+      const mensagem =
+        erro?.message ||
+        'Erro ao consultar a IA.';
 
-  } catch (error) {
-
-    console.error(
-      'Erro /organizar-ia:',
-      error
-    );
-
-    res.status(500).json({
-      error:
-        error.message ||
-        'Erro ao organizar turno com IA.'
-    });
-
+      res.status(500).json({
+        error: mensagem
+      });
+    }
   }
-
-});
+);
 
 /* =========================================================
-   CHAT GERAL DO TURNO
-========================================================= */
-
-app.post('/chat-ia', async (req, res) => {
-
-  try {
-
-    const {
-      ocorrencias = [],
-      pergunta,
-      historico = []
-    } = req.body || {};
-
-    if (
-      !Array.isArray(ocorrencias) ||
-      !ocorrencias.length
-    ) {
-
-      return res.status(400).json({
-        error:
-          'Não existem ocorrências para analisar.'
-      });
-
-    }
-
-    if (
-      !pergunta ||
-      !String(pergunta).trim()
-    ) {
-
-      return res.status(400).json({
-        error:
-          'Digite uma pergunta.'
-      });
-
-    }
-
-    const contexto =
-      ocorrencias
-        .map(item => {
-
-          return [
-            item.hora || '',
-            item.frente || 'GERAL',
-            item.texto || ''
-          ].join(' | ');
-
-        })
-        .join('\n');
-
-    const historicoSeguro =
-      Array.isArray(historico)
-        ? historico
-            .filter(item =>
-              item &&
-              (
-                item.role === 'user' ||
-                item.role === 'assistant'
-              ) &&
-              typeof item.content === 'string'
-            )
-            .slice(-8)
-        : [];
-
-    const systemPrompt = `Você é um copiloto operacional do CTT da unidade MANDU.
-
-Você está analisando TODAS as ocorrências de um turno.
-
-Seu objetivo é ajudar a equipe a tomar decisões operacionais melhores com base no que foi registrado.
-
-Você pode analisar:
-
-- problemas repetidos;
-- causas aparentes quando estiverem registradas;
-- riscos;
-- gargalos;
-- produtividade;
-- transporte;
-- ciclo do malhador;
-- colhedoras;
-- trações;
-- frentes;
-- manutenção;
-- logística;
-- organização do próximo turno;
-- necessidade de acompanhamento;
-- possíveis ações preventivas;
-- pontos que podem ser escalados.
-
-REGRAS IMPORTANTES:
-
-1. Use somente os fatos disponíveis nas ocorrências.
-2. Não invente números.
-3. Não invente capacidade de máquinas.
-4. Não invente disponibilidade.
-5. Não afirme uma causa como fato se ela não estiver registrada.
-6. Diferencie claramente FATO de SUGESTÃO.
-7. Quando faltar informação para uma conclusão, diga qual informação falta.
-8. Seja objetivo e operacional.
-9. Não fique repetindo as ocorrências literalmente.
-10. Quando possível, transforme os registros em ações práticas.
-11. Considere o turno como um todo, e não apenas uma frente.
-12. Se a pergunta envolver deslocar uma colhedora, tração ou recurso, apresente a lógica operacional e os dados que deveriam ser confirmados antes da movimentação.
-13. Se a pergunta envolver redução de ciclo, analise os registros relacionados a carregamento, transporte, espera, descarga, retorno e disponibilidade.
-14. Se a pergunta envolver recorrência, identifique padrões presentes nas ocorrências.
-15. Não tome decisões no lugar do gestor. Apresente a análise e as opções operacionais sustentadas pelos dados.`;
-
-    const messages = [
-
-      {
-        role: 'system',
-        content: systemPrompt
-      },
-
-      {
-        role: 'user',
-        content:
-          `CONTEXTO COMPLETO DO TURNO:
-
-${contexto}`
-      }
-
-    ];
-
-    for (const item of historicoSeguro) {
-
-      messages.push({
-        role: item.role,
-        content: item.content
-      });
-
-    }
-
-    messages.push({
-      role: 'user',
-      content:
-        `PERGUNTA ATUAL:
-
-${String(pergunta).trim()}`
-    });
-
-    const resposta =
-      await chamarIA(
-        messages,
-        {
-          maxTokens: 750,
-          temperature: 0.15,
-          reasoningEffort: 'minimal'
-        }
-      );
-
-    res.json({
-      resposta
-    });
-
-  } catch (error) {
-
-    console.error(
-      'Erro /chat-ia:',
-      error
-    );
-
-    res.status(500).json({
-      error:
-        error.message ||
-        'Erro ao consultar a IA.'
-    });
-
-  }
-
-});
-
-/* =========================================================
-   ERRO GLOBAL
+   404 API
 ========================================================= */
 
 app.use(
-  (err, req, res, next) => {
+  '/api',
+  (req, res) => {
+    res.status(404).json({
+      error:
+        'Rota da API não encontrada.'
+    });
+  }
+);
+
+/* =========================================================
+   TRATAMENTO GLOBAL DE ERROS
+========================================================= */
+
+app.use(
+  (
+    erro,
+    req,
+    res,
+    next
+  ) => {
 
     console.error(
-      'Erro não tratado:',
-      err
+      'Erro global:',
+      erro
     );
+
+    if (
+      res.headersSent
+    ) {
+      return next(erro);
+    }
 
     res.status(500).json({
       error:
         'Erro interno do servidor.'
     });
-
   }
 );
 
 /* =========================================================
-   INICIAR SERVIDOR
+   START
 ========================================================= */
 
 app.listen(
@@ -827,10 +1413,7 @@ app.listen(
 
     console.log(
       `Supabase: ${
-        Boolean(
-          SUPABASE_URL &&
-          SUPABASE_KEY
-        )
+        supa
           ? 'OK'
           : 'NÃO CONFIGURADO'
       }`
@@ -838,13 +1421,18 @@ app.listen(
 
     console.log(
       `OpenRouter: ${
-        Boolean(
-          OPENROUTER_API_KEY
-        )
+        OPENROUTER_API_KEY
           ? 'OK'
           : 'NÃO CONFIGURADO'
       }`
     );
 
+    console.log(
+      `Modelo IA: ${AI_MODEL}`
+    );
+
+    console.log(
+      'Raciocínio IA: mínimo'
+    );
   }
 );

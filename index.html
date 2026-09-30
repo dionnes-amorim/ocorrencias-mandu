@@ -598,6 +598,212 @@ body::before{
   text-transform:uppercase;
   letter-spacing:.5px
 }
+
+
+/* =========================================================
+   IA OPERACIONAL — ACRESCENTADO
+========================================================= */
+
+.ia-area{
+  padding:14px 16px 18px;
+  position:relative;
+  z-index:1
+}
+
+.ia-tools{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
+}
+
+.ia-tool{
+  border:none;
+  border-radius:14px;
+  padding:13px 8px;
+  font-size:11px;
+  font-weight:800;
+  color:#fff;
+  cursor:pointer
+}
+
+.ia-tool.chat{
+  background:rgba(77,208,255,.13);
+  border:1px solid rgba(77,208,255,.28);
+  color:#4dd0ff
+}
+
+.ia-tool.fechar{
+  background:rgba(255,152,0,.13);
+  border:1px solid rgba(255,152,0,.3);
+  color:#ffb74d
+}
+
+
+/* CHAT */
+
+.chat-sheet{
+  max-height:92vh
+}
+
+.chat-lista{
+  height:48vh;
+  overflow-y:auto;
+  padding:8px 0;
+  margin-top:10px
+}
+
+.chat-msg{
+  display:flex;
+  margin-bottom:10px
+}
+
+.chat-msg.user{
+  justify-content:flex-end
+}
+
+.chat-balao{
+  max-width:88%;
+  padding:12px 14px;
+  border-radius:15px;
+  font-size:12.5px;
+  line-height:1.6;
+  white-space:pre-wrap
+}
+
+.chat-msg.user .chat-balao{
+  background:#7c4dff;
+  color:#fff;
+  border-bottom-right-radius:5px
+}
+
+.chat-msg.assistant .chat-balao{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.07);
+  border-bottom-left-radius:5px
+}
+
+.chat-atalhos{
+  display:flex;
+  gap:7px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding:4px 0 9px
+}
+
+.chat-atalhos::-webkit-scrollbar{
+  display:none
+}
+
+.chat-atalho{
+  white-space:nowrap;
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:100px;
+  padding:8px 12px;
+  font-size:10px;
+  cursor:pointer
+}
+
+.chat-input-area{
+  display:flex;
+  gap:7px
+}
+
+.chat-input-area input{
+  flex:1;
+  min-width:0;
+  background:#080c1a;
+  border:1px solid rgba(255,255,255,.1);
+  color:#fff;
+  border-radius:14px;
+  padding:13px;
+  outline:none;
+  font-size:12px
+}
+
+.chat-input-area button{
+  width:48px;
+  border:none;
+  border-radius:14px;
+  background:#7c4dff;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer
+}
+
+.chat-status{
+  font-size:10px;
+  opacity:.45;
+  min-height:15px;
+  margin-top:7px
+}
+
+
+/* FECHAMENTO */
+
+.fechamento-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:6px;
+  margin-top:15px
+}
+
+.fechamento-tab{
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  border-radius:11px;
+  padding:10px 5px;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer
+}
+
+.fechamento-tab.ativo{
+  background:#7c4dff;
+  border-color:#7c4dff
+}
+
+.fechamento-info{
+  font-size:10px;
+  opacity:.45;
+  margin-top:9px;
+  text-align:center
+}
+
+.loading-ia{
+  text-align:center;
+  opacity:.6;
+  animation:iaPulse 1.2s infinite alternate
+}
+
+@keyframes iaPulse{
+  from{opacity:.35}
+  to{opacity:1}
+}
+
+.btn-executivo{
+  background:#4dd0ff;
+  color:#06151b
+}
+
+.btn-fechamento{
+  background:#ff9800;
+  color:#271700
+}
+
+@media(max-width:380px){
+
+  .ia-tools{
+    grid-template-columns:1fr
+  }
+
+  .fechamento-tabs{
+    grid-template-columns:1fr
+  }
+
+}
 </style>
 </head>
 
@@ -755,6 +961,40 @@ body::before{
 <div id="lista"></div>
 
 
+<!-- =====================================================
+     NOVOS BOTÕES DE IA
+===================================================== -->
+
+<div class="ia-area">
+
+  <div class="ia-tools">
+
+    <button
+      class="ia-tool chat"
+      onclick="abrirChat()">
+
+      <i class="fa-solid fa-comments"></i>
+
+      CHAT OPERACIONAL
+
+    </button>
+
+
+    <button
+      class="ia-tool fechar"
+      onclick="fecharTurno()">
+
+      <i class="fa-solid fa-brain"></i>
+
+      FECHAR TURNO
+
+    </button>
+
+  </div>
+
+</div>
+
+
 <div class="bottom">
 
   <button
@@ -769,6 +1009,10 @@ body::before{
 
 </div>
 
+
+<!-- =====================================================
+     MODAL ORGANIZAR
+===================================================== -->
 
 <div
   id="modalOrg"
@@ -823,6 +1067,10 @@ body::before{
 </div>
 
 
+<!-- =====================================================
+     MODAL EDITAR
+===================================================== -->
+
 <div id="modalEdit" class="modal">
 
   <div class="sheet edit-area">
@@ -867,11 +1115,253 @@ body::before{
 </div>
 
 
+<!-- =====================================================
+     MODAL CHAT OPERACIONAL
+===================================================== -->
+
+<div
+  id="modalChat"
+  class="modal"
+  onclick="if(event.target.id==='modalChat')fecharChat()">
+
+  <div class="sheet chat-sheet">
+
+    <h3 style="font-size:17px">
+
+      <i
+        class="fa-solid fa-comments"
+        style="color:#4dd0ff">
+      </i>
+
+      Chat Operacional
+
+    </h3>
+
+    <p
+      style="font-size:12px;opacity:.55;margin-top:4px">
+
+      Pergunte sobre o turno inteiro
+
+    </p>
+
+
+    <div
+      id="chatLista"
+      class="chat-lista">
+
+      <div class="chat-msg assistant">
+
+        <div class="chat-balao">
+
+          🧠 Estou pronto para analisar as ocorrências deste turno.
+
+          Pode perguntar sobre riscos, recorrências, rendimento,
+          ciclo, manutenção, frentes ou plano de ação.
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="chat-atalhos">
+
+      <button
+        class="chat-atalho"
+        onclick="usarAtalho('Quais problemas mais se repetiram hoje?')">
+
+        🔁 Problemas repetidos
+
+      </button>
+
+
+      <button
+        class="chat-atalho"
+        onclick="usarAtalho('O que está mais ameaçando a continuidade operacional?')">
+
+        ⚠️ Riscos
+
+      </button>
+
+
+      <button
+        class="chat-atalho"
+        onclick="usarAtalho('O que mudou nas últimas duas horas?')">
+
+        ⏱️ Últimas 2h
+
+      </button>
+
+
+      <button
+        class="chat-atalho"
+        onclick="usarAtalho('Monte meu plano de voo para as próximas 4 horas.')">
+
+        🎯 Plano de voo
+
+      </button>
+
+
+      <button
+        class="chat-atalho"
+        onclick="usarAtalho('O que eu preciso cobrar da manutenção?')">
+
+        🔧 Manutenção
+
+      </button>
+
+    </div>
+
+
+    <div class="chat-input-area">
+
+      <input
+        id="chatInput"
+        placeholder="Pergunte sobre o turno..."
+        autocomplete="off">
+
+      <button
+        id="chatEnviar"
+        onclick="enviarChat()">
+
+        <i class="fa-solid fa-paper-plane"></i>
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="chatStatus"
+      class="chat-status">
+    </div>
+
+
+    <button
+      class="btn btn-c"
+      style="width:100%;margin-top:10px"
+      onclick="fecharChat()">
+
+      Fechar
+
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL FECHAR TURNO
+===================================================== -->
+
+<div
+  id="modalFechamento"
+  class="modal"
+  onclick="if(event.target.id==='modalFechamento')fecharModalFechamento()">
+
+  <div class="sheet">
+
+    <h3 style="font-size:17px">
+
+      <i
+        class="fa-solid fa-brain"
+        style="color:#ff9800">
+      </i>
+
+      Fechar Turno
+
+    </h3>
+
+    <p
+      style="font-size:12px;opacity:.55;margin-top:4px">
+
+      Análise completa do turno — não apaga as ocorrências
+
+    </p>
+
+
+    <div class="fechamento-tabs">
+
+      <button
+        id="tabGerencial"
+        class="fechamento-tab ativo"
+        onclick="selecionarFechamento('gerencial')">
+
+        📋 GERENCIAL
+
+      </button>
+
+
+      <button
+        id="tabExecutivo"
+        class="fechamento-tab"
+        onclick="selecionarFechamento('executivo')">
+
+        ⚡ EXECUTIVO
+
+      </button>
+
+
+      <button
+        id="tabFechamento"
+        class="fechamento-tab"
+        onclick="selecionarFechamento('fechamento')">
+
+        🧠 FECHAMENTO
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="fechamentoInfo"
+      class="fechamento-info">
+    </div>
+
+
+    <pre
+      id="textoFechamento"
+      class="loading-ia">
+
+Processando IA...
+
+    </pre>
+
+
+    <button
+      id="btnCopiarFechamento"
+      class="btn-copy"
+      onclick="copiarFechamentoAtual()">
+
+      <i class="fa-solid fa-copy"></i>
+
+      COPIAR TEXTO
+
+    </button>
+
+
+    <button
+      class="btn btn-c"
+      style="width:100%;margin-top:10px"
+      onclick="fecharModalFechamento()">
+
+      Fechar
+
+    </button>
+
+  </div>
+
+</div>
+
+
 <script>
 
 /* =========================================================
    API DO BACKEND
-   ========================================================= */
+========================================================= */
 
 async function api(url, options = {}){
 
@@ -887,7 +1377,9 @@ async function api(url, options = {}){
     }
   );
 
+
   let dados = null;
+
 
   try{
 
@@ -899,6 +1391,7 @@ async function api(url, options = {}){
 
   }
 
+
   if(!resposta.ok){
 
     throw new Error(
@@ -909,6 +1402,7 @@ async function api(url, options = {}){
 
   }
 
+
   return dados;
 
 }
@@ -916,7 +1410,7 @@ async function api(url, options = {}){
 
 /* =========================================================
    VARIÁVEIS
-   ========================================================= */
+========================================================= */
 
 let ocorrencias = [];
 
@@ -940,18 +1434,40 @@ let pollingTimer = null;
 
 
 /* =========================================================
+   NOVAS VARIÁVEIS IA
+========================================================= */
+
+let historicoChat = [];
+
+let chatEnviando = false;
+
+let fechamentoDados = {
+
+  gerencial:'',
+  executivo:'',
+  fechamento:''
+
+};
+
+let fechamentoAtual = 'gerencial';
+
+
+/* =========================================================
    TURNO
-   ========================================================= */
+========================================================= */
 
 function getTurnoAuto(){
 
   const h = new Date().getHours();
 
+
   if(h >= 6 && h < 14)
     return 'TURNO A';
 
+
   if(h >= 14 && h < 22)
     return 'TURNO B';
+
 
   return 'TURNO C';
 
@@ -960,7 +1476,7 @@ function getTurnoAuto(){
 
 /* =========================================================
    CABEÇALHO
-   ========================================================= */
+========================================================= */
 
 document.getElementById('dataHoje').innerText =
   new Date().toLocaleDateString(
@@ -972,20 +1488,23 @@ document.getElementById('dataHoje').innerText =
     }
   );
 
+
 document.getElementById('turnoAuto').innerText =
   getTurnoAuto();
 
 
 /* =========================================================
    DETECTAR HORÁRIO
-   ========================================================= */
+========================================================= */
 
 function detectarHorario(texto){
 
   const t = texto.toLowerCase();
 
+
   const m =
     t.match(/(\d{1,2})[:h](\d{2})/);
+
 
   if(m){
 
@@ -997,6 +1516,7 @@ function detectarHorario(texto){
 
   }
 
+
   return null;
 
 }
@@ -1004,11 +1524,12 @@ function detectarHorario(texto){
 
 /* =========================================================
    DETECTAR FRENTE
-   ========================================================= */
+========================================================= */
 
 function detectarFrente(texto){
 
   const t = texto.toLowerCase();
+
 
   const mp = {
 
@@ -1026,12 +1547,14 @@ function detectarFrente(texto){
   let m =
     t.match(/quinhent\w*\s*e?\s*(\w+)/);
 
+
   if(m && mp[m[1]])
     return 'FRENTE 50' + mp[m[1]];
 
 
   m =
     t.match(/\b50\s*([1-6])\b/);
+
 
   if(m)
     return 'FRENTE 50' + m[1];
@@ -1040,12 +1563,14 @@ function detectarFrente(texto){
   m =
     t.match(/\b50([1-6])\b/);
 
+
   if(m)
     return 'FRENTE 50' + m[1];
 
 
   m =
     t.match(/frente\s*([1-6])\b/);
+
 
   if(m)
     return 'FRENTE 50' + m[1];
@@ -1058,7 +1583,7 @@ function detectarFrente(texto){
 
 /* =========================================================
    LIMPAR CABEÇALHO
-   ========================================================= */
+========================================================= */
 
 function limparCabecalho(texto){
 
@@ -1074,7 +1599,7 @@ function limparCabecalho(texto){
 
   t =
     t.replace(
-      /frente\s*(quinhent\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,
+      /frente\s*(quinh\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,
       ''
     );
 
@@ -1086,7 +1611,7 @@ function limparCabecalho(texto){
 
 /* =========================================================
    CORREÇÃO LEVE
-   ========================================================= */
+========================================================= */
 
 function correcaoLeve(texto){
 
@@ -1127,7 +1652,7 @@ function correcaoLeve(texto){
 
 /* =========================================================
    HORA ATUAL
-   ========================================================= */
+========================================================= */
 
 function horaAgora(){
 
@@ -1143,8 +1668,8 @@ function horaAgora(){
 
 
 /* =========================================================
-   CARREGAR OCORRÊNCIAS PELO BACKEND
-   ========================================================= */
+   CARREGAR OCORRÊNCIAS
+========================================================= */
 
 async function loadSupa(){
 
@@ -1193,7 +1718,7 @@ async function loadSupa(){
 
 /* =========================================================
    PROTEÇÃO HTML
-   ========================================================= */
+========================================================= */
 
 function escapeHtml(valor){
 
@@ -1209,7 +1734,7 @@ function escapeHtml(valor){
 
 /* =========================================================
    ADICIONAR OCORRÊNCIA
-   ========================================================= */
+========================================================= */
 
 async function addOcorrencia(bruto){
 
@@ -1280,7 +1805,7 @@ async function addOcorrencia(bruto){
 
 /* =========================================================
    ADICIONAR MANUAL
-   ========================================================= */
+========================================================= */
 
 async function addManual(){
 
@@ -1307,8 +1832,30 @@ async function addManual(){
 
 
 /* =========================================================
+   ENTER NO MANUAL
+========================================================= */
+
+document
+  .getElementById('textoManual')
+  .addEventListener(
+    'keydown',
+    function(event){
+
+      if(event.key === 'Enter'){
+
+        event.preventDefault();
+
+        addManual();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
    DELETAR
-   ========================================================= */
+========================================================= */
 
 async function deletar(id){
 
@@ -1353,7 +1900,7 @@ async function deletar(id){
 
 /* =========================================================
    NOVO TURNO
-   ========================================================= */
+========================================================= */
 
 async function limparTudo(){
 
@@ -1384,6 +1931,15 @@ async function limparTudo(){
     );
 
 
+    historicoChat = [];
+
+    fechamentoDados = {
+      gerencial:'',
+      executivo:'',
+      fechamento:''
+    };
+
+
     await loadSupa();
 
 
@@ -1407,7 +1963,7 @@ async function limparTudo(){
 
 /* =========================================================
    FILTRO
-   ========================================================= */
+========================================================= */
 
 function filtrar(f,b){
 
@@ -1431,7 +1987,7 @@ function filtrar(f,b){
 
 /* =========================================================
    EDITAR
-   ========================================================= */
+========================================================= */
 
 function abrirEdit(id){
 
@@ -1462,7 +2018,7 @@ function abrirEdit(id){
 
 /* =========================================================
    SALVAR EDIÇÃO
-   ========================================================= */
+========================================================= */
 
 async function salvarEdit(){
 
@@ -1523,7 +2079,7 @@ async function salvarEdit(){
 
 /* =========================================================
    RENDER
-   ========================================================= */
+========================================================= */
 
 function render(){
 
@@ -1632,7 +2188,7 @@ function render(){
 
 /* =========================================================
    MICROFONE
-   ========================================================= */
+========================================================= */
 
 const btnMic =
   document.getElementById('btnMic');
@@ -1877,7 +2433,7 @@ if(
 
 /* =========================================================
    ORGANIZAR TURNO
-   ========================================================= */
+========================================================= */
 
 async function organizar(){
 
@@ -1952,8 +2508,8 @@ async function organizar(){
 
 
 /* =========================================================
-   COPIAR
-   ========================================================= */
+   COPIAR ORGANIZADO
+========================================================= */
 
 function copiarTexto(){
 
@@ -1963,9 +2519,671 @@ function copiarTexto(){
     ).innerText;
 
 
+  copiarGenerico(
+    texto,
+    'Resumo copiado com sucesso!'
+  );
+
+}
+
+
+/* =========================================================
+   CHAT OPERACIONAL
+========================================================= */
+
+function abrirChat(){
+
+  document
+    .getElementById('modalChat')
+    .classList.add('show');
+
+
+  setTimeout(
+    () => {
+
+      document
+        .getElementById('chatInput')
+        .focus();
+
+    },
+    250
+  );
+
+}
+
+
+function fecharChat(){
+
+  document
+    .getElementById('modalChat')
+    .classList.remove('show');
+
+}
+
+
+function usarAtalho(texto){
+
+  document
+    .getElementById('chatInput')
+    .value = texto;
+
+
+  enviarChat();
+
+}
+
+
+async function enviarChat(){
+
+  if(chatEnviando)
+    return;
+
+
+  const input =
+    document.getElementById(
+      'chatInput'
+    );
+
+
+  const pergunta =
+    input.value.trim();
+
+
+  if(!pergunta)
+    return;
+
+
+  if(!ocorrencias.length){
+
+    adicionarMensagemChat(
+      'assistant',
+      'Ainda não existem ocorrências registradas neste turno para eu analisar.'
+    );
+
+    input.value = '';
+
+    return;
+
+  }
+
+
+  chatEnviando = true;
+
+
+  const botao =
+    document.getElementById(
+      'chatEnviar'
+    );
+
+
+  const status =
+    document.getElementById(
+      'chatStatus'
+    );
+
+
+  botao.disabled = true;
+
+  input.disabled = true;
+
+
+  adicionarMensagemChat(
+    'user',
+    pergunta
+  );
+
+
+  input.value = '';
+
+
+  status.innerText =
+    '🧠 Analisando o turno...';
+
+
+  try{
+
+    const data =
+      await api(
+        '/chat-ia',
+        {
+          method:'POST',
+
+          body:JSON.stringify({
+
+            ocorrencias:
+              ocorrencias
+                .slice()
+                .reverse(),
+
+            pergunta,
+
+            historico:
+              historicoChat
+                .slice(-10)
+
+          })
+
+        }
+      );
+
+
+    const resposta =
+      data.resposta
+      ||
+      'A IA não retornou uma resposta.';
+
+
+    historicoChat.push({
+
+      role:'user',
+
+      content:pergunta
+
+    });
+
+
+    historicoChat.push({
+
+      role:'assistant',
+
+      content:resposta
+
+    });
+
+
+    if(
+      historicoChat.length > 12
+    ){
+
+      historicoChat =
+        historicoChat.slice(-12);
+
+    }
+
+
+    adicionarMensagemChat(
+      'assistant',
+      resposta
+    );
+
+
+    status.innerText =
+      'Análise concluída.';
+
+
+  }catch(error){
+
+    adicionarMensagemChat(
+      'assistant',
+      '❌ Erro ao consultar a IA:\n'
+      + error.message
+    );
+
+
+    status.innerText =
+      'Erro na consulta.';
+
+  }
+
+
+  chatEnviando = false;
+
+  botao.disabled = false;
+
+  input.disabled = false;
+
+  input.focus();
+
+}
+
+
+function adicionarMensagemChat(
+  tipo,
+  texto
+){
+
+  const lista =
+    document.getElementById(
+      'chatLista'
+    );
+
+
+  const div =
+    document.createElement('div');
+
+
+  div.className =
+    'chat-msg ' + tipo;
+
+
+  const balao =
+    document.createElement('div');
+
+
+  balao.className =
+    'chat-balao';
+
+
+  balao.innerText =
+    texto;
+
+
+  div.appendChild(
+    balao
+  );
+
+
+  lista.appendChild(
+    div
+  );
+
+
+  lista.scrollTop =
+    lista.scrollHeight;
+
+}
+
+
+/* =========================================================
+   ENTER DO CHAT
+========================================================= */
+
+document
+  .getElementById('chatInput')
+  .addEventListener(
+    'keydown',
+    function(event){
+
+      if(
+        event.key === 'Enter'
+      ){
+
+        event.preventDefault();
+
+        enviarChat();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   FECHAR TURNO
+========================================================= */
+
+async function fecharTurno(){
+
+  if(!ocorrencias.length){
+
+    alert(
+      'Adicione pelo menos uma ocorrência antes de fechar o turno.'
+    );
+
+    return;
+
+  }
+
+
+  const modal =
+    document.getElementById(
+      'modalFechamento'
+    );
+
+
+  const texto =
+    document.getElementById(
+      'textoFechamento'
+    );
+
+
+  modal.classList.add(
+    'show'
+  );
+
+
+  fechamentoDados = {
+
+    gerencial:'',
+    executivo:'',
+    fechamento:''
+
+  };
+
+
+  fechamentoAtual =
+    'gerencial';
+
+
+  atualizarAbasFechamento();
+
+
+  texto.classList.add(
+    'loading-ia'
+  );
+
+
+  texto.innerText =
+    '🧠 PROCESSANDO FECHAMENTO...\n\n'
+    + 'A IA está analisando todas as ocorrências do turno.\n\n'
+    + 'Aguarde...';
+
+
+  document.getElementById(
+    'fechamentoInfo'
+  ).innerText =
+    ocorrencias.length
+    + ' ocorrência(s) sendo analisada(s).';
+
+
+  try{
+
+    /*
+     * Fazemos as duas análises em paralelo:
+     * 1 — fechamento completo
+     * 2 — resumo executivo
+     */
+
+    const [resultadoFechamento, resultadoExecutivo] =
+      await Promise.all([
+
+        api(
+          '/fechar-turno-ia',
+          {
+            method:'POST',
+
+            body:JSON.stringify({
+
+              ocorrencias:
+                ocorrencias
+                  .slice()
+                  .reverse()
+
+            })
+
+          }
+        ),
+
+        api(
+          '/resumo-executivo-ia',
+          {
+            method:'POST',
+
+            body:JSON.stringify({
+
+              ocorrencias:
+                ocorrencias
+                  .slice()
+                  .reverse()
+
+            })
+
+          }
+        )
+
+      ]);
+
+
+    const fechamento =
+      resultadoFechamento.fechamento
+      ||
+      'Não foi possível gerar o fechamento.';
+
+
+    const executivo =
+      resultadoExecutivo.resumo
+      ||
+      'Não foi possível gerar o resumo executivo.';
+
+
+    /*
+     * O gerencial utiliza o fechamento completo.
+     * O executivo vem da chamada específica.
+     */
+
+    fechamentoDados = {
+
+      gerencial:extrairGerencial(fechamento),
+
+      executivo:executivo,
+
+      fechamento:fechamento
+
+    };
+
+
+    texto.classList.remove(
+      'loading-ia'
+    );
+
+
+    atualizarAbasFechamento();
+
+
+    selecionarFechamento(
+      'gerencial'
+    );
+
+
+  }catch(error){
+
+    texto.classList.remove(
+      'loading-ia'
+    );
+
+
+    texto.innerText =
+      '❌ ERRO AO FECHAR O TURNO\n\n'
+      + error.message;
+
+
+    document.getElementById(
+      'fechamentoInfo'
+    ).innerText =
+      'Não foi possível concluir a análise.';
+
+  }
+
+}
+
+
+/* =========================================================
+   EXTRAIR GERENCIAL
+========================================================= */
+
+function extrairGerencial(texto){
+
+  if(!texto)
+    return '';
+
+
+  /*
+   * Se o modelo gerar um bloco
+   * "RESUMO EXECUTIVO", removemos essa parte
+   * para o gerencial não ficar duplicado.
+   */
+
+  const marcador =
+    '*⚡ RESUMO EXECUTIVO*';
+
+
+  const pos =
+    texto.indexOf(marcador);
+
+
+  if(pos > -1){
+
+    return texto
+      .substring(0,pos)
+      .trim();
+
+  }
+
+
+  return texto.trim();
+
+}
+
+
+/* =========================================================
+   ABAS DO FECHAMENTO
+========================================================= */
+
+function selecionarFechamento(tipo){
+
+  fechamentoAtual =
+    tipo;
+
+
+  atualizarAbasFechamento();
+
+}
+
+
+function atualizarAbasFechamento(){
+
+  const texto =
+    document.getElementById(
+      'textoFechamento'
+    );
+
+
+  const info =
+    document.getElementById(
+      'fechamentoInfo'
+    );
+
+
+  document
+    .querySelectorAll('.fechamento-tab')
+    .forEach(
+      b => b.classList.remove('ativo')
+    );
+
+
+  const mapa = {
+
+    gerencial:
+      'tabGerencial',
+
+    executivo:
+      'tabExecutivo',
+
+    fechamento:
+      'tabFechamento'
+
+  };
+
+
+  const botao =
+    document.getElementById(
+      mapa[fechamentoAtual]
+    );
+
+
+  if(botao)
+    botao.classList.add(
+      'ativo'
+    );
+
+
+  const conteudo =
+    fechamentoDados[
+      fechamentoAtual
+    ];
+
+
+  if(conteudo){
+
+    texto.classList.remove(
+      'loading-ia'
+    );
+
+
+    texto.innerText =
+      conteudo;
+
+
+    if(
+      fechamentoAtual === 'gerencial'
+    ){
+
+      info.innerText =
+        'Mensagem gerencial pronta para WhatsApp.';
+
+    }else if(
+      fechamentoAtual === 'executivo'
+    ){
+
+      info.innerText =
+        'Versão curta para grupo de gestão.';
+
+    }else{
+
+      info.innerText =
+        'Fechamento completo do turno.';
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   COPIAR ABA ATUAL
+========================================================= */
+
+function copiarFechamentoAtual(){
+
+  const texto =
+    fechamentoDados[
+      fechamentoAtual
+    ]
+    ||
+    document.getElementById(
+      'textoFechamento'
+    ).innerText;
+
+
+  if(!texto)
+    return;
+
+
+  copiarGenerico(
+    texto,
+    'Texto copiado com sucesso!'
+  );
+
+}
+
+
+/* =========================================================
+   FECHAR MODAL
+========================================================= */
+
+function fecharModalFechamento(){
+
+  document
+    .getElementById(
+      'modalFechamento'
+    )
+    .classList.remove('show');
+
+}
+
+
+/* =========================================================
+   COPIAR GENÉRICO
+========================================================= */
+
+function copiarGenerico(
+  texto,
+  mensagem
+){
+
   if(
-    navigator.clipboard
-    &&
+    navigator.clipboard &&
     navigator.clipboard.writeText
   ){
 
@@ -1974,50 +3192,75 @@ function copiarTexto(){
       .then(() => {
 
         alert(
-          'Resumo copiado com sucesso!'
+          mensagem
         );
 
       })
       .catch(() => {
 
-        copiarFallback(texto);
+        copiarFallback(
+          texto,
+          mensagem
+        );
 
       });
 
   }else{
 
-    copiarFallback(texto);
+    copiarFallback(
+      texto,
+      mensagem
+    );
 
   }
 
 }
 
 
-function copiarFallback(texto){
+/* =========================================================
+   FALLBACK COPIAR
+========================================================= */
+
+function copiarFallback(
+  texto,
+  mensagem = 'Texto copiado com sucesso!'
+){
 
   const area =
     document.createElement('textarea');
 
 
-  area.value = texto;
-
-  area.style.position = 'fixed';
-
-  area.style.left = '-9999px';
+  area.value =
+    texto;
 
 
-  document.body.appendChild(area);
+  area.style.position =
+    'fixed';
+
+
+  area.style.left =
+    '-9999px';
+
+
+  document.body.appendChild(
+    area
+  );
+
 
   area.select();
 
 
   try{
 
-    document.execCommand('copy');
+    document.execCommand(
+      'copy'
+    );
+
 
     alert(
-      'Resumo copiado com sucesso!'
+      mensagem
     );
+
 
   }catch(e){
 
@@ -2028,19 +3271,23 @@ function copiarFallback(texto){
   }
 
 
-  document.body.removeChild(area);
+  document.body.removeChild(
+    area
+  );
 
 }
 
 
 /* =========================================================
    ATUALIZAÇÃO AUTOMÁTICA
-   ========================================================= */
+========================================================= */
 
 function iniciarAtualizacao(){
 
   if(pollingTimer)
-    clearInterval(pollingTimer);
+    clearInterval(
+      pollingTimer
+    );
 
 
   pollingTimer =
@@ -2063,8 +3310,31 @@ function iniciarAtualizacao(){
 
 
 /* =========================================================
+   FECHAR MODAIS COM ESC
+========================================================= */
+
+document.addEventListener(
+  'keydown',
+  function(event){
+
+    if(event.key !== 'Escape')
+      return;
+
+
+    document
+      .querySelectorAll('.modal.show')
+      .forEach(
+        modal =>
+          modal.classList.remove('show')
+      );
+
+  }
+);
+
+
+/* =========================================================
    CARGA INICIAL
-   ========================================================= */
+========================================================= */
 
 loadSupa();
 
@@ -2073,4 +3343,4 @@ iniciarAtualizacao();
 </script>
 
 </body>
-</html>o
+</html>

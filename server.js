@@ -241,7 +241,7 @@ ${material}
         body: JSON.stringify({
 
           model:
-            'google/gemma-4-31b-it:free',
+            model: 'openrouter/free',
 
           messages: [
             {

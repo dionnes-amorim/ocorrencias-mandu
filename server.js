@@ -188,6 +188,7 @@ app.get(
 
     res.json({
       ok: true,
+
       sistema:
         'CTT Diário de Turno - MANDU',
 
@@ -837,10 +838,20 @@ async function chamarIA(
   const maxTokens =
     options.maxTokens || 2500;
 
+  const timeoutMs =
+    options.timeoutMs || 45000;
+
+  const maxTentativas =
+    options.maxTentativas || 2;
+
   console.log(
     'IA - iniciando chamada OpenRouter...',
     'modelo =',
-    AI_MODEL
+    AI_MODEL,
+    'timeout =',
+    `${timeoutMs}ms`,
+    'maxTokens =',
+    maxTokens
   );
 
   let ultimoErro =
@@ -848,14 +859,14 @@ async function chamarIA(
 
   for (
     let tentativa = 1;
-    tentativa <= 2;
+    tentativa <= maxTentativas;
     tentativa++
   ) {
 
     try {
 
       console.log(
-        `IA - tentativa ${tentativa}/2`
+        `IA - tentativa ${tentativa}/${maxTentativas}`
       );
 
       const controller =
@@ -866,7 +877,7 @@ async function chamarIA(
           () => {
             controller.abort();
           },
-          90000
+          timeoutMs
         );
 
       let response;
@@ -930,9 +941,12 @@ async function chamarIA(
       let data = null;
 
       try {
+
         data =
           JSON.parse(raw);
+
       } catch {
+
         data = null;
       }
 
@@ -958,13 +972,18 @@ async function chamarIA(
           ultimoErro
         );
 
+        const temporario =
+          response.status === 429 ||
+          response.status >= 500;
+
         if (
-          (
-            response.status === 429 ||
-            response.status >= 500
-          ) &&
-          tentativa < 2
+          temporario &&
+          tentativa < maxTentativas
         ) {
+
+          console.log(
+            'IA - erro temporário. Nova tentativa em 2 segundos.'
+          );
 
           await new Promise(
             resolve =>
@@ -992,7 +1011,7 @@ async function chamarIA(
 
         console.error(
           'IA - resposta sem conteúdo:',
-          raw.slice(0, 1000)
+          raw.slice(0, 1500)
         );
 
         throw new Error(
@@ -1012,7 +1031,7 @@ async function chamarIA(
 
       ultimoErro =
         error?.name === 'AbortError'
-          ? 'Tempo limite de 90 segundos excedido ao consultar a IA.'
+          ? `Tempo limite de ${Math.round(timeoutMs / 1000)} segundos excedido ao consultar a IA.`
           : (
               error?.message ||
               'Erro desconhecido na IA.'
@@ -1023,13 +1042,20 @@ async function chamarIA(
         ultimoErro
       );
 
-      if (
-        tentativa < 2 &&
-        /429|fetch|network|timeout|temporarily|aborted|ECONN/i
+      const erroTemporario =
+        /429|fetch|network|timeout|temporarily|aborted|ECONN|socket|503|502|504/i
           .test(
             ultimoErro
-          )
+          );
+
+      if (
+        tentativa < maxTentativas &&
+        erroTemporario
       ) {
+
+        console.log(
+          'IA - nova tentativa em 2 segundos.'
+        );
 
         await new Promise(
           resolve =>
@@ -1146,7 +1172,8 @@ ${contexto}
             }
           ],
           {
-            maxTokens: 2500
+            maxTokens: 2500,
+            timeoutMs: 45000
           }
         );
 
@@ -1169,6 +1196,162 @@ ${contexto}
         error:
           error.message ||
           'Erro ao organizar turno.'
+      });
+    }
+  }
+);
+
+// ======================================================
+// RESUMO EXECUTIVO IA
+//
+// COMPATIBILIDADE COM O INDEX
+// ======================================================
+
+app.post(
+  [
+    '/resumo-executivo-ia',
+    '/api/resumo-executivo-ia'
+  ],
+
+  async (req, res) => {
+
+    console.log(
+      '======================================'
+    );
+
+    console.log(
+      'RESUMO EXECUTIVO IA:',
+      req.method,
+      req.originalUrl
+    );
+
+    try {
+
+      const ocorrencias =
+        await obterOcorrenciasIA(
+          req
+        );
+
+      console.log(
+        'RESUMO EXECUTIVO - total:',
+        ocorrencias.length
+      );
+
+      if (
+        !ocorrencias.length
+      ) {
+
+        return res.status(400).json({
+          error:
+            'Não existem ocorrências para gerar o resumo executivo.'
+        });
+      }
+
+      const contexto =
+        gerarContextoPorFrente(
+          ocorrencias
+        );
+
+      const prompt = `
+Gere um RESUMO EXECUTIVO do turno do CTT MANDU.
+
+O texto será enviado para um grupo de gestão pelo WhatsApp.
+
+Seja extremamente direto.
+
+Utilize somente as ocorrências fornecidas.
+
+Não invente:
+- números;
+- causas;
+- horários;
+- ações;
+- resultados;
+- informações não presentes nos dados.
+
+Utilize exatamente esta estrutura:
+
+*⚡ RESUMO EXECUTIVO — MANDU*
+
+*PRINCIPAIS PONTOS*
+- Liste os principais fatos operacionais identificados.
+
+*RISCOS / IMPACTOS*
+- Liste somente riscos ou impactos sustentados pelas ocorrências.
+
+*AÇÕES / COBRANÇAS*
+- Liste acompanhamentos necessários.
+- Quando for recomendação, use *SUGESTÃO:*.
+
+*FRENTES DE ATENÇÃO*
+- Informe as frentes que possuem ocorrências relevantes e explique objetivamente o motivo.
+
+DADOS DO TURNO:
+
+${contexto}
+`;
+
+      console.log(
+        'RESUMO EXECUTIVO - chamando IA...'
+      );
+
+      const resultado =
+        await chamarIA(
+          [
+            {
+              role: 'system',
+              content:
+                SYSTEM_IA
+            },
+
+            {
+              role: 'user',
+              content:
+                prompt
+            }
+          ],
+          {
+            maxTokens: 1800,
+            timeoutMs: 45000
+          }
+        );
+
+      console.log(
+        'RESUMO EXECUTIVO - IA respondeu:',
+        resultado.length,
+        'caracteres'
+      );
+
+      console.log(
+        '======================================'
+      );
+
+      return res.json({
+
+        texto:
+          resultado,
+
+        executivo:
+          resultado,
+
+        total:
+          ocorrencias.length
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ERRO RESUMO EXECUTIVO IA:',
+        error
+      );
+
+      return res.status(500).json({
+
+        error:
+          error?.message ||
+          'Erro ao gerar resumo executivo.'
+
       });
     }
   }
@@ -1206,7 +1389,7 @@ app.post(
         req.body
       ).slice(
         0,
-        1000
+        1500
       )
     );
 
@@ -1259,6 +1442,7 @@ app.post(
 Faça o FECHAMENTO COMPLETO do turno do CTT MANDU.
 
 IMPORTANTE:
+
 - Utilize SOMENTE as ocorrências fornecidas.
 - Não invente informações.
 - Não invente números.
@@ -1373,7 +1557,8 @@ ${contexto}
             }
           ],
           {
-            maxTokens: 4000
+            maxTokens: 4000,
+            timeoutMs: 45000
           }
         );
 
@@ -1495,6 +1680,10 @@ ${contexto}
         executivo,
 
         fechamento,
+
+        // Compatibilidade adicional
+        texto:
+          fechamento,
 
         total:
           ocorrencias.length,
@@ -1661,15 +1850,18 @@ Se perguntar qual frente precisa de atenção, explique quais dados sustentam a 
             }
           ],
           {
-            maxTokens: 2500
+            maxTokens: 2500,
+            timeoutMs: 45000
           }
         );
 
       res.json({
+
         resposta,
 
         total:
           ocorrencias.length
+
       });
 
     } catch (error) {
@@ -1802,6 +1994,10 @@ app.listen(
 
     console.log(
       'IA: organização por frente'
+    );
+
+    console.log(
+      'IA: resumo executivo'
     );
 
     console.log(

@@ -94,6 +94,170 @@ app.get('/api/status', (req, res) => {
 // =========================================================
 
 app.post('/organizar-ia', async (req, res) => {
+  try {
+    if (!OPENROUTER_API_KEY) {
+      return res.status(500).json({
+        texto: 'OPENROUTER_API_KEY não configurada no Render.'
+      });
+    }
+
+    const ocorrencias = Array.isArray(req.body?.ocorrencias)
+      ? req.body.ocorrencias
+      : [];
+
+    if (!ocorrencias.length) {
+      return res.status(400).json({
+        texto: 'Nenhuma ocorrência foi enviada.'
+      });
+    }
+
+    const material = ocorrencias
+      .map((o) => {
+        return [
+          `Horário: ${o.hora || '--:--'}`,
+          `Frente: ${o.frente || 'GERAL'}`,
+          `Turno: ${o.turno || 'Não informado'}`,
+          `Unidade: ${o.unidade || 'MANDU'}`,
+          `Ocorrência: ${o.texto || ''}`
+        ].join('\n');
+      })
+      .join('\n\n');
+
+    const prompt = `
+Você é responsável por organizar o Diário de Turno do CTT da unidade Mandu.
+
+Transforme as ocorrências abaixo em um relatório operacional profissional.
+
+REGRAS:
+- Corrija erros de português.
+- Corrija erros óbvios de transcrição.
+- Não invente informações.
+- Não invente números.
+- Não invente horários.
+- Não invente causas.
+- Não altere os números das frentes.
+- Preserve os fatos registrados.
+- Agrupe ocorrências da mesma frente.
+- Mantenha os horários.
+- Seja objetivo e técnico.
+- Destaque manutenção, parada, indisponibilidade, atraso e riscos somente quando estiverem registrados.
+- Não faça comentários que não estejam sustentados pelas ocorrências.
+
+FORMATO:
+
+CTT - DIÁRIO DE TURNO | MANDU
+
+[Frente]
+- HH:MM — ocorrência.
+
+[Outra Frente]
+- HH:MM — ocorrência.
+
+[GERAL]
+- HH:MM — ocorrência.
+
+Ao final, caso existam informações suficientes:
+
+PONTOS DE ATENÇÃO
+- ponto relevante.
+
+Entregue somente o relatório final.
+
+OCORRÊNCIAS:
+
+${material}
+`;
+
+    const response = await fetch(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://ocorrencias-mandu.onrender.com',
+          'X-Title': 'CTT Diário de Turno - Mandu'
+        },
+
+        body: JSON.stringify({
+          model: 'google/gemma-4-31b-it:free',
+
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+
+          temperature: 0.2,
+
+          max_tokens: 2000
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    console.log(
+      'Resposta OpenRouter:',
+      JSON.stringify(data)
+    );
+
+    if (!response.ok) {
+      console.error(
+        'Erro OpenRouter:',
+        JSON.stringify(data)
+      );
+
+      return res.status(500).json({
+        texto:
+          'Erro OpenRouter: ' +
+          (
+            data?.error?.message ||
+            JSON.stringify(data?.error) ||
+            'erro desconhecido'
+          )
+      });
+    }
+
+    const texto =
+      data?.choices?.[0]?.message?.content ||
+      data?.choices?.[0]?.text ||
+      data?.output?.[0]?.content?.[0]?.text ||
+      '';
+
+    if (!texto || !texto.trim()) {
+      console.error(
+        'OpenRouter respondeu sem texto:',
+        JSON.stringify(data)
+      );
+
+      return res.status(500).json({
+        texto:
+          'A IA respondeu, mas não retornou texto. Verifique os logs do Render.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      texto: texto.trim()
+    });
+
+  } catch (error) {
+
+    console.error(
+      'Erro /organizar-ia:',
+      error
+    );
+
+    return res.status(500).json({
+      texto:
+        'Erro ao organizar as ocorrências com IA: ' +
+        (error?.message || 'erro desconhecido')
+    });
+  }
+});
 
   try {
 

@@ -1,14 +1,22 @@
-const express = require('express');
-const path = require('path');
-require('dotenv').config();
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
-const { createClient } = require('@supabase/supabase-js');
+dotenv.config();
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-
 const TABLE = 'ocorrencias_mandu';
+
+/* =========================================================
+   CAMINHOS
+========================================================= */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /* =========================================================
    VARIÁVEIS DO RENDER
@@ -60,14 +68,15 @@ const supabase = createClient(
    MIDDLEWARE
 ========================================================= */
 
-app.use(express.json({
-  limit: '1mb'
-}));
+app.use(
+  express.json({
+    limit: '1mb'
+  })
+);
 
-/*
-  O index.html pode ficar na raiz do projeto.
-  O servidor entrega apenas o arquivo inicial na rota "/".
-*/
+/* =========================================================
+   INDEX
+========================================================= */
 
 app.get('/', (req, res) => {
 
@@ -172,7 +181,10 @@ app.post('/api/ocorrencias', async (req, res) => {
       unidade
     } = req.body;
 
-    if (!texto || !String(texto).trim()) {
+    if (
+      !texto ||
+      !String(texto).trim()
+    ) {
 
       return res.status(400).json({
         error:
@@ -253,7 +265,10 @@ app.put('/api/ocorrencias/:id', async (req, res) => {
       texto
     } = req.body;
 
-    if (!texto || !String(texto).trim()) {
+    if (
+      !texto ||
+      !String(texto).trim()
+    ) {
 
       return res.status(400).json({
         error:
@@ -265,12 +280,10 @@ app.put('/api/ocorrencias/:id', async (req, res) => {
     const alteracao = {
 
       hora:
-        hora ||
-        null,
+        hora || null,
 
       frente:
-        frente ||
-        'GERAL',
+        frente || 'GERAL',
 
       texto:
         String(texto).trim()
@@ -355,12 +368,6 @@ app.delete('/api/ocorrencias', async (req, res) => {
 
   try {
 
-    /*
-      UUID impossível de ser usado pela aplicação.
-      O filtro permite que o Supabase aceite a operação
-      de exclusão de todos os registros.
-    */
-
     const { error } =
       await supabase
         .from(TABLE)
@@ -419,11 +426,6 @@ async function chamarIA(
     reasoningEffort = 'minimal'
   } = opcoes;
 
-  /*
-    Mantemos o modelo configurado no servidor.
-    Nenhuma informação de autenticação vai para o navegador.
-  */
-
   const AI_MODEL =
     'google/gemma-4-26b-a4b-it:free';
 
@@ -436,7 +438,7 @@ async function chamarIA(
 
         headers: {
 
-          'Authorization':
+          Authorization:
             `Bearer ${OPENROUTER_API_KEY}`,
 
           'Content-Type':
@@ -533,10 +535,6 @@ app.post('/organizar-ia', async (req, res) => {
       });
 
     }
-
-    /*
-      Contexto enxuto para acelerar a resposta.
-    */
 
     const contexto =
       ocorrencias
@@ -660,11 +658,6 @@ app.post('/chat-ia', async (req, res) => {
 
     }
 
-    /*
-      Contexto enxuto.
-      Isso evita mandar dados desnecessários para a IA.
-    */
-
     const contexto =
       ocorrencias
         .map(item => {
@@ -677,10 +670,6 @@ app.post('/chat-ia', async (req, res) => {
 
         })
         .join('\n');
-
-    /*
-      Mantém somente o histórico recente.
-    */
 
     const historicoSeguro =
       Array.isArray(historico)
@@ -755,10 +744,6 @@ ${contexto}`
       }
 
     ];
-
-    /*
-      Adiciona histórico recente.
-    */
 
     for (const item of historicoSeguro) {
 
@@ -841,11 +826,24 @@ app.listen(
     );
 
     console.log(
-      `Supabase: ${Boolean(SUPABASE_URL && SUPABASE_KEY) ? 'OK' : 'NÃO CONFIGURADO'}`
+      `Supabase: ${
+        Boolean(
+          SUPABASE_URL &&
+          SUPABASE_KEY
+        )
+          ? 'OK'
+          : 'NÃO CONFIGURADO'
+      }`
     );
 
     console.log(
-      `OpenRouter: ${Boolean(OPENROUTER_API_KEY) ? 'OK' : 'NÃO CONFIGURADO'}`
+      `OpenRouter: ${
+        Boolean(
+          OPENROUTER_API_KEY
+        )
+          ? 'OK'
+          : 'NÃO CONFIGURADO'
+      }`
     );
 
   }

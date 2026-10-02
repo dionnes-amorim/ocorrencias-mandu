@@ -163,6 +163,7 @@ body::before{
   position:relative;
   width:132px;
   height:132px;
+  touch-action:none;
 }
 
 #btnMic{
@@ -186,9 +187,10 @@ body::before{
     0 20px 60px rgba(0,230,118,.35);
 
   transition:
-    transform .18s ease,
+    transform .12s ease,
     box-shadow .18s ease,
-    background .18s ease;
+    background .18s ease,
+    border-radius .18s ease;
 
   position:relative;
   z-index:2;
@@ -204,16 +206,13 @@ body::before{
   justify-content:center;
 
   outline:none;
+
+  -webkit-user-drag:none;
 }
 
-#btnMic:hover{
-  transform:translateY(-2px);
-}
+/* estado pressionado / gravando */
 
-#btnMic:active{
-  transform:scale(.96);
-}
-
+#btnMic.pressionado,
 #btnMic.gravando{
 
   background:
@@ -226,11 +225,50 @@ body::before{
   color:#fff;
 
   box-shadow:
-    0 20px 65px rgba(255,82,82,.45);
-
-  animation:pulse 1.25s infinite;
+    0 20px 65px rgba(255,82,82,.5);
 
   border-radius:50%;
+
+  transform:scale(1.02);
+
+}
+
+/* anima somente enquanto realmente ouvindo */
+
+#btnMic.gravando{
+  animation:pulse 1.25s infinite;
+}
+
+/* estado cancelado */
+
+#btnMic.cancelado{
+
+  background:
+    linear-gradient(
+      135deg,
+      #616161,
+      #303030
+    );
+
+  color:#fff;
+
+  box-shadow:
+    0 15px 45px rgba(0,0,0,.45);
+
+  border-radius:50%;
+
+  animation:none;
+
+  transform:scale(.96);
+
+}
+
+#btnMic:hover{
+  transform:translateY(-2px);
+}
+
+#btnMic:active{
+  transform:scale(.97);
 }
 
 @keyframes pulse{
@@ -255,6 +293,7 @@ body::before{
 }
 
 #btnMic.gravando ~ .ring{
+  border-color:rgba(255,82,82,.5);
   animation:ringPulse 1.8s infinite;
 }
 
@@ -343,7 +382,6 @@ body::before{
   display:none;
   position:relative;
   z-index:1;
-
   max-height:150px;
   overflow:auto;
 }
@@ -574,12 +612,11 @@ body::before{
 }
 
 /* =========================================================
-   BARRA INFERIOR FIXA
+   BARRA INFERIOR
 ========================================================= */
 
 .bottom{
   position:fixed;
-
   bottom:0;
   left:0;
   right:0;
@@ -1071,11 +1108,8 @@ body::before{
 <div class="header">
 
   <h1>
-
     <i class="fa-solid fa-tractor"></i>
-
     Diário de Turno - MANDU
-
   </h1>
 
   <div class="sub">
@@ -1099,33 +1133,21 @@ body::before{
 <div class="stats">
 
   <div class="stat">
-
     <b id="stTotal">0</b>
-
     <br>
-
     <small>Ocorrências</small>
-
   </div>
 
   <div class="stat">
-
     <b id="stFrentes">0</b>
-
     <br>
-
     <small>Frentes</small>
-
   </div>
 
   <div class="stat">
-
     <b id="stUltima">--:--</b>
-
     <br>
-
     <small>Última</small>
-
   </div>
 
 </div>
@@ -1142,17 +1164,16 @@ body::before{
     <button
       id="btnMic"
       type="button"
-      aria-label="Falar ocorrência"
-      title="Segure para falar">
+      aria-label="Segure para falar"
+      title="Segure para falar"
+    >
 
       <i class="fa-solid fa-microphone"></i>
 
     </button>
 
     <div class="ring"></div>
-
     <div class="ring r2"></div>
-
     <div class="ring r3"></div>
 
   </div>
@@ -1162,9 +1183,7 @@ body::before{
   </div>
 
   <div id="silenceBar">
-
     <div id="silenceFill"></div>
-
   </div>
 
 </div>
@@ -1181,10 +1200,11 @@ body::before{
     style="color:#ffeb3b">
   </i>
 
-  Fale naturalmente. Exemplo:
+  Segure o microfone para falar. Enquanto você fala,
+  o texto aparece em tempo real no campo abaixo.
 
   <b>
-    "Às 18 horas e 22 minutos, frente 502 parou novamente a colhedora 450060 com problema de solda..."
+    Arraste para o lado para cancelar.
   </b>
 
 </div>
@@ -1277,13 +1297,10 @@ body::before{
   <button
     class="btn-limpar"
     onclick="limparTudo()">
-
     Novo turno
-
   </button>
 
 </div>
-
 
 <div id="lista"></div>
 
@@ -1339,9 +1356,7 @@ body::before{
       <button
         class="btn btn-s"
         onclick="salvarEdit()">
-
         Salvar
-
       </button>
 
       <button
@@ -1351,9 +1366,7 @@ body::before{
           .getElementById('modalEdit')
           .classList.remove('show')
         ">
-
         Cancelar
-
       </button>
 
     </div>
@@ -1395,34 +1408,27 @@ body::before{
 
     </p>
 
-
     <div class="fechamento-tabs">
 
       <button
         id="tabChat"
         class="fechamento-tab ativo"
         onclick="selecionarPainelIA('chat')">
-
         💬 CHAT
-
       </button>
 
       <button
         id="tabGerencial"
         class="fechamento-tab"
         onclick="selecionarPainelIA('gerencial')">
-
         📋 GERENCIAL
-
       </button>
 
       <button
         id="tabExecutivo"
         class="fechamento-tab"
         onclick="selecionarPainelIA('executivo')">
-
         ⚡ EXECUTIVO
-
       </button>
 
     </div>
@@ -1461,9 +1467,7 @@ body::before{
               'Quais problemas mais se repetiram hoje?'
             )
           ">
-
           🔁 Problemas repetidos
-
         </button>
 
         <button
@@ -1473,9 +1477,7 @@ body::before{
               'O que está mais ameaçando a continuidade operacional?'
             )
           ">
-
           ⚠️ Riscos
-
         </button>
 
         <button
@@ -1485,9 +1487,7 @@ body::before{
               'O que mudou nas últimas duas horas?'
             )
           ">
-
           ⏱️ Últimas 2h
-
         </button>
 
         <button
@@ -1497,9 +1497,7 @@ body::before{
               'Monte meu plano de voo para as próximas 4 horas.'
             )
           ">
-
           🎯 Plano de voo
-
         </button>
 
         <button
@@ -1509,9 +1507,7 @@ body::before{
               'O que eu preciso cobrar da manutenção?'
             )
           ">
-
           🔧 Manutenção
-
         </button>
 
       </div>
@@ -1578,9 +1574,7 @@ Aguardando fechamento do turno...
       class="painel-ia">
 
       <div class="fechamento-info">
-
         Resumo executivo para gestão
-
       </div>
 
       <pre
@@ -1602,7 +1596,6 @@ Aguardando fechamento do turno...
       </button>
 
     </div>
-
 
 
     <button
@@ -1643,14 +1636,9 @@ async function api(url, options = {}){
   let dados = null;
 
   try{
-
-    dados =
-      await resposta.json();
-
+    dados = await resposta.json();
   }catch(_){
-
     dados = {};
-
   }
 
   if(!resposta.ok){
@@ -1680,7 +1668,7 @@ let editId = null;
 
 
 /* =========================================================
-   MICROFONE
+   MICROFONE — ESTADO
 ========================================================= */
 
 let rec = null;
@@ -1697,11 +1685,38 @@ let interimBuffer = '';
 
 let micPointerId = null;
 
+let micPressionado = false;
+
+let micCancelado = false;
+
 let micSoltadoEnquantoInicia = false;
 
 let finalizandoMicrofone = false;
 
 let recognitionGeneration = 0;
+
+let finalizacaoTimer = null;
+
+let micPermissionOK = false;
+
+let ultimoX = 0;
+
+let inicioX = 0;
+
+let movimentoHorizontal = 0;
+
+
+/*
+  Distância para cancelar.
+
+  No celular:
+  arrastou 80px para qualquer lado = CANCELA.
+
+  No mouse:
+  mesma lógica.
+*/
+
+const DISTANCIA_CANCELAMENTO = 80;
 
 
 /* =========================================================
@@ -1972,9 +1987,7 @@ function correcaoLeve(texto){
     t &&
     !/[.!?]$/.test(t)
   ){
-
     t += '.';
-
   }
 
   return t;
@@ -2073,9 +2086,7 @@ async function addOcorrencia(bruto){
     !bruto ||
     !bruto.trim()
   ){
-
     return;
-
   }
 
   const hora =
@@ -2094,9 +2105,7 @@ async function addOcorrencia(bruto){
     !texto ||
     texto === '.'
   ){
-
     return;
-
   }
 
   try{
@@ -2195,9 +2204,7 @@ async function deletar(id){
       'Deseja excluir este registro?'
     )
   ){
-
     return;
-
   }
 
   try{
@@ -2248,9 +2255,7 @@ async function limparTudo(){
       'Deseja iniciar um novo turno e limpar todas as ocorrências atuais?'
     )
   ){
-
     return;
-
   }
 
   try{
@@ -2510,7 +2515,8 @@ function render(){
 
 
 /* =========================================================
-   MICROFONE — APERTAR E SEGURAR
+   MICROFONE
+   PUSH-TO-TALK + CANCELAMENTO POR ARRASTE
 ========================================================= */
 
 const btnMic =
@@ -2526,6 +2532,11 @@ const statusMic =
 const tempDiv =
   document.getElementById(
     'transcricaoTemp'
+  );
+
+const textoManual =
+  document.getElementById(
+    'textoManual'
   );
 
 
@@ -2648,7 +2659,7 @@ function configurarContextoReconhecimento(){
   }catch(error){
 
     console.debug(
-      'Contexto de fala não disponível neste navegador.',
+      'Contexto de fala não disponível.',
       error
     );
 
@@ -2658,42 +2669,72 @@ function configurarContextoReconhecimento(){
 
 
 /* =========================================================
-   VISUAL
+   VISUAL DO MICROFONE
 ========================================================= */
 
 function atualizarVisualMic(){
 
-  if(gravando){
+  btnMic.classList.toggle(
+    'pressionado',
+    micPressionado
+  );
 
-    btnMic.classList.add(
-      'gravando'
-    );
+  btnMic.classList.toggle(
+    'gravando',
+    gravando
+  );
+
+  btnMic.classList.toggle(
+    'cancelado',
+    micCancelado
+  );
+
+
+  if(micCancelado){
 
     btnMic.innerHTML =
-      '<i class="fa-solid fa-microphone"></i>';
+      '<i class="fa-solid fa-xmark"></i>';
 
     statusMic.innerText =
-      'Ouvindo... solte para registrar';
+      'Cancelado — solte o botão';
 
-  }else{
-
-    btnMic.classList.remove(
-      'gravando'
-    );
-
-    btnMic.innerHTML =
-      '<i class="fa-solid fa-microphone"></i>';
-
-    statusMic.innerText =
-      'Segure para falar';
+    return;
 
   }
+
+
+  btnMic.innerHTML =
+    '<i class="fa-solid fa-microphone"></i>';
+
+
+  if(gravando){
+
+    statusMic.innerText =
+      '🔴 Ouvindo... solte para registrar';
+
+    return;
+
+  }
+
+
+  if(micPressionado){
+
+    statusMic.innerText =
+      'Preparando microfone...';
+
+    return;
+
+  }
+
+
+  statusMic.innerText =
+    'Segure para falar';
 
 }
 
 
 /* =========================================================
-   TRANSCRIÇÃO VISUAL
+   MOSTRAR TEXTO EM TEMPO REAL
 ========================================================= */
 
 function atualizarTranscricao(){
@@ -2710,17 +2751,75 @@ function atualizarTranscricao(){
     .replace(/\s+/g,' ')
     .trim();
 
-  tempDiv.innerText =
-    texto || 'Ouvindo...';
 
-  tempDiv.style.display =
-    'block';
+  /*
+    O campo principal recebe o texto em tempo real.
+    Isso permite ao operador enxergar o que está
+    sendo reconhecido enquanto fala.
+  */
+
+  textoManual.value =
+    texto;
+
+
+  /*
+    Mantemos também o painel visual de transcrição.
+  */
+
+  if(texto){
+
+    tempDiv.innerText =
+      texto;
+
+    tempDiv.style.display =
+      'block';
+
+  }else{
+
+    tempDiv.innerText =
+      'Ouvindo...';
+
+    tempDiv.style.display =
+      'block';
+
+  }
 
 }
 
 
 /* =========================================================
-   FINALIZAR TEXTO DO MICROFONE
+   LIMPAR MICROFONE
+========================================================= */
+
+function limparEstadoMicrofone(){
+
+  micPressionado = false;
+
+  micCancelado = false;
+
+  gravando = false;
+
+  recognitionStarting = false;
+
+  wantRestart = false;
+
+  micSoltadoEnquantoInicia = false;
+
+  micPointerId = null;
+
+  movimentoHorizontal = 0;
+
+  inicioX = 0;
+
+  ultimoX = 0;
+
+  atualizarVisualMic();
+
+}
+
+
+/* =========================================================
+   FINALIZAR MICROFONE
 ========================================================= */
 
 async function finalizarMicrofone(){
@@ -2730,27 +2829,31 @@ async function finalizarMicrofone(){
 
   finalizandoMicrofone = true;
 
-  const textoFinal =
-    (
-      finalBuffer +
-      (
-        interimBuffer
-          ? ' ' + interimBuffer
-          : ''
-      )
-    )
-      .replace(/\s+/g,' ')
-      .trim();
 
-  finalBuffer = '';
-  interimBuffer = '';
+  clearTimeout(
+    finalizacaoTimer
+  );
 
-  if(!textoFinal){
+
+  /*
+    Se o usuário cancelou arrastando,
+    não salva absolutamente nada.
+  */
+
+  if(micCancelado){
+
+    finalBuffer = '';
+
+    interimBuffer = '';
+
+    textoManual.value = '';
 
     tempDiv.innerText = '';
 
     tempDiv.style.display =
       'none';
+
+    limparEstadoMicrofone();
 
     finalizandoMicrofone = false;
 
@@ -2758,11 +2861,54 @@ async function finalizarMicrofone(){
 
   }
 
+
+  const textoFinal =
+    (
+      finalBuffer ||
+      interimBuffer ||
+      textoManual.value ||
+      ''
+    )
+    .replace(/\s+/g,' ')
+    .trim();
+
+
+  finalBuffer = '';
+
+  interimBuffer = '';
+
+
+  if(!textoFinal){
+
+    textoManual.value = '';
+
+    tempDiv.innerText = '';
+
+    tempDiv.style.display =
+      'none';
+
+    limparEstadoMicrofone();
+
+    finalizandoMicrofone = false;
+
+    return;
+
+  }
+
+
+  /*
+    Mantém o texto visível enquanto salva.
+  */
+
+  textoManual.value =
+    textoFinal;
+
   tempDiv.innerText =
     textoFinal;
 
   tempDiv.style.display =
     'block';
+
 
   try{
 
@@ -2770,9 +2916,99 @@ async function finalizarMicrofone(){
       textoFinal
     );
 
+    /*
+      Depois de salvar, limpa o campo
+      para a próxima ocorrência.
+    */
+
+    textoManual.value = '';
+
+    tempDiv.innerText = '';
+
+    tempDiv.style.display =
+      'none';
+
   }finally{
 
+    limparEstadoMicrofone();
+
     finalizandoMicrofone = false;
+
+  }
+
+}
+
+
+/* =========================================================
+   PERMISSÃO DO MICROFONE
+========================================================= */
+
+async function garantirPermissaoMicrofone(){
+
+  /*
+    Se já conseguimos acesso anteriormente,
+    não pedimos novamente.
+  */
+
+  if(micPermissionOK)
+    return true;
+
+
+  /*
+    Alguns navegadores não expõem getUserMedia
+    diretamente, mas o SpeechRecognition ainda
+    pode funcionar.
+  */
+
+  if(
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ){
+
+    return true;
+
+  }
+
+
+  try{
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        audio:{
+          echoCancellation:true,
+          noiseSuppression:true,
+          autoGainControl:true
+        }
+      });
+
+
+    stream
+      .getTracks()
+      .forEach(
+        track => track.stop()
+      );
+
+
+    micPermissionOK =
+      true;
+
+    return true;
+
+  }catch(error){
+
+    console.error(
+      'Permissão do microfone:',
+      error
+    );
+
+    statusMic.innerText =
+      'Permita o acesso ao microfone no navegador.';
+
+    micPressionado = false;
+
+    atualizarVisualMic();
+
+    return false;
 
   }
 
@@ -2785,6 +3021,20 @@ async function finalizarMicrofone(){
 
 async function iniciarGravacao(){
 
+  if(!rec){
+
+    statusMic.innerText =
+      'Reconhecimento de voz indisponível neste navegador.';
+
+    micPressionado = false;
+
+    atualizarVisualMic();
+
+    return;
+
+  }
+
+
   if(
     gravando ||
     recognitionStarting
@@ -2794,66 +3044,49 @@ async function iniciarGravacao(){
 
   }
 
-  if(!rec){
-
-    statusMic.innerText =
-      'Reconhecimento de voz indisponível neste navegador.';
-
-    return;
-
-  }
-
-  micSoltadoEnquantoInicia =
-    false;
 
   finalBuffer = '';
 
   interimBuffer = '';
 
-  atualizarTranscricao();
+  micCancelado = false;
+
+  micSoltadoEnquantoInicia = false;
+
 
   /*
-    Primeiro pedimos a permissão do microfone.
-    Isso evita que o SpeechRecognition fique
-    travado por falta de permissão.
+    Limpa o campo manual para que a nova fala
+    apareça desde o começo.
   */
 
-  if(
-    navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia
-  ){
+  textoManual.value = '';
 
-    try{
+  tempDiv.innerText = '';
 
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-          audio:true
-        });
+  tempDiv.style.display =
+    'none';
 
-      stream
-        .getTracks()
-        .forEach(
-          track => track.stop()
-        );
 
-    }catch(error){
+  atualizarVisualMic();
 
-      statusMic.innerText =
-        'Permita o acesso ao microfone no navegador.';
 
-      return;
+  /*
+    Solicita acesso ao microfone.
+  */
 
-    }
+  const permitido =
+    await garantirPermissaoMicrofone();
 
-  }
 
   /*
     O usuário pode ter soltado o botão
-    enquanto a janela de permissão estava aberta.
+    enquanto a permissão estava sendo pedida.
   */
 
   if(
-    micSoltadoEnquantoInicia
+    !micPressionado ||
+    micPointerId === null ||
+    micCancelado
   ){
 
     micSoltadoEnquantoInicia =
@@ -2863,16 +3096,27 @@ async function iniciarGravacao(){
 
   }
 
+
+  if(!permitido){
+
+    return;
+
+  }
+
+
   wantRestart =
     true;
 
   recognitionGeneration++;
 
+
   const generation =
     recognitionGeneration;
 
+
   recognitionStarting =
     true;
+
 
   try{
 
@@ -2886,13 +3130,14 @@ async function iniciarGravacao(){
       false;
 
     console.debug(
-      'Erro ao iniciar reconhecimento:',
+      'SpeechRecognition.start:',
       error
     );
 
+
     /*
-      Em alguns casos o navegador ainda está
-      encerrando uma sessão anterior.
+      Se foi erro de estado,
+      tenta novamente rapidamente.
     */
 
     setTimeout(
@@ -2902,18 +3147,16 @@ async function iniciarGravacao(){
           generation !==
           recognitionGeneration
         ){
-
           return;
-
         }
 
         if(
-          !wantRestart ||
-          !micPointerId
+          !micPressionado ||
+          micPointerId === null ||
+          micCancelado ||
+          !wantRestart
         ){
-
           return;
-
         }
 
         try{
@@ -2928,10 +3171,13 @@ async function iniciarGravacao(){
           recognitionStarting =
             false;
 
-          console.debug(
-            'Segundo erro ao iniciar reconhecimento:',
+          console.error(
+            'Não foi possível reiniciar o reconhecimento:',
             e
           );
+
+          statusMic.innerText =
+            'Não foi possível iniciar o reconhecimento.';
 
         }
 
@@ -2945,14 +3191,14 @@ async function iniciarGravacao(){
 
 
 /* =========================================================
-   PARAR GRAVAÇÃO
+   PARAR / SOLTAR
 ========================================================= */
 
-async function pararTudo(){
+function pararTudo(){
 
   /*
-    Caso o usuário solte enquanto o navegador
-    ainda está pedindo permissão/iniciando.
+    Se soltou antes do reconhecimento começar,
+    apenas marca o cancelamento da inicialização.
   */
 
   if(
@@ -2968,18 +3214,32 @@ async function pararTudo(){
 
     recognitionGeneration++;
 
+    micPressionado = false;
+
+    atualizarVisualMic();
+
     return;
 
   }
+
+
+  /*
+    Se não estava gravando, não há nada para parar.
+  */
 
   if(
     !gravando &&
     !recognitionStarting
   ){
 
+    micPressionado = false;
+
+    atualizarVisualMic();
+
     return;
 
   }
+
 
   wantRestart =
     false;
@@ -2992,7 +3252,12 @@ async function pararTudo(){
   recognitionStarting =
     false;
 
+  micPressionado =
+    false;
+
+
   atualizarVisualMic();
+
 
   try{
 
@@ -3007,19 +3272,107 @@ async function pararTudo(){
 
   }
 
+
   /*
-    Pequeno intervalo para deixar o último
-    resultado chegar ao onresult antes
-    de registrar a ocorrência.
+    Dá tempo para o último onresult chegar.
+  */
+
+  clearTimeout(
+    finalizacaoTimer
+  );
+
+
+  finalizacaoTimer =
+    setTimeout(
+      () => {
+
+        finalizarMicrofone();
+
+      },
+      350
+    );
+
+}
+
+
+/* =========================================================
+   CANCELAR MANUALMENTE
+========================================================= */
+
+function cancelarMicrofone(){
+
+  micCancelado =
+    true;
+
+  wantRestart =
+    false;
+
+  recognitionGeneration++;
+
+  gravando =
+    false;
+
+  recognitionStarting =
+    false;
+
+  micPressionado =
+    false;
+
+  micSoltadoEnquantoInicia =
+    true;
+
+
+  /*
+    Limpa imediatamente o campo.
+  */
+
+  finalBuffer = '';
+
+  interimBuffer = '';
+
+  textoManual.value = '';
+
+  tempDiv.innerText = '';
+
+  tempDiv.style.display =
+    'none';
+
+
+  try{
+
+    if(rec)
+      rec.abort();
+
+  }catch(_){}
+
+
+  atualizarVisualMic();
+
+  statusMic.innerText =
+    '❌ Fala cancelada';
+
+
+  /*
+    Volta para o estado normal.
   */
 
   setTimeout(
     () => {
 
-      finalizarMicrofone();
+      if(
+        !micPressionado &&
+        !gravando
+      ){
+
+        micCancelado =
+          false;
+
+        atualizarVisualMic();
+
+      }
 
     },
-    180
+    500
   );
 
 }
@@ -3038,24 +3391,29 @@ if(
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
+
   rec =
     new SpeechRecognition();
+
 
   rec.lang =
     'pt-BR';
 
+
   rec.continuous =
     true;
 
+
   rec.interimResults =
     true;
+
 
   rec.maxAlternatives =
     1;
 
 
   /* =======================================================
-     INÍCIO DA SESSÃO
+     INÍCIO
   ======================================================= */
 
   rec.onstart = () => {
@@ -3063,41 +3421,31 @@ if(
     recognitionStarting =
       false;
 
+
     /*
-      Se o usuário soltou antes do reconhecimento
-      efetivamente começar, não deixamos uma
-      gravação fantasma iniciar.
+      Se soltou antes do início real,
+      aborta imediatamente.
     */
 
     if(
-      micSoltadoEnquantoInicia ||
-      !wantRestart ||
-      micPointerId === null
+      !micPressionado ||
+      micPointerId === null ||
+      micCancelado ||
+      !wantRestart
     ){
 
-      micSoltadoEnquantoInicia =
-        false;
-
-      wantRestart =
-        false;
-
-      gravando =
-        false;
-
       try{
-
         rec.stop();
-
       }catch(_){}
-
-      atualizarVisualMic();
 
       return;
 
     }
 
+
     gravando =
       true;
+
 
     atualizarVisualMic();
 
@@ -3114,6 +3462,7 @@ if(
 
     let interim = '';
 
+
     for(
       let i = event.resultIndex;
       i < event.results.length;
@@ -3123,6 +3472,7 @@ if(
       const resultado =
         event.results[i];
 
+
       const texto =
         (
           resultado[0]?.transcript ||
@@ -3130,8 +3480,10 @@ if(
         )
         .trim();
 
+
       if(!texto)
         continue;
+
 
       if(resultado.isFinal){
 
@@ -3157,8 +3509,10 @@ if(
 
     }
 
+
     interimBuffer =
       interim;
+
 
     atualizarTranscricao();
 
@@ -3166,7 +3520,7 @@ if(
 
 
   /* =======================================================
-     FIM AUTOMÁTICO DA SESSÃO
+     FIM AUTOMÁTICO
   ======================================================= */
 
   rec.onend = () => {
@@ -3174,17 +3528,16 @@ if(
     recognitionStarting =
       false;
 
-    /*
-      Se ainda está segurando o botão,
-      reiniciamos automaticamente.
 
-      Isso é importante porque o Chrome/Edge
-      pode encerrar o SpeechRecognition sozinho
-      mesmo com continuous=true.
+    /*
+      Enquanto o botão continua pressionado,
+      o reconhecimento pode encerrar sozinho.
+      Reiniciamos automaticamente.
     */
 
     if(
-      gravando &&
+      micPressionado &&
+      !micCancelado &&
       wantRestart &&
       micPointerId !== null
     ){
@@ -3193,7 +3546,8 @@ if(
         () => {
 
           if(
-            !gravando ||
+            !micPressionado ||
+            micCancelado ||
             !wantRestart ||
             micPointerId === null
           ){
@@ -3201,6 +3555,7 @@ if(
             return;
 
           }
+
 
           try{
 
@@ -3219,11 +3574,13 @@ if(
               error
             );
 
+
             setTimeout(
               () => {
 
                 if(
-                  gravando &&
+                  micPressionado &&
+                  !micCancelado &&
                   wantRestart &&
                   micPointerId !== null
                 ){
@@ -3251,8 +3608,38 @@ if(
           }
 
         },
-        100
+        120
       );
+
+      return;
+
+    }
+
+
+    /*
+      Se soltou, deixa o último resultado
+      chegar antes de salvar.
+    */
+
+    if(
+      !micPressionado &&
+      !micCancelado &&
+      !finalizandoMicrofone
+    ){
+
+      clearTimeout(
+        finalizacaoTimer
+      );
+
+      finalizacaoTimer =
+        setTimeout(
+          () => {
+
+            finalizarMicrofone();
+
+          },
+          120
+        );
 
     }
 
@@ -3270,8 +3657,10 @@ if(
       event.error
     );
 
+
     recognitionStarting =
       false;
+
 
     if(
       event.error === 'no-speech'
@@ -3280,13 +3669,14 @@ if(
       if(gravando){
 
         statusMic.innerText =
-          'Continue falando...';
+          '🔴 Continue falando...';
 
       }
 
       return;
 
     }
+
 
     if(
       event.error === 'aborted'
@@ -3295,6 +3685,7 @@ if(
       return;
 
     }
+
 
     if(
       event.error === 'audio-capture'
@@ -3306,6 +3697,9 @@ if(
       wantRestart =
         false;
 
+      micPressionado =
+        false;
+
       atualizarVisualMic();
 
       statusMic.innerText =
@@ -3314,6 +3708,7 @@ if(
       return;
 
     }
+
 
     if(
       event.error === 'not-allowed'
@@ -3325,6 +3720,9 @@ if(
       wantRestart =
         false;
 
+      micPressionado =
+        false;
+
       atualizarVisualMic();
 
       statusMic.innerText =
@@ -3334,20 +3732,46 @@ if(
 
     }
 
+
+    if(
+      event.error === 'service-not-allowed'
+    ){
+
+      gravando =
+        false;
+
+      wantRestart =
+        false;
+
+      micPressionado =
+        false;
+
+      atualizarVisualMic();
+
+      statusMic.innerText =
+        'Reconhecimento de voz bloqueado pelo navegador.';
+
+      return;
+
+    }
+
+
     if(
       event.error === 'network'
     ){
 
       /*
-        Se já estamos segurando, não cancelamos
-        imediatamente. O onend poderá tentar
-        iniciar novamente.
+        Não finaliza enquanto o botão estiver
+        pressionado.
       */
 
-      if(gravando){
+      if(
+        micPressionado &&
+        gravando
+      ){
 
         statusMic.innerText =
-          'Reconectando reconhecimento...';
+          '🔴 Reconectando reconhecimento...';
 
       }else{
 
@@ -3359,6 +3783,10 @@ if(
       return;
 
     }
+
+
+    statusMic.innerText =
+      'Falha no reconhecimento. Tente novamente.';
 
   };
 
@@ -3372,7 +3800,7 @@ if(
     if(gravando){
 
       statusMic.innerText =
-        'Continue falando...';
+        '🔴 Continue falando...';
 
     }
 
@@ -3380,7 +3808,7 @@ if(
 
 
   /* =======================================================
-     APERTAR
+     APERTAR O BOTÃO
   ======================================================= */
 
   btnMic.addEventListener(
@@ -3389,8 +3817,9 @@ if(
 
       event.preventDefault();
 
+
       /*
-        Evita dois ponteiros simultâneos.
+        Ignora segundo dedo / segundo ponteiro.
       */
 
       if(
@@ -3401,8 +3830,10 @@ if(
 
       }
 
+
       /*
-        Se já estiver gravando, não reinicia.
+        Se ainda existe uma sessão anterior,
+        não inicia outra.
       */
 
       if(
@@ -3414,11 +3845,37 @@ if(
 
       }
 
+
       micPointerId =
         event.pointerId;
 
+
+      inicioX =
+        event.clientX;
+
+      ultimoX =
+        event.clientX;
+
+      movimentoHorizontal =
+        0;
+
+
+      micPressionado =
+        true;
+
+      micCancelado =
+        false;
+
       micSoltadoEnquantoInicia =
         false;
+
+
+      /*
+        Captura o ponteiro.
+
+        Isso é fundamental para poder arrastar
+        para fora do botão sem perder o controle.
+      */
 
       try{
 
@@ -3428,7 +3885,117 @@ if(
 
       }catch(_){}
 
+
+      /*
+        Vermelho imediatamente.
+      */
+
+      atualizarVisualMic();
+
+
       iniciarGravacao();
+
+    }
+  );
+
+
+  /* =======================================================
+     MOVIMENTO — CANCELAMENTO POR ARRASTE
+  ======================================================= */
+
+  btnMic.addEventListener(
+    'pointermove',
+    event => {
+
+      if(
+        micPointerId === null ||
+        event.pointerId !== micPointerId ||
+        !micPressionado
+      ){
+
+        return;
+
+      }
+
+
+      event.preventDefault();
+
+
+      ultimoX =
+        event.clientX;
+
+
+      movimentoHorizontal =
+        ultimoX - inicioX;
+
+
+      /*
+        Cancelamento proposital.
+
+        Pode arrastar para esquerda ou direita.
+      */
+
+      if(
+        Math.abs(movimentoHorizontal) >=
+        DISTANCIA_CANCELAMENTO
+      ){
+
+        if(!micCancelado){
+
+          micCancelado =
+            true;
+
+          /*
+            Para o reconhecimento imediatamente,
+            mas não salva.
+          */
+
+          wantRestart =
+            false;
+
+          recognitionGeneration++;
+
+          try{
+
+            if(rec)
+              rec.abort();
+
+          }catch(_){}
+
+
+          gravando =
+            false;
+
+          recognitionStarting =
+            false;
+
+          atualizarVisualMic();
+
+
+          /*
+            Limpa o texto para deixar claro
+            que foi cancelado.
+          */
+
+          finalBuffer = '';
+
+          interimBuffer = '';
+
+          textoManual.value = '';
+
+          tempDiv.innerText =
+            '';
+
+          tempDiv.style.display =
+            'none';
+
+
+          statusMic.innerText =
+            '↔ Solte para cancelar';
+
+        }
+
+      }
 
     }
   );
@@ -3440,9 +4007,10 @@ if(
 
   btnMic.addEventListener(
     'pointerup',
-    async event => {
+    event => {
 
       event.preventDefault();
+
 
       if(
         micPointerId !== null &&
@@ -3453,18 +4021,36 @@ if(
 
       }
 
-      /*
-        IMPORTANTE:
 
-        Se ainda estiver iniciando,
-        não finalizamos imediatamente.
-        Apenas marcamos que o usuário soltou.
+      /*
+        Se arrastou o suficiente:
+        CANCELA.
+      */
+
+      if(micCancelado){
+
+        micPointerId =
+          null;
+
+        cancelarMicrofone();
+
+        return;
+
+      }
+
+
+      /*
+        Se ainda estava inicializando,
+        marca que soltou.
       */
 
       if(
         recognitionStarting &&
         !gravando
       ){
+
+        micPressionado =
+          false;
 
         micSoltadoEnquantoInicia =
           true;
@@ -3474,36 +4060,106 @@ if(
 
         recognitionGeneration++;
 
+        micPointerId =
+          null;
+
+        atualizarVisualMic();
+
         return;
 
       }
 
+
       micPointerId =
         null;
 
-      await pararTudo();
+
+      /*
+        SOLTOU NORMALMENTE:
+        finaliza e salva uma única ocorrência.
+      */
+
+      pararTudo();
 
     }
   );
 
 
   /* =======================================================
-     CANCELAR
+     CANCELAMENTO DO PONTEIRO
   ======================================================= */
 
   btnMic.addEventListener(
     'pointercancel',
-    async event => {
+    event => {
 
       event.preventDefault();
 
-      micSoltadoEnquantoInicia =
-        true;
+
+      if(
+        micPointerId !== null &&
+        event.pointerId !== micPointerId
+      ){
+
+        return;
+
+      }
+
 
       micPointerId =
         null;
 
-      await pararTudo();
+
+      cancelarMicrofone();
+
+    }
+  );
+
+
+  /* =======================================================
+     SEGURANÇA:
+     MOUSE/TOQUE PODE SOLTAR FORA DA PÁGINA
+  ======================================================= */
+
+  window.addEventListener(
+    'pointerup',
+    event => {
+
+      if(
+        micPointerId === null ||
+        event.pointerId !== micPointerId
+      ){
+
+        return;
+
+      }
+
+
+      /*
+        O botão normalmente receberá esse evento
+        graças ao pointer capture.
+
+        Este listener é uma proteção extra.
+      */
+
+      if(
+        micCancelado
+      ){
+
+        micPointerId =
+          null;
+
+        cancelarMicrofone();
+
+        return;
+
+      }
+
+
+      micPointerId =
+        null;
+
+      pararTudo();
 
     }
   );
@@ -3515,20 +4171,18 @@ if(
 
   window.addEventListener(
     'blur',
-    async () => {
+    () => {
 
       if(
+        micPressionado ||
         gravando ||
         recognitionStarting
       ){
 
-        micSoltadoEnquantoInicia =
-          true;
-
         micPointerId =
           null;
 
-        await pararTudo();
+        cancelarMicrofone();
 
       }
 
@@ -3537,33 +4191,26 @@ if(
 
 
   /* =======================================================
-     VISIBILIDADE DA PÁGINA
+     VISIBILIDADE
   ======================================================= */
 
   document.addEventListener(
     'visibilitychange',
-    async () => {
-
-      /*
-        Se o usuário sair da página enquanto
-        segura o botão, encerramos.
-      */
+    () => {
 
       if(
         document.visibilityState !== 'visible' &&
         (
+          micPressionado ||
           gravando ||
           recognitionStarting
         )
       ){
 
-        micSoltadoEnquantoInicia =
-          true;
-
         micPointerId =
           null;
 
-        await pararTudo();
+        cancelarMicrofone();
 
       }
 
@@ -3572,11 +4219,21 @@ if(
 
 
   /* =======================================================
-     MENU DE CONTEXTO
+     CONTEXTO / ARRASTAR
   ======================================================= */
 
   btnMic.addEventListener(
     'contextmenu',
+    event => {
+
+      event.preventDefault();
+
+    }
+  );
+
+
+  btnMic.addEventListener(
+    'dragstart',
     event => {
 
       event.preventDefault();
@@ -4268,7 +4925,7 @@ function atualizarAbasFechamento(){
 
 
 /* =========================================================
-   FORMATAÇÃO PARA PUBLICAÇÃO
+   FORMATAÇÃO
 ========================================================= */
 
 function normalizarTextoPublicacao(texto){
@@ -4601,6 +5258,7 @@ document
 loadSupa();
 
 iniciarAtualizacao();
+
 
 </script>
 

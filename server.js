@@ -72,9 +72,6 @@ app.use(
   })
 );
 
-// IMPORTANTE:
-// O servidor apenas entrega os arquivos.
-// Nenhum código de navegador deve ser executado aqui.
 app.use(
   express.static(__dirname, {
     maxAge: '1h'
@@ -253,7 +250,7 @@ app.get(
         });
       }
 
-      return res.json(
+      res.json(
         (data || [])
           .map(
             normalizarOcorrencia
@@ -267,7 +264,7 @@ app.get(
         error
       );
 
-      return res.status(500).json({
+      res.status(500).json({
         error:
           'Erro ao carregar ocorrências.'
       });
@@ -355,7 +352,7 @@ app.post(
         });
       }
 
-      return res.status(201).json(
+      res.status(201).json(
         normalizarOcorrencia(data)
       );
 
@@ -366,7 +363,7 @@ app.post(
         error
       );
 
-      return res.status(500).json({
+      res.status(500).json({
         error:
           'Erro ao salvar ocorrência.'
       });
@@ -482,7 +479,7 @@ app.put(
         });
       }
 
-      return res.json(
+      res.json(
         normalizarOcorrencia(data)
       );
 
@@ -493,7 +490,7 @@ app.put(
         error
       );
 
-      return res.status(500).json({
+      res.status(500).json({
         error:
           'Erro ao atualizar ocorrência.'
       });
@@ -502,7 +499,7 @@ app.put(
 );
 
 // ======================================================
-// DELETE UMA OCORRÊNCIA
+// DELETE OCORRÊNCIA
 // ======================================================
 
 app.delete(
@@ -544,7 +541,7 @@ app.delete(
         });
       }
 
-      return res.json({
+      res.json({
         ok: true
       });
 
@@ -555,7 +552,7 @@ app.delete(
         error
       );
 
-      return res.status(500).json({
+      res.status(500).json({
         error:
           'Erro ao excluir ocorrência.'
       });
@@ -564,7 +561,7 @@ app.delete(
 );
 
 // ======================================================
-// LIMPAR TODAS AS OCORRÊNCIAS
+// LIMPAR OCORRÊNCIAS
 // ======================================================
 
 app.delete(
@@ -604,7 +601,7 @@ app.delete(
         });
       }
 
-      return res.json({
+      res.json({
         ok: true
       });
 
@@ -615,7 +612,7 @@ app.delete(
         error
       );
 
-      return res.status(500).json({
+      res.status(500).json({
         error:
           'Erro ao limpar ocorrências.'
       });
@@ -767,9 +764,17 @@ async function obterOcorrenciasIA(
       );
     }
 
-    return prepararOcorrenciasIA(
-      data || []
+    const resultado =
+      prepararOcorrenciasIA(
+        data || []
+      );
+
+    console.log(
+      'IA - ocorrências encontradas:',
+      resultado.length
     );
+
+    return resultado;
   }
 
   const resultado =
@@ -824,6 +829,7 @@ async function chamarIA(
 ) {
 
   if (!OPENROUTER_API_KEY) {
+
     throw new Error(
       'OPENROUTER_API_KEY não configurada no Render.'
     );
@@ -837,6 +843,16 @@ async function chamarIA(
 
   const maxTentativas =
     options.maxTentativas || 2;
+
+  console.log(
+    'IA - iniciando chamada OpenRouter...',
+    'modelo =',
+    AI_MODEL,
+    'timeout =',
+    `${timeoutMs}ms`,
+    'maxTokens =',
+    maxTokens
+  );
 
   let ultimoErro =
     'Erro desconhecido na IA.';
@@ -925,9 +941,12 @@ async function chamarIA(
       let data = null;
 
       try {
+
         data =
           JSON.parse(raw);
+
       } catch {
+
         data = null;
       }
 
@@ -936,7 +955,9 @@ async function chamarIA(
         response.status
       );
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         const detalhe =
           data?.error?.message ||
@@ -946,6 +967,11 @@ async function chamarIA(
         ultimoErro =
           `OpenRouter HTTP ${response.status}: ${detalhe}`;
 
+        console.error(
+          'IA - ERRO:',
+          ultimoErro
+        );
+
         const temporario =
           response.status === 429 ||
           response.status >= 500;
@@ -954,6 +980,10 @@ async function chamarIA(
           temporario &&
           tentativa < maxTentativas
         ) {
+
+          console.log(
+            'IA - erro temporário. Nova tentativa em 2 segundos.'
+          );
 
           await new Promise(
             resolve =>
@@ -978,10 +1008,20 @@ async function chamarIA(
           ?.content;
 
       if (!conteudo) {
+
+        console.error(
+          'IA - resposta sem conteúdo:',
+          raw.slice(0, 1500)
+        );
+
         throw new Error(
           'A IA não retornou conteúdo.'
         );
       }
+
+      console.log(
+        'IA - resposta recebida com sucesso.'
+      );
 
       return String(
         conteudo
@@ -1013,6 +1053,10 @@ async function chamarIA(
         erroTemporario
       ) {
 
+        console.log(
+          'IA - nova tentativa em 2 segundos.'
+        );
+
         await new Promise(
           resolve =>
             setTimeout(
@@ -1036,18 +1080,18 @@ async function chamarIA(
 }
 
 // ======================================================
-// FECHAR TURNO
+// ORGANIZAR TURNO
 // ======================================================
 
 app.post(
-  [
-    '/fechar-turno',
-    '/fechar-turno-ia',
-    '/api/fechar-turno',
-    '/api/fechar-turno-ia'
-  ],
-
+  '/organizar-ia',
   async (req, res) => {
+
+    console.log(
+      'ORGANIZAR IA:',
+      req.method,
+      req.originalUrl
+    );
 
     try {
 
@@ -1062,7 +1106,7 @@ app.post(
 
         return res.status(400).json({
           error:
-            'Não existem ocorrências para fechar o turno.'
+            'Não existem ocorrências para organizar.'
         });
       }
 
@@ -1070,6 +1114,329 @@ app.post(
         gerarContextoPorFrente(
           ocorrencias
         );
+
+      const prompt = `
+Organize as ocorrências abaixo em uma mensagem profissional para WhatsApp.
+
+Utilize esta estrutura:
+
+*📋 DIÁRIO DE TURNO — MANDU*
+
+*FRENTE 501*
+...
+
+*FRENTE 502*
+...
+
+*FRENTE 503*
+...
+
+*FRENTE 504*
+...
+
+*FRENTE 505*
+...
+
+*FRENTE 506*
+...
+
+*⚠️ PONTOS DE ATENÇÃO*
+...
+
+*🚨 RISCOS / IMPACTOS*
+...
+
+*🎯 AÇÕES / ACOMPANHAMENTOS*
+...
+
+Não invente informações.
+
+OCORRÊNCIAS:
+
+${contexto}
+`;
+
+      const resultado =
+        await chamarIA(
+          [
+            {
+              role: 'system',
+              content:
+                SYSTEM_IA
+            },
+
+            {
+              role: 'user',
+              content:
+                prompt
+            }
+          ],
+          {
+            maxTokens: 2500,
+            timeoutMs: 45000
+          }
+        );
+
+      res.json({
+        texto:
+          resultado,
+
+        total:
+          ocorrencias.length
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ERRO ORGANIZAR IA:',
+        error
+      );
+
+      res.status(500).json({
+        error:
+          error.message ||
+          'Erro ao organizar turno.'
+      });
+    }
+  }
+);
+
+// ======================================================
+// RESUMO EXECUTIVO IA
+//
+// COMPATIBILIDADE COM O INDEX
+// ======================================================
+
+app.post(
+  [
+    '/resumo-executivo-ia',
+    '/api/resumo-executivo-ia'
+  ],
+
+  async (req, res) => {
+
+    console.log(
+      '======================================'
+    );
+
+    console.log(
+      'RESUMO EXECUTIVO IA:',
+      req.method,
+      req.originalUrl
+    );
+
+    try {
+
+      const ocorrencias =
+        await obterOcorrenciasIA(
+          req
+        );
+
+      console.log(
+        'RESUMO EXECUTIVO - total:',
+        ocorrencias.length
+      );
+
+      if (
+        !ocorrencias.length
+      ) {
+
+        return res.status(400).json({
+          error:
+            'Não existem ocorrências para gerar o resumo executivo.'
+        });
+      }
+
+      const contexto =
+        gerarContextoPorFrente(
+          ocorrencias
+        );
+
+      const prompt = `
+Gere um RESUMO EXECUTIVO do turno do CTT MANDU.
+
+O texto será enviado para um grupo de gestão pelo WhatsApp.
+
+Seja extremamente direto.
+
+Utilize somente as ocorrências fornecidas.
+
+Não invente:
+- números;
+- causas;
+- horários;
+- ações;
+- resultados;
+- informações não presentes nos dados.
+
+Utilize exatamente esta estrutura:
+
+*⚡ RESUMO EXECUTIVO — MANDU*
+
+*PRINCIPAIS PONTOS*
+- Liste os principais fatos operacionais identificados.
+
+*RISCOS / IMPACTOS*
+- Liste somente riscos ou impactos sustentados pelas ocorrências.
+
+*AÇÕES / COBRANÇAS*
+- Liste acompanhamentos necessários.
+- Quando for recomendação, use *SUGESTÃO:*.
+
+*FRENTES DE ATENÇÃO*
+- Informe as frentes que possuem ocorrências relevantes e explique objetivamente o motivo.
+
+DADOS DO TURNO:
+
+${contexto}
+`;
+
+      console.log(
+        'RESUMO EXECUTIVO - chamando IA...'
+      );
+
+      const resultado =
+        await chamarIA(
+          [
+            {
+              role: 'system',
+              content:
+                SYSTEM_IA
+            },
+
+            {
+              role: 'user',
+              content:
+                prompt
+            }
+          ],
+          {
+            maxTokens: 1800,
+            timeoutMs: 45000
+          }
+        );
+
+      console.log(
+        'RESUMO EXECUTIVO - IA respondeu:',
+        resultado.length,
+        'caracteres'
+      );
+
+      console.log(
+        '======================================'
+      );
+
+      return res.json({
+
+        texto:
+          resultado,
+
+        executivo:
+          resultado,
+
+        total:
+          ocorrencias.length
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        'ERRO RESUMO EXECUTIVO IA:',
+        error
+      );
+
+      return res.status(500).json({
+
+        error:
+          error?.message ||
+          'Erro ao gerar resumo executivo.'
+
+      });
+    }
+  }
+);
+
+// ======================================================
+// FECHAR TURNO
+//
+// TODAS AS ROTAS SÃO ACEITAS
+// ======================================================
+
+app.post(
+  [
+    '/fechar-turno',
+    '/fechar-turno-ia',
+    '/api/fechar-turno',
+    '/api/fechar-turno-ia'
+  ],
+
+  async (req, res) => {
+
+    console.log(
+      '======================================'
+    );
+
+    console.log(
+      'FECHAR TURNO:',
+      req.method,
+      req.originalUrl
+    );
+
+    console.log(
+      'FECHAR TURNO - BODY:',
+      JSON.stringify(
+        req.body
+      ).slice(
+        0,
+        1500
+      )
+    );
+
+    try {
+
+      // ----------------------------------------------
+      // 1. BUSCAR DADOS
+      // ----------------------------------------------
+
+      const ocorrencias =
+        await obterOcorrenciasIA(
+          req
+        );
+
+      console.log(
+        'FECHAR TURNO - total:',
+        ocorrencias.length
+      );
+
+      if (
+        !ocorrencias.length
+      ) {
+
+        return res.status(400).json({
+          error:
+            'Não existem ocorrências para fechar o turno.'
+        });
+      }
+
+      // ----------------------------------------------
+      // 2. GERAR CONTEXTO
+      // ----------------------------------------------
+
+      const contexto =
+        gerarContextoPorFrente(
+          ocorrencias
+        );
+
+      console.log(
+        'FECHAR TURNO - contexto gerado:',
+        contexto.length,
+        'caracteres'
+      );
+
+      // ----------------------------------------------
+      // 3. UMA ÚNICA CHAMADA PARA A IA
+      // ----------------------------------------------
 
       const prompt = `
 Faça o FECHAMENTO COMPLETO do turno do CTT MANDU.
@@ -1091,19 +1458,34 @@ RETORNE EXATAMENTE NESTA ESTRUTURA:
 
 *📋 FECHAMENTO DE TURNO — MANDU*
 
-*PRINCIPAIS PROBLEMAS*
+*FRENTE 501*
+...
+
+*FRENTE 502*
+...
+
+*FRENTE 503*
+...
+
+*FRENTE 504*
+...
+
+*FRENTE 505*
+...
+
+*FRENTE 506*
+...
+
+*⚠️ PRINCIPAIS PROBLEMAS*
 - ...
 
-*PROBLEMAS RECORRENTES*
+*🔁 PROBLEMAS RECORRENTES*
 - ...
 
-*RISCOS / IMPACTOS*
+*🚨 RISCOS / IMPACTOS*
 - ...
 
-*AÇÕES / ACOMPANHAMENTOS*
-- ...
-
-*FRENTES DE ATENÇÃO*
+*🎯 AÇÕES / ACOMPANHAMENTOS*
 - ...
 
 
@@ -1118,9 +1500,6 @@ RETORNE EXATAMENTE NESTA ESTRUTURA:
 - ...
 
 *AÇÕES / COBRANÇAS*
-- ...
-
-*FRENTES DE ATENÇÃO*
 - ...
 
 
@@ -1158,6 +1537,10 @@ DADOS DO TURNO:
 ${contexto}
 `;
 
+      console.log(
+        'FECHAR TURNO - chamando IA...'
+      );
+
       const resposta =
         await chamarIA(
           [
@@ -1166,6 +1549,7 @@ ${contexto}
               content:
                 SYSTEM_IA
             },
+
             {
               role: 'user',
               content:
@@ -1177,6 +1561,16 @@ ${contexto}
             timeoutMs: 45000
           }
         );
+
+      console.log(
+        'FECHAR TURNO - IA respondeu:',
+        resposta.length,
+        'caracteres'
+      );
+
+      // ----------------------------------------------
+      // 4. SEPARAR OS 3 RESULTADOS
+      // ----------------------------------------------
 
       let gerencial =
         resposta;
@@ -1250,6 +1644,10 @@ ${contexto}
             .trim();
       }
 
+      // ----------------------------------------------
+      // 5. CONTAR FRENTES
+      // ----------------------------------------------
+
       const frentes =
         new Set(
           ocorrencias.map(
@@ -1257,6 +1655,23 @@ ${contexto}
               item.frente
           )
         );
+
+      console.log(
+        'FECHAR TURNO - concluído.'
+      );
+
+      console.log(
+        'FECHAR TURNO - frentes:',
+        frentes.size
+      );
+
+      console.log(
+        '======================================'
+      );
+
+      // ----------------------------------------------
+      // 6. RESPOSTA PARA O INDEX
+      // ----------------------------------------------
 
       return res.json({
 
@@ -1266,6 +1681,7 @@ ${contexto}
 
         fechamento,
 
+        // Compatibilidade adicional
         texto:
           fechamento,
 
@@ -1280,8 +1696,24 @@ ${contexto}
     } catch (error) {
 
       console.error(
-        'ERRO FECHAR TURNO:',
+        '======================================'
+      );
+
+      console.error(
+        'ERRO FECHAR TURNO:'
+      );
+
+      console.error(
         error
+      );
+
+      console.error(
+        'MENSAGEM:',
+        error?.message
+      );
+
+      console.error(
+        '======================================'
       );
 
       return res.status(500).json({
@@ -1306,6 +1738,12 @@ app.post(
   ],
 
   async (req, res) => {
+
+    console.log(
+      'CHAT IA:',
+      req.method,
+      req.originalUrl
+    );
 
     try {
 
@@ -1386,6 +1824,12 @@ REGRAS:
 - Identifique riscos somente quando houver evidência.
 - Recomendações devem ser marcadas como *SUGESTÃO:*.
 - Não transforme hipótese em fato.
+
+Se o usuário pedir plano de voo, apresente ações práticas.
+
+Se perguntar sobre problemas repetidos, compare as ocorrências.
+
+Se perguntar qual frente precisa de atenção, explique quais dados sustentam a análise.
 `;
 
       const resposta =
@@ -1411,7 +1855,7 @@ REGRAS:
           }
         );
 
-      return res.json({
+      res.json({
 
         resposta,
 
@@ -1427,7 +1871,7 @@ REGRAS:
         error
       );
 
-      return res.status(500).json({
+      res.status(500).json({
         error:
           error.message ||
           'Erro no chat operacional.'
@@ -1549,7 +1993,19 @@ app.listen(
     );
 
     console.log(
-      'Servidor pronto.'
+      'IA: organização por frente'
+    );
+
+    console.log(
+      'IA: resumo executivo'
+    );
+
+    console.log(
+      'IA: fechamento de turno'
+    );
+
+    console.log(
+      'IA: chat operacional'
     );
   }
 );

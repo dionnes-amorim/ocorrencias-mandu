@@ -604,7 +604,7 @@ body::before{
   margin:auto;
 
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr;
   gap:8px;
 }
 
@@ -649,38 +649,6 @@ body::before{
   transform:scale(.98);
 }
 
-.btn-fechar{
-  min-height:54px;
-
-  border:1px solid rgba(0,230,118,.3);
-  border-radius:16px;
-
-  background:rgba(0,230,118,.1);
-
-  color:#00e676;
-
-  font-weight:800;
-  font-size:13px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-
-  cursor:pointer;
-
-  transition:
-    transform .15s ease,
-    background .15s ease;
-}
-
-.btn-fechar:hover{
-  background:rgba(0,230,118,.18);
-}
-
-.btn-fechar:active{
-  transform:scale(.98);
-}
 
 /* =========================================================
    MODAIS
@@ -996,7 +964,6 @@ body::before{
   grid-template-columns:
     1fr
     1fr
-    1fr
     1fr;
 
   gap:6px;
@@ -1072,19 +1039,18 @@ body::before{
 @media(max-width:500px){
 
   .fechamento-tabs{
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:1fr 1fr 1fr;
   }
 
   .bottom-inner{
-    grid-template-columns:1.25fr 1fr;
+    grid-template-columns:1fr;
   }
 
 }
 
 @media(max-width:380px){
 
-  .btn-central,
-  .btn-fechar{
+  .btn-central{
     font-size:11px;
   }
 
@@ -1330,21 +1296,11 @@ body::before{
 
     <button
       class="btn-central"
-      onclick="abrirIA('chat')">
+      onclick="analisarTurno()">
 
       <i class="fa-solid fa-brain"></i>
 
-      CENTRAL OPERACIONAL
-
-    </button>
-
-    <button
-      class="btn-fechar"
-      onclick="abrirIA('fechamento')">
-
-      <i class="fa-solid fa-clipboard-check"></i>
-
-      FECHAR TURNO
+      ANALISAR
 
     </button>
 
@@ -1433,7 +1389,7 @@ body::before{
         margin-top:4px;
       ">
 
-      Análise operacional e fechamento inteligente do turno
+      Análise operacional inteligente do turno
 
     </p>
 
@@ -1468,15 +1424,6 @@ body::before{
         onclick="selecionarPainelIA('executivo')">
 
         ⚡ EXECUTIVO
-
-      </button>
-
-      <button
-        id="tabFechamento"
-        class="fechamento-tab"
-        onclick="selecionarPainelIA('fechamento')">
-
-        🧠 FECHAMENTO
 
       </button>
 
@@ -1671,40 +1618,6 @@ Aguardando fechamento do turno...
     </div>
 
 
-    <!-- =================================================
-         FECHAMENTO
-    ================================================= -->
-
-    <div
-      id="painelFechamento"
-      class="painel-ia">
-
-      <div class="fechamento-info">
-
-        Fechamento completo do turno
-
-      </div>
-
-      <pre
-        id="textoFechamento"
-        class="loading-ia">
-
-Aguardando fechamento do turno...
-
-      </pre>
-
-      <button
-        class="btn-copy"
-        onclick="copiarFechamentoAtual()">
-
-        <i class="fa-solid fa-copy"></i>
-
-        COPIAR FECHAMENTO
-
-      </button>
-
-    </div>
-
 
     <button
       class="btn btn-c"
@@ -1804,8 +1717,7 @@ let chatEnviando = false;
 
 let fechamentoDados = {
   gerencial:'',
-  executivo:'',
-  fechamento:''
+  executivo:''
 };
 
 let fechamentoAtual = 'gerencial';
@@ -2352,8 +2264,7 @@ async function limparTudo(){
 
     fechamentoDados = {
       gerencial:'',
-      executivo:'',
-      fechamento:''
+      executivo:''
     };
 
     await loadSupa();
@@ -2783,7 +2694,7 @@ function atualizarVisualMic(){
 }
 
 
-function iniciarGravacao(){
+async function iniciarGravacao(){
 
   if(
     gravando ||
@@ -2804,6 +2715,41 @@ function iniciarGravacao(){
   }
 
   finalBuffer = '';
+
+  /*
+    Garante que o navegador tenha permissão para o microfone
+    antes de iniciar o reconhecimento.
+  */
+  if(
+    navigator.mediaDevices &&
+    navigator.mediaDevices.getUserMedia
+  ){
+    try{
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
+          audio:true
+        });
+
+      stream.getTracks().forEach(
+        track => track.stop()
+      );
+
+    }catch(error){
+      statusMic.innerText =
+        'Permita o acesso ao microfone no navegador.';
+      return;
+    }
+  }
+
+  /*
+    Se o usuário já soltou o botão enquanto a permissão
+    estava sendo solicitada, não inicia uma gravação atrasada.
+  */
+  if(micSoltadoEnquantoInicia){
+    micSoltadoEnquantoInicia = false;
+    micPointerId = null;
+    return;
+  }
 
   wantRestart = true;
 
@@ -2867,6 +2813,9 @@ function pararTudo(){
   recognitionGeneration++;
 
   gravando = false;
+
+  micSoltadoEnquantoInicia = false;
+  micPointerId = null;
 
   recognitionStarting = false;
 
@@ -2969,6 +2918,22 @@ if(
 
     recognitionStarting =
       false;
+
+    if(
+      micSoltadoEnquantoInicia
+    ){
+      micSoltadoEnquantoInicia = false;
+      wantRestart = false;
+      gravando = false;
+
+      try{
+        rec.stop();
+      }catch(_){}
+
+      atualizarVisualMic();
+      micPointerId = null;
+      return;
+    }
 
     gravando =
       true;
@@ -3265,8 +3230,12 @@ if(
 
   /* =======================================================
      POINTER EVENTS
-     Melhor para mouse + touch.
+     Mouse + touch, com proteção contra o pointerup
+     acontecer antes do SpeechRecognition.onstart.
   ======================================================= */
+
+  let micPointerId = null;
+  let micSoltadoEnquantoInicia = false;
 
   btnMic.addEventListener(
     'pointerdown',
@@ -3274,12 +3243,21 @@ if(
 
       event.preventDefault();
 
-      try{
+      if(
+        micPointerId !== null ||
+        gravando ||
+        recognitionStarting
+      ){
+        return;
+      }
 
+      micPointerId = event.pointerId;
+      micSoltadoEnquantoInicia = false;
+
+      try{
         btnMic.setPointerCapture(
           event.pointerId
         );
-
       }catch(_){}
 
       iniciarGravacao();
@@ -3294,7 +3272,22 @@ if(
 
       event.preventDefault();
 
+      if(
+        micPointerId !== null &&
+        event.pointerId !== micPointerId
+      ){
+        return;
+      }
+
+      if(recognitionStarting && !gravando){
+        micSoltadoEnquantoInicia = true;
+        wantRestart = false;
+        recognitionGeneration++;
+        return;
+      }
+
       pararTudo();
+      micPointerId = null;
 
     }
   );
@@ -3306,29 +3299,44 @@ if(
 
       event.preventDefault();
 
+      micSoltadoEnquantoInicia = false;
       pararTudo();
+      micPointerId = null;
 
     }
   );
 
 
   btnMic.addEventListener(
+    'lostpointercapture',
+    () => {
+
+      if(
+        micPointerId !== null &&
+        !gravando &&
+        !recognitionStarting
+      ){
+        micPointerId = null;
+      }
+
+    }
+  );
+
+
+  /*
+    No desktop, se o usuário apertar e arrastar para fora,
+    encerramos somente quando o botão já estiver capturando.
+  */
+  btnMic.addEventListener(
     'pointerleave',
     event => {
 
-      /*
-        No desktop, se o usuário apertar
-        e arrastar para fora do botão,
-        ainda encerramos a captura.
-      */
-
       if(
-        event.buttons &
-        1
+        event.buttons & 1 &&
+        gravando
       ){
-
         pararTudo();
-
+        micPointerId = null;
       }
 
     }
@@ -3338,6 +3346,7 @@ if(
   /*
     Impede menu de contexto no botão.
   */
+
 
   btnMic.addEventListener(
     'contextmenu',
@@ -3660,15 +3669,15 @@ document
 
 
 /* =========================================================
-   FECHAR TURNO
+   ANALISAR TURNO
 ========================================================= */
 
-async function fecharTurno(){
+async function analisarTurno(){
 
   if(!ocorrencias.length){
 
     alert(
-      'Adicione pelo menos uma ocorrência antes de fechar o turno.'
+      'Adicione pelo menos uma ocorrência antes de analisar.'
     );
 
     return;
@@ -3685,11 +3694,8 @@ async function fecharTurno(){
   );
 
   fechamentoDados = {
-
     gerencial:'',
-    executivo:'',
-    fechamento:''
-
+    executivo:''
   };
 
   fechamentoAtual =
@@ -3702,17 +3708,12 @@ async function fecharTurno(){
   document.getElementById(
     'textoGerencial'
   ).innerText =
-    '🧠 PROCESSANDO FECHAMENTO...\n\nA IA está analisando todas as ocorrências do turno.\n\nAguarde...';
+    '🧠 ANALISANDO...\\n\\nA IA está processando todas as ocorrências.\\n\\nAguarde...';
 
   document.getElementById(
     'textoExecutivo'
   ).innerText =
-    '🧠 PROCESSANDO FECHAMENTO...';
-
-  document.getElementById(
-    'textoFechamento'
-  ).innerText =
-    '🧠 PROCESSANDO FECHAMENTO...';
+    '🧠 ANALISANDO...';
 
   document.getElementById(
     'textoGerencial'
@@ -3722,12 +3723,6 @@ async function fecharTurno(){
 
   document.getElementById(
     'textoExecutivo'
-  ).classList.add(
-    'loading-ia'
-  );
-
-  document.getElementById(
-    'textoFechamento'
   ).classList.add(
     'loading-ia'
   );
@@ -3761,21 +3756,20 @@ async function fecharTurno(){
     fechamentoDados = {
 
       gerencial:
-        data.gerencial ||
-        extrairGerencial(
-          data.fechamento ||
-          data.texto ||
-          ''
+        normalizarTextoPublicacao(
+          data.gerencial ||
+          extrairGerencial(
+            data.fechamento ||
+            data.texto ||
+            ''
+          )
         ),
 
       executivo:
-        data.executivo ||
-        'Não foi possível gerar o resumo executivo.',
-
-      fechamento:
-        data.fechamento ||
-        data.texto ||
-        'Não foi possível gerar o fechamento.'
+        normalizarTextoPublicacao(
+          data.executivo ||
+          'Não foi possível gerar o resumo executivo.'
+        )
 
     };
 
@@ -3787,12 +3781,6 @@ async function fecharTurno(){
 
     document.getElementById(
       'textoExecutivo'
-    ).classList.remove(
-      'loading-ia'
-    );
-
-    document.getElementById(
-      'textoFechamento'
     ).classList.remove(
       'loading-ia'
     );
@@ -3822,7 +3810,7 @@ async function fecharTurno(){
   }catch(error){
 
     const erro =
-      '❌ ERRO AO FECHAR O TURNO\n\n' +
+      '❌ ERRO AO ANALISAR\\n\\n' +
       error.message;
 
     document.getElementById(
@@ -3838,23 +3826,12 @@ async function fecharTurno(){
     );
 
     document.getElementById(
-      'textoFechamento'
-    ).classList.remove(
-      'loading-ia'
-    );
-
-    document.getElementById(
       'textoGerencial'
     ).innerText =
       erro;
 
     document.getElementById(
       'textoExecutivo'
-    ).innerText =
-      erro;
-
-    document.getElementById(
-      'textoFechamento'
     ).innerText =
       erro;
 
@@ -3916,8 +3893,7 @@ function selecionarPainelIA(
 
   if(
     tipo === 'gerencial' ||
-    tipo === 'executivo' ||
-    tipo === 'fechamento'
+    tipo === 'executivo'
   ){
 
     fechamentoAtual =
@@ -3929,8 +3905,7 @@ function selecionarPainelIA(
 
     chat:'tabChat',
     gerencial:'tabGerencial',
-    executivo:'tabExecutivo',
-    fechamento:'tabFechamento'
+    executivo:'tabExecutivo'
 
   };
 
@@ -3938,8 +3913,7 @@ function selecionarPainelIA(
 
     chat:'painelChat',
     gerencial:'painelGerencial',
-    executivo:'painelExecutivo',
-    fechamento:'painelFechamento'
+    executivo:'painelExecutivo'
 
   };
 
@@ -3988,7 +3962,7 @@ function selecionarPainelIA(
   if(
     tipo === 'gerencial' ||
     tipo === 'executivo' ||
-    tipo === 'fechamento'
+    false && tipo === 'fechamento'
   ){
 
     atualizarAbasFechamento();
@@ -4018,8 +3992,7 @@ function atualizarAbasFechamento(){
   const mapa = {
 
     gerencial:'tabGerencial',
-    executivo:'tabExecutivo',
-    fechamento:'tabFechamento'
+    executivo:'tabExecutivo'
 
   };
 
@@ -4045,8 +4018,7 @@ function atualizarAbasFechamento(){
   const textoId = {
 
     gerencial:'textoGerencial',
-    executivo:'textoExecutivo',
-    fechamento:'textoFechamento'
+    executivo:'textoExecutivo'
 
   };
 
@@ -4062,9 +4034,61 @@ function atualizarAbasFechamento(){
     );
 
     texto.innerText =
-      conteudo;
+      normalizarTextoPublicacao(conteudo);
 
   }
+
+}
+
+
+/* =========================================================
+   FORMATAÇÃO PARA PUBLICAÇÃO
+========================================================= */
+
+function normalizarTextoPublicacao(texto){
+
+  if(!texto)
+    return '';
+
+  let t =
+    String(texto)
+      .replace(/\\r\\n/g,'\\n')
+      .replace(/\\r/g,'\\n');
+
+  /*
+    Converte negrito duplicado da IA (**texto**)
+    para o padrão de publicação (*texto*).
+    Também elimina duplicações acidentais de asteriscos.
+  */
+  t = t.replace(
+    /\*{2,}([^*\\n]+?)\*{2,}/g,
+    '*$1*'
+  );
+
+  t = t.replace(
+    /\*{3,}/g,
+    '*'
+  );
+
+  /*
+    Evita linhas com asterisco isolado ou repetido.
+  */
+  t = t.replace(
+    /^([ \t]*)\*{2,}([ \t]*)$/gm,
+    '$1*$2'
+  );
+
+  /*
+    Limpa espaços antes/depois de asteriscos de destaque.
+  */
+  t = t.replace(
+    /\*\s+([^\\n]*?)\s+\*/g,
+    '*$1*'
+  );
+
+  return t
+    .replace(/\\n{3,}/g,'\\n\\n')
+    .trim();
 
 }
 
@@ -4093,18 +4117,13 @@ function copiarFechamentoAtual(){
     texto =
       fechamentoDados.executivo;
 
-  }else{
-
-    texto =
-      fechamentoDados.fechamento;
-
   }
 
   if(!texto)
     return;
 
   copiarGenerico(
-    texto,
+    normalizarTextoPublicacao(texto),
     'Texto copiado com sucesso!'
   );
 
@@ -4134,9 +4153,7 @@ function fecharModalFechamento(){
 
 function organizar(){
 
-  abrirIA(
-    'gerencial'
-  );
+  analisarTurno();
 
 }
 

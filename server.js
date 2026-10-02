@@ -1381,7 +1381,8 @@ ${contexto}
 );
 
 // ======================================================
-// FECHAR TURNO
+// ======================================================
+// ANÁLISE DO TURNO — GERENCIAL + EXECUTIVO
 // ======================================================
 
 app.post(
@@ -1399,42 +1400,36 @@ app.post(
     );
 
     console.log(
-      'FECHAR TURNO:',
+      'ANÁLISE DO TURNO:',
       req.method,
       req.originalUrl
     );
 
-    console.log(
-      'FECHAR TURNO - BODY:',
-      JSON.stringify(
-        req.body
-      ).slice(
-        0,
-        1500
-      )
-    );
-
     try {
 
+      // --------------------------------------------------
+      // OBTER OCORRÊNCIAS
+      // --------------------------------------------------
+
       const ocorrencias =
-        await obterOcorrenciasIA(
-          req
-        );
+        await obterOcorrenciasIA(req);
 
       console.log(
-        'FECHAR TURNO - total:',
+        'ANÁLISE - total de ocorrências:',
         ocorrencias.length
       );
 
-      if (
-        !ocorrencias.length
-      ) {
+      if (!ocorrencias.length) {
 
         return res.status(400).json({
           error:
-            'Não existem ocorrências para fechar o turno.'
+            'Não existem ocorrências para analisar o turno.'
         });
       }
+
+      // --------------------------------------------------
+      // CONTEXTO
+      // --------------------------------------------------
 
       const contexto =
         gerarContextoPorFrente(
@@ -1442,89 +1437,74 @@ app.post(
         );
 
       console.log(
-        'FECHAR TURNO - contexto gerado:',
+        'ANÁLISE - contexto:',
         contexto.length,
         'caracteres'
       );
 
-      const prompt = `
-Faça o FECHAMENTO COMPLETO do turno do CTT MANDU.
+      // ==================================================
+      // GERENCIAL
+      // ==================================================
 
-IMPORTANTE:
+      const promptGerencial = `
+Você é responsável pela análise GERENCIAL do turno do CTT MANDU.
 
-- Utilize SOMENTE as ocorrências fornecidas.
-- Não invente informações.
-- Não invente números.
-- Não invente causas.
-- Não invente ações já realizadas.
-- Recomendações devem ser marcadas como *SUGESTÃO:*.
-- O texto deve ser profissional, técnico e direto.
-- O resultado será utilizado no WhatsApp.
+Analise exclusivamente as ocorrências fornecidas abaixo.
 
-RETORNE EXATAMENTE NESTA ESTRUTURA:
+O objetivo é produzir um texto pronto para ser enviado no WhatsApp para a gestão operacional.
 
-===== GERENCIAL =====
+SEJA:
+- técnico;
+- objetivo;
+- direto;
+- claro;
+- baseado somente nos dados;
+- organizado por frente quando necessário.
 
-*📋 FECHAMENTO DE TURNO — MANDU*
+NÃO INVENTE:
+- números;
+- horários;
+- causas;
+- resultados;
+- ações realizadas;
+- informações que não estejam nas ocorrências.
+
+Quando uma ação for apenas recomendação, escreva:
+*SUGESTÃO:*
+
+UTILIZE EXATAMENTE ESTA ESTRUTURA:
+
+*📋 ANÁLISE GERENCIAL — MANDU*
 
 *FRENTES COM OCORRÊNCIAS*
-- Informe somente as frentes que possuem ocorrências.
+- Informe as frentes que possuem ocorrências relevantes.
+- Explique objetivamente o que ocorreu em cada uma.
 
 *⚠️ PRINCIPAIS PROBLEMAS*
-- ...
+- Liste os principais problemas identificados.
+- Priorize os problemas com impacto operacional evidente.
 
 *🔁 PROBLEMAS RECORRENTES*
-- ...
+- Liste somente problemas que realmente aparecem mais de uma vez nos dados.
+- Se não houver recorrência, informe que não foram identificadas recorrências.
 
 *🚨 RISCOS / IMPACTOS*
-- ...
+- Informe somente riscos ou impactos sustentados pelas ocorrências.
+- Não transforme hipótese em fato.
 
 *🎯 AÇÕES / ACOMPANHAMENTOS*
-- ...
+- Liste os acompanhamentos necessários.
+- Não diga que uma ação já foi realizada se isso não estiver informado.
+- Recomendações devem utilizar *SUGESTÃO:*.
 
+REGRAS DE FORMATAÇÃO:
 
-===== EXECUTIVO =====
-
-*⚡ RESUMO EXECUTIVO — MANDU*
-
-*PRINCIPAIS PONTOS*
-- ...
-
-*RISCOS*
-- ...
-
-*AÇÕES / COBRANÇAS*
-- ...
-
-
-===== FECHAMENTO =====
-
-*🧠 FECHAMENTO OPERACIONAL*
-
-*RESUMO DO TURNO*
-...
-
-*OCORRÊNCIAS POR FRENTE*
-...
-
-*PRINCIPAIS PROBLEMAS*
-...
-
-*PROBLEMAS RECORRENTES*
-...
-
-*RISCOS / IMPACTOS*
-...
-
-*PENDÊNCIAS*
-...
-
-*PLANO DE AÇÃO*
-...
-
-*PONTOS PARA O PRÓXIMO TURNO*
-...
-
+- Não utilize títulos com =====.
+- Não coloque o texto entre blocos de código.
+- Não duplique asteriscos.
+- Use apenas um * no início e um * no final dos títulos.
+- Use "-" para os tópicos.
+- Não escreva explicações fora da estrutura solicitada.
 
 DADOS DO TURNO:
 
@@ -1532,123 +1512,195 @@ ${contexto}
 `;
 
       console.log(
-        'FECHAR TURNO - chamando IA...'
+        'ANÁLISE - gerando GERENCIAL...'
       );
 
-      const resposta =
+      const gerencial =
         await chamarIA(
           [
             {
               role: 'system',
-              content:
-                SYSTEM_IA
+              content: SYSTEM_IA
             },
 
             {
               role: 'user',
-              content:
-                prompt
+              content: promptGerencial
             }
           ],
           {
-            maxTokens: 2600,
+            maxTokens: 2200,
             timeoutMs: 30000,
             maxTentativas: 1
           }
         );
 
       console.log(
-        'FECHAR TURNO - IA respondeu:',
-        resposta.length,
+        'ANÁLISE - GERENCIAL gerado:',
+        gerencial.length,
         'caracteres'
       );
 
-      let gerencial =
-        resposta;
+      // ==================================================
+      // EXECUTIVO
+      // ==================================================
 
-      let executivo =
-        resposta;
+      const promptExecutivo = `
+Você é responsável pelo RESUMO EXECUTIVO do turno do CTT MANDU.
 
-      let fechamento =
-        resposta;
+Analise exclusivamente as ocorrências fornecidas abaixo.
 
-      const marcadorGerencial =
-        '===== GERENCIAL =====';
+O texto será enviado para um grupo de gestão pelo WhatsApp.
 
-      const marcadorExecutivo =
-        '===== EXECUTIVO =====';
+Seja extremamente direto.
 
-      const marcadorFechamento =
-        '===== FECHAMENTO =====';
+O objetivo é permitir que um gestor entenda rapidamente:
+1. o que aconteceu;
+2. quais são os principais impactos;
+3. quais frentes exigem atenção;
+4. quais acompanhamentos são necessários.
 
-      if (
-        resposta.includes(
-          marcadorGerencial
-        ) &&
-        resposta.includes(
-          marcadorExecutivo
-        ) &&
-        resposta.includes(
-          marcadorFechamento
-        )
-      ) {
+NÃO INVENTE:
+- números;
+- horários;
+- causas;
+- resultados;
+- ações realizadas;
+- informações que não estejam nas ocorrências.
 
-        const inicioGerencial =
-          resposta.indexOf(
-            marcadorGerencial
-          ) +
-          marcadorGerencial.length;
+Quando uma ação for apenas recomendação, utilize:
+*SUGESTÃO:*
 
-        const inicioExecutivo =
-          resposta.indexOf(
-            marcadorExecutivo
-          );
+UTILIZE EXATAMENTE ESTA ESTRUTURA:
 
-        const inicioFechamento =
-          resposta.indexOf(
-            marcadorFechamento
-          );
+*⚡ RESUMO EXECUTIVO — MANDU*
 
-        gerencial =
-          resposta
-            .slice(
-              inicioGerencial,
-              inicioExecutivo
-            )
-            .trim();
+*PRINCIPAIS PONTOS*
+- Liste os fatos operacionais mais relevantes.
 
-        executivo =
-          resposta
-            .slice(
-              inicioExecutivo +
-                marcadorExecutivo.length,
-              inicioFechamento
-            )
-            .trim();
+*RISCOS / IMPACTOS*
+- Liste somente riscos ou impactos sustentados pelos dados.
 
-        fechamento =
-          resposta
-            .slice(
-              inicioFechamento +
-                marcadorFechamento.length
-            )
-            .trim();
-      }
+*AÇÕES / COBRANÇAS*
+- Liste os acompanhamentos necessários.
+- Não trate recomendação como ação já realizada.
+- Quando for recomendação, use *SUGESTÃO:*.
 
-      const frentes =
-        new Set(
-          ocorrencias.map(
-            item =>
-              item.frente
-          )
+*FRENTES DE ATENÇÃO*
+- Informe somente as frentes que possuem ocorrências relevantes.
+- Explique objetivamente o motivo da atenção.
+
+REGRAS DE FORMATAÇÃO:
+
+- Não utilize títulos com =====.
+- Não coloque o texto entre blocos de código.
+- Não duplique asteriscos.
+- Use apenas um * no início e um * no final dos títulos.
+- Use "-" para os tópicos.
+- Seja curto e objetivo.
+- Não escreva explicações fora da estrutura solicitada.
+
+DADOS DO TURNO:
+
+${contexto}
+`;
+
+      console.log(
+        'ANÁLISE - gerando EXECUTIVO...'
+      );
+
+      const executivo =
+        await chamarIA(
+          [
+            {
+              role: 'system',
+              content: SYSTEM_IA
+            },
+
+            {
+              role: 'user',
+              content: promptExecutivo
+            }
+          ],
+          {
+            maxTokens: 1600,
+            timeoutMs: 30000,
+            maxTentativas: 1
+          }
         );
 
       console.log(
-        'FECHAR TURNO - concluído.'
+        'ANÁLISE - EXECUTIVO gerado:',
+        executivo.length,
+        'caracteres'
+      );
+
+      // ==================================================
+      // NORMALIZAÇÃO FINAL
+      // ==================================================
+
+      function normalizarPublicacaoIA(texto) {
+
+        return String(texto || '')
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+
+          // Remove blocos de código
+          .replace(/```(?:text|markdown|md)?/gi, '')
+          .replace(/```/g, '')
+
+          // Corrige asteriscos duplicados
+          .replace(/\*{2,}/g, '*')
+
+          // Remove espaços antes/depois de asteriscos
+          .replace(/\*\s+\*/g, '*')
+
+          // Remove linhas com =====
+          .replace(/^={3,}.*$/gm, '')
+
+          // Evita excesso de linhas vazias
+          .replace(/\n{3,}/g, '\n\n')
+
+          .trim();
+      }
+
+      const gerencialFinal =
+        normalizarPublicacaoIA(
+          gerencial
+        );
+
+      const executivoFinal =
+        normalizarPublicacaoIA(
+          executivo
+        );
+
+      // ==================================================
+      // CONTAGEM DE FRENTES
+      // ==================================================
+
+      const frentes =
+        new Set(
+          ocorrencias
+            .map(item => item.frente)
+            .filter(Boolean)
+        );
+
+      console.log(
+        'ANÁLISE - concluída.'
       );
 
       console.log(
-        'FECHAR TURNO - frentes:',
+        'ANÁLISE - gerencial:',
+        gerencialFinal.length
+      );
+
+      console.log(
+        'ANÁLISE - executivo:',
+        executivoFinal.length
+      );
+
+      console.log(
+        'ANÁLISE - frentes:',
         frentes.size
       );
 
@@ -1656,16 +1708,25 @@ ${contexto}
         '======================================'
       );
 
+      // ==================================================
+      // RESPOSTA PARA O DA
+      // ==================================================
+
       return res.json({
 
-        gerencial,
+        gerencial:
+          gerencialFinal,
 
-        executivo,
+        executivo:
+          executivoFinal,
 
-        fechamento,
+        // Mantido apenas por compatibilidade
+        // com versões antigas do frontend.
+        fechamento:
+          '',
 
         texto:
-          fechamento,
+          gerencialFinal,
 
         total:
           ocorrencias.length,
@@ -1682,7 +1743,7 @@ ${contexto}
       );
 
       console.error(
-        'ERRO FECHAR TURNO:'
+        'ERRO ANÁLISE DO TURNO:'
       );
 
       console.error(
@@ -1702,13 +1763,12 @@ ${contexto}
 
         error:
           error?.message ||
-          'Erro ao fechar turno.'
+          'Erro ao gerar análise gerencial e executiva.'
 
       });
     }
   }
 );
-
 // ======================================================
 // CHAT OPERACIONAL
 // ======================================================

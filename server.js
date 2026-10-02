@@ -836,7 +836,7 @@ async function chamarIA(
   }
 
   const maxTokens =
-    options.maxTokens || 2500;
+    options.maxTokens || 3000;
 
   const timeoutMs =
     options.timeoutMs || 30000;
@@ -851,7 +851,8 @@ async function chamarIA(
     'timeout =',
     `${timeoutMs}ms`,
     'maxTokens =',
-    maxTokens
+    maxTokens,
+    'reasoning = none'
   );
 
   let ultimoErro =
@@ -921,9 +922,13 @@ async function chamarIA(
                 temperature:
                   0.2,
 
+                // DESLIGA O RACIOCÍNIO.
+                // Isso evita que modelos gratuitos
+                // gastem todo o limite pensando e
+                // retornem content = null.
                 reasoning: {
                   effort:
-                    'minimal'
+                    'none'
                 }
               }),
 
@@ -937,8 +942,6 @@ async function chamarIA(
         response.status
       );
 
-      // O timeout permanece ativo durante a leitura
-      // completa da resposta.
       const raw =
         await response.text();
 
@@ -958,7 +961,14 @@ async function chamarIA(
 
       } catch {
 
-        data = null;
+        console.error(
+          'IA - resposta não é JSON:',
+          raw.slice(0, 1500)
+        );
+
+        throw new Error(
+          'OpenRouter retornou uma resposta inválida.'
+        );
       }
 
       console.log(
@@ -988,33 +998,61 @@ async function chamarIA(
         );
       }
 
+      const escolha =
+        data?.choices?.[0];
+
       const conteudo =
-        data
-          ?.choices?.[0]
+        escolha
           ?.message
           ?.content;
 
-      if (!conteudo) {
+      console.log(
+        'IA - modelo utilizado:',
+        data?.model || 'desconhecido'
+      );
 
-        console.error(
-          'IA - resposta sem conteúdo:',
-          raw.slice(0, 1500)
-        );
+      console.log(
+        'IA - finish_reason:',
+        escolha?.finish_reason || 'não informado'
+      );
+
+      console.log(
+        'IA - content:',
+        conteudo
+          ? `${String(conteudo).length} caracteres`
+          : 'VAZIO'
+      );
+
+      /*
+       * Alguns modelos de raciocínio podem retornar
+       * content vazio/null quando atingem o limite
+       * antes de produzir a resposta.
+       *
+       * NÃO usamos o campo "reasoning" como resposta,
+       * pois ele é raciocínio interno do modelo.
+       */
+
+      if (
+        typeof conteudo !== 'string' ||
+        !conteudo.trim()
+      ) {
+
+        const finishReason =
+          escolha?.finish_reason ||
+          'desconhecido';
 
         throw new Error(
-          'A IA não retornou conteúdo.'
+          `A IA não gerou uma resposta final. Motivo: ${finishReason}.`
         );
       }
 
       console.log(
         'IA - resposta recebida com sucesso:',
-        String(conteudo).length,
+        conteudo.length,
         'caracteres'
       );
 
-      return String(
-        conteudo
-      ).trim();
+      return conteudo.trim();
 
     } catch (error) {
 
@@ -1157,7 +1195,7 @@ ${contexto}
             }
           ],
           {
-            maxTokens: 2500,
+            maxTokens: 2200,
             timeoutMs: 30000,
             maxTentativas: 1
           }
@@ -1189,8 +1227,6 @@ ${contexto}
 
 // ======================================================
 // RESUMO EXECUTIVO IA
-//
-// COMPATIBILIDADE COM O INDEX
 // ======================================================
 
 app.post(
@@ -1297,7 +1333,7 @@ ${contexto}
             }
           ],
           {
-            maxTokens: 1800,
+            maxTokens: 1600,
             timeoutMs: 30000,
             maxTentativas: 1
           }
@@ -1346,8 +1382,6 @@ ${contexto}
 
 // ======================================================
 // FECHAR TURNO
-//
-// TODAS AS ROTAS SÃO ACEITAS
 // ======================================================
 
 app.post(
@@ -1382,10 +1416,6 @@ app.post(
 
     try {
 
-      // ----------------------------------------------
-      // 1. BUSCAR DADOS
-      // ----------------------------------------------
-
       const ocorrencias =
         await obterOcorrenciasIA(
           req
@@ -1406,10 +1436,6 @@ app.post(
         });
       }
 
-      // ----------------------------------------------
-      // 2. GERAR CONTEXTO
-      // ----------------------------------------------
-
       const contexto =
         gerarContextoPorFrente(
           ocorrencias
@@ -1420,10 +1446,6 @@ app.post(
         contexto.length,
         'caracteres'
       );
-
-      // ----------------------------------------------
-      // 3. UMA ÚNICA CHAMADA PARA A IA
-      // ----------------------------------------------
 
       const prompt = `
 Faça o FECHAMENTO COMPLETO do turno do CTT MANDU.
@@ -1445,23 +1467,8 @@ RETORNE EXATAMENTE NESTA ESTRUTURA:
 
 *📋 FECHAMENTO DE TURNO — MANDU*
 
-*FRENTE 501*
-...
-
-*FRENTE 502*
-...
-
-*FRENTE 503*
-...
-
-*FRENTE 504*
-...
-
-*FRENTE 505*
-...
-
-*FRENTE 506*
-...
+*FRENTES COM OCORRÊNCIAS*
+- Informe somente as frentes que possuem ocorrências.
 
 *⚠️ PRINCIPAIS PROBLEMAS*
 - ...
@@ -1544,7 +1551,7 @@ ${contexto}
             }
           ],
           {
-            maxTokens: 2500,
+            maxTokens: 2600,
             timeoutMs: 30000,
             maxTentativas: 1
           }
@@ -1555,10 +1562,6 @@ ${contexto}
         resposta.length,
         'caracteres'
       );
-
-      // ----------------------------------------------
-      // 4. SEPARAR OS 3 RESULTADOS
-      // ----------------------------------------------
 
       let gerencial =
         resposta;
@@ -1632,10 +1635,6 @@ ${contexto}
             .trim();
       }
 
-      // ----------------------------------------------
-      // 5. CONTAR FRENTES
-      // ----------------------------------------------
-
       const frentes =
         new Set(
           ocorrencias.map(
@@ -1656,10 +1655,6 @@ ${contexto}
       console.log(
         '======================================'
       );
-
-      // ----------------------------------------------
-      // 6. RESPOSTA PARA O INDEX
-      // ----------------------------------------------
 
       return res.json({
 
@@ -1837,7 +1832,7 @@ Se perguntar qual frente precisa de atenção, explique quais dados sustentam a 
             }
           ],
           {
-            maxTokens: 2500,
+            maxTokens: 1800,
             timeoutMs: 30000,
             maxTentativas: 1
           }
@@ -1977,7 +1972,7 @@ app.listen(
     );
 
     console.log(
-      'Raciocínio IA: mínimo'
+      'Raciocínio IA: DESATIVADO'
     );
 
     console.log(

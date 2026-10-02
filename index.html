@@ -195,12 +195,15 @@ body::before{
 
   user-select:none;
   -webkit-user-select:none;
+  -webkit-touch-callout:none;
 
   touch-action:none;
 
   display:flex;
   align-items:center;
   justify-content:center;
+
+  outline:none;
 }
 
 #btnMic:hover{
@@ -648,7 +651,6 @@ body::before{
 .btn-central:active{
   transform:scale(.98);
 }
-
 
 /* =========================================================
    MODAIS
@@ -1182,7 +1184,7 @@ body::before{
   Fale naturalmente. Exemplo:
 
   <b>
-    "vinte e três e quinze, frente quinhentos e dois, acolhedora quebrou"
+    "Às 18 horas e 22 minutos, frente 502 parou novamente a colhedora 450060 com problema de solda..."
   </b>
 
 </div>
@@ -1394,10 +1396,6 @@ body::before{
     </p>
 
 
-    <!-- =================================================
-         ABAS
-    ================================================= -->
-
     <div class="fechamento-tabs">
 
       <button
@@ -1429,10 +1427,6 @@ body::before{
 
     </div>
 
-
-    <!-- =================================================
-         CHAT
-    ================================================= -->
 
     <div
       id="painelChat"
@@ -1549,10 +1543,6 @@ body::before{
     </div>
 
 
-    <!-- =================================================
-         GERENCIAL
-    ================================================= -->
-
     <div
       id="painelGerencial"
       class="painel-ia">
@@ -1582,10 +1572,6 @@ Aguardando fechamento do turno...
 
     </div>
 
-
-    <!-- =================================================
-         EXECUTIVO
-    ================================================= -->
 
     <div
       id="painelExecutivo"
@@ -1692,19 +1678,37 @@ let filtroAtual = 'TODAS';
 
 let editId = null;
 
+
+/* =========================================================
+   MICROFONE
+========================================================= */
+
 let rec = null;
 
 let gravando = false;
+
+let recognitionStarting = false;
 
 let wantRestart = false;
 
 let finalBuffer = '';
 
-let pollingTimer = null;
+let interimBuffer = '';
 
-let recognitionStarting = false;
+let micPointerId = null;
+
+let micSoltadoEnquantoInicia = false;
+
+let finalizandoMicrofone = false;
 
 let recognitionGeneration = 0;
+
+
+/* =========================================================
+   POLLING
+========================================================= */
+
+let pollingTimer = null;
 
 
 /* =========================================================
@@ -1913,8 +1917,6 @@ function limparCabecalho(texto){
 
 /* =========================================================
    CORREÇÃO LEVE
-   Apenas ajustes extremamente seguros.
-   Não tenta reescrever a fala.
 ========================================================= */
 
 function correcaoLeve(texto){
@@ -2508,7 +2510,7 @@ function render(){
 
 
 /* =========================================================
-   MICROFONE — RECONHECIMENTO MELHORADO
+   MICROFONE — APERTAR E SEGURAR
 ========================================================= */
 
 const btnMic =
@@ -2527,14 +2529,9 @@ const tempDiv =
   );
 
 
-/*
-  Termos operacionais.
-
-  Alguns navegadores modernos permitem
-  contextualização de reconhecimento.
-  Quando não suportado, simplesmente
-  ignoramos sem quebrar o reconhecimento.
-*/
+/* =========================================================
+   TERMOS OPERACIONAIS
+========================================================= */
 
 const termosOperacionais = [
 
@@ -2618,19 +2615,16 @@ const termosOperacionais = [
 ];
 
 
+/* =========================================================
+   CONTEXTO DE RECONHECIMENTO
+========================================================= */
+
 function configurarContextoReconhecimento(){
 
   if(!rec)
     return;
 
   try{
-
-    /*
-      SpeechRecognitionPhrase é experimental
-      em alguns navegadores.
-
-      Não dependemos dela para funcionar.
-    */
 
     if(
       'SpeechRecognitionPhrase'
@@ -2663,6 +2657,10 @@ function configurarContextoReconhecimento(){
 }
 
 
+/* =========================================================
+   VISUAL
+========================================================= */
+
 function atualizarVisualMic(){
 
   if(gravando){
@@ -2672,7 +2670,7 @@ function atualizarVisualMic(){
     );
 
     btnMic.innerHTML =
-      '<i class="fa-solid fa-waveform-lines"></i>';
+      '<i class="fa-solid fa-microphone"></i>';
 
     statusMic.innerText =
       'Ouvindo... solte para registrar';
@@ -2694,6 +2692,97 @@ function atualizarVisualMic(){
 }
 
 
+/* =========================================================
+   TRANSCRIÇÃO VISUAL
+========================================================= */
+
+function atualizarTranscricao(){
+
+  const texto =
+    (
+      finalBuffer +
+      (
+        interimBuffer
+          ? ' ' + interimBuffer
+          : ''
+      )
+    )
+    .replace(/\s+/g,' ')
+    .trim();
+
+  tempDiv.innerText =
+    texto || 'Ouvindo...';
+
+  tempDiv.style.display =
+    'block';
+
+}
+
+
+/* =========================================================
+   FINALIZAR TEXTO DO MICROFONE
+========================================================= */
+
+async function finalizarMicrofone(){
+
+  if(finalizandoMicrofone)
+    return;
+
+  finalizandoMicrofone = true;
+
+  const textoFinal =
+    (
+      finalBuffer +
+      (
+        interimBuffer
+          ? ' ' + interimBuffer
+          : ''
+      )
+    )
+      .replace(/\s+/g,' ')
+      .trim();
+
+  finalBuffer = '';
+  interimBuffer = '';
+
+  if(!textoFinal){
+
+    tempDiv.innerText = '';
+
+    tempDiv.style.display =
+      'none';
+
+    finalizandoMicrofone = false;
+
+    return;
+
+  }
+
+  tempDiv.innerText =
+    textoFinal;
+
+  tempDiv.style.display =
+    'block';
+
+  try{
+
+    await addOcorrencia(
+      textoFinal
+    );
+
+  }finally{
+
+    finalizandoMicrofone = false;
+
+  }
+
+}
+
+
+/* =========================================================
+   INICIAR GRAVAÇÃO
+========================================================= */
+
 async function iniciarGravacao(){
 
   if(
@@ -2708,57 +2797,82 @@ async function iniciarGravacao(){
   if(!rec){
 
     statusMic.innerText =
-      'Reconhecimento de voz indisponível.';
+      'Reconhecimento de voz indisponível neste navegador.';
 
     return;
 
   }
 
+  micSoltadoEnquantoInicia =
+    false;
+
   finalBuffer = '';
 
+  interimBuffer = '';
+
+  atualizarTranscricao();
+
   /*
-    Garante que o navegador tenha permissão para o microfone
-    antes de iniciar o reconhecimento.
+    Primeiro pedimos a permissão do microfone.
+    Isso evita que o SpeechRecognition fique
+    travado por falta de permissão.
   */
+
   if(
     navigator.mediaDevices &&
     navigator.mediaDevices.getUserMedia
   ){
+
     try{
+
       const stream =
         await navigator.mediaDevices.getUserMedia({
           audio:true
         });
 
-      stream.getTracks().forEach(
-        track => track.stop()
-      );
+      stream
+        .getTracks()
+        .forEach(
+          track => track.stop()
+        );
 
     }catch(error){
+
       statusMic.innerText =
         'Permita o acesso ao microfone no navegador.';
+
       return;
+
     }
+
   }
 
   /*
-    Se o usuário já soltou o botão enquanto a permissão
-    estava sendo solicitada, não inicia uma gravação atrasada.
+    O usuário pode ter soltado o botão
+    enquanto a janela de permissão estava aberta.
   */
-  if(micSoltadoEnquantoInicia){
-    micSoltadoEnquantoInicia = false;
-    micPointerId = null;
+
+  if(
+    micSoltadoEnquantoInicia
+  ){
+
+    micSoltadoEnquantoInicia =
+      false;
+
     return;
+
   }
 
-  wantRestart = true;
+  wantRestart =
+    true;
 
   recognitionGeneration++;
 
   const generation =
     recognitionGeneration;
 
-  recognitionStarting = true;
+  recognitionStarting =
+    true;
 
   try{
 
@@ -2768,36 +2882,95 @@ async function iniciarGravacao(){
 
   }catch(error){
 
+    recognitionStarting =
+      false;
+
     console.debug(
-      'Falha ao iniciar reconhecimento:',
+      'Erro ao iniciar reconhecimento:',
       error
     );
 
-    recognitionStarting = false;
+    /*
+      Em alguns casos o navegador ainda está
+      encerrando uma sessão anterior.
+    */
+
+    setTimeout(
+      () => {
+
+        if(
+          generation !==
+          recognitionGeneration
+        ){
+
+          return;
+
+        }
+
+        if(
+          !wantRestart ||
+          !micPointerId
+        ){
+
+          return;
+
+        }
+
+        try{
+
+          recognitionStarting =
+            true;
+
+          rec.start();
+
+        }catch(e){
+
+          recognitionStarting =
+            false;
+
+          console.debug(
+            'Segundo erro ao iniciar reconhecimento:',
+            e
+          );
+
+        }
+
+      },
+      180
+    );
 
   }
-
-  setTimeout(
-    () => {
-
-      if(
-        generation ===
-        recognitionGeneration
-      ){
-
-        recognitionStarting =
-          false;
-
-      }
-
-    },
-    500
-  );
 
 }
 
 
-function pararTudo(){
+/* =========================================================
+   PARAR GRAVAÇÃO
+========================================================= */
+
+async function pararTudo(){
+
+  /*
+    Caso o usuário solte enquanto o navegador
+    ainda está pedindo permissão/iniciando.
+  */
+
+  if(
+    recognitionStarting &&
+    !gravando
+  ){
+
+    micSoltadoEnquantoInicia =
+      true;
+
+    wantRestart =
+      false;
+
+    recognitionGeneration++;
+
+    return;
+
+  }
 
   if(
     !gravando &&
@@ -2808,16 +2981,18 @@ function pararTudo(){
 
   }
 
-  wantRestart = false;
+  wantRestart =
+    false;
 
   recognitionGeneration++;
 
-  gravando = false;
+  gravando =
+    false;
 
-  micSoltadoEnquantoInicia = false;
-  micPointerId = null;
+  recognitionStarting =
+    false;
 
-  recognitionStarting = false;
+  atualizarVisualMic();
 
   try{
 
@@ -2826,42 +3001,32 @@ function pararTudo(){
   }catch(error){
 
     console.debug(
-      'stop:',
+      'Erro ao parar reconhecimento:',
       error
     );
 
   }
 
-  atualizarVisualMic();
+  /*
+    Pequeno intervalo para deixar o último
+    resultado chegar ao onresult antes
+    de registrar a ocorrência.
+  */
 
-  if(
-    finalBuffer.trim()
-  ){
+  setTimeout(
+    () => {
 
-    const textoFinal =
-      finalBuffer
-        .replace(/\s+/g,' ')
-        .trim();
+      finalizarMicrofone();
 
-    finalBuffer = '';
-
-    tempDiv.innerText =
-      textoFinal;
-
-    tempDiv.style.display =
-      'block';
-
-    addOcorrencia(
-      textoFinal
-    );
-
-  }
+    },
+    180
+  );
 
 }
 
 
 /* =========================================================
-   CONFIGURAÇÃO DO RECONHECIMENTO
+   SPEECH RECOGNITION
 ========================================================= */
 
 if(
@@ -2869,49 +3034,28 @@ if(
   'webkitSpeechRecognition' in window
 ){
 
-  const SR =
+  const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
   rec =
-    new SR();
-
-  /*
-    Português brasileiro.
-  */
+    new SpeechRecognition();
 
   rec.lang =
     'pt-BR';
 
-  /*
-    Mostra a transcrição enquanto
-    você está falando.
-  */
+  rec.continuous =
+    true;
 
   rec.interimResults =
     true;
 
-  /*
-    Permite frases contínuas.
-  */
-
-  rec.continuous =
-    true;
-
-  /*
-    Mais de uma alternativa disponível
-    quando o mecanismo fornecer.
-  */
-
   rec.maxAlternatives =
-    3;
-
-
-  configurarContextoReconhecimento();
+    1;
 
 
   /* =======================================================
-     INÍCIO
+     INÍCIO DA SESSÃO
   ======================================================= */
 
   rec.onstart = () => {
@@ -2919,20 +3063,37 @@ if(
     recognitionStarting =
       false;
 
+    /*
+      Se o usuário soltou antes do reconhecimento
+      efetivamente começar, não deixamos uma
+      gravação fantasma iniciar.
+    */
+
     if(
-      micSoltadoEnquantoInicia
+      micSoltadoEnquantoInicia ||
+      !wantRestart ||
+      micPointerId === null
     ){
-      micSoltadoEnquantoInicia = false;
-      wantRestart = false;
-      gravando = false;
+
+      micSoltadoEnquantoInicia =
+        false;
+
+      wantRestart =
+        false;
+
+      gravando =
+        false;
 
       try{
+
         rec.stop();
+
       }catch(_){}
 
       atualizarVisualMic();
-      micPointerId = null;
+
       return;
+
     }
 
     gravando =
@@ -2940,31 +3101,18 @@ if(
 
     atualizarVisualMic();
 
-    tempDiv.style.display =
-      'block';
-
-    tempDiv.innerText =
-      finalBuffer.trim() ||
-      'Ouvindo...';
+    atualizarTranscricao();
 
   };
 
 
   /* =======================================================
-     RESULTADO
+     RESULTADOS
   ======================================================= */
 
   rec.onresult = (event) => {
 
     let interim = '';
-
-    /*
-      O Web Speech API mantém os resultados finais
-      e os resultados intermediários podem ser
-      substituídos pelo próximo resultado.
-
-      Por isso NÃO concatenamos intermediários.
-    */
 
     for(
       let i = event.resultIndex;
@@ -2975,57 +3123,12 @@ if(
       const resultado =
         event.results[i];
 
-      /*
-        Escolhemos a alternativa mais provável.
-        Não fazemos "correção" artificial.
-      */
-
-      let melhor =
-        resultado[0];
-
-      if(
-        resultado.length > 1
-      ){
-
-        let maiorConfianca =
-          Number(
-            melhor.confidence || 0
-          );
-
-        for(
-          let j = 1;
-          j < resultado.length;
-          j++
-        ){
-
-          const alternativa =
-            resultado[j];
-
-          const confianca =
-            Number(
-              alternativa.confidence || 0
-            );
-
-          if(
-            confianca >
-            maiorConfianca
-          ){
-
-            melhor =
-              alternativa;
-
-            maiorConfianca =
-              confianca;
-
-          }
-
-        }
-
-      }
-
       const texto =
-        (melhor.transcript || '')
-          .trim();
+        (
+          resultado[0]?.transcript ||
+          ''
+        )
+        .trim();
 
       if(!texto)
         continue;
@@ -3033,39 +3136,37 @@ if(
       if(resultado.isFinal){
 
         finalBuffer +=
-          (finalBuffer ? ' ' : '')
-          + texto;
+          (
+            finalBuffer
+              ? ' '
+              : ''
+          ) +
+          texto;
 
       }else{
 
         interim +=
-          (interim ? ' ' : '')
-          + texto;
+          (
+            interim
+              ? ' '
+              : ''
+          ) +
+          texto;
 
       }
 
     }
 
-    const visual =
-      (
-        finalBuffer +
-        (
-          interim
-            ? ' ' + interim
-            : ''
-        )
-      )
-      .replace(/\s+/g,' ')
-      .trim();
+    interimBuffer =
+      interim;
 
-    tempDiv.innerText =
-      visual || 'Ouvindo...';
+    atualizarTranscricao();
 
   };
 
 
   /* =======================================================
-     FIM DA SESSÃO
+     FIM AUTOMÁTICO DA SESSÃO
   ======================================================= */
 
   rec.onend = () => {
@@ -3074,50 +3175,83 @@ if(
       false;
 
     /*
-      O navegador pode encerrar uma sessão
-      contínua automaticamente.
+      Se ainda está segurando o botão,
+      reiniciamos automaticamente.
 
-      Se o usuário ainda estiver segurando,
-      iniciamos outra sessão sem perder
-      finalBuffer.
+      Isso é importante porque o Chrome/Edge
+      pode encerrar o SpeechRecognition sozinho
+      mesmo com continuous=true.
     */
 
     if(
       gravando &&
-      wantRestart
+      wantRestart &&
+      micPointerId !== null
     ){
 
       setTimeout(
         () => {
 
           if(
-            gravando &&
-            wantRestart
+            !gravando ||
+            !wantRestart ||
+            micPointerId === null
           ){
 
-            try{
+            return;
 
-              recognitionStarting =
-                true;
+          }
 
-              rec.start();
+          try{
 
-            }catch(error){
+            recognitionStarting =
+              true;
 
-              recognitionStarting =
-                false;
+            rec.start();
 
-              console.debug(
-                'Reconhecimento reiniciado:',
-                error
-              );
+          }catch(error){
 
-            }
+            recognitionStarting =
+              false;
+
+            console.debug(
+              'Reconhecimento será reiniciado:',
+              error
+            );
+
+            setTimeout(
+              () => {
+
+                if(
+                  gravando &&
+                  wantRestart &&
+                  micPointerId !== null
+                ){
+
+                  try{
+
+                    recognitionStarting =
+                      true;
+
+                    rec.start();
+
+                  }catch(_){
+
+                    recognitionStarting =
+                      false;
+
+                  }
+
+                }
+
+              },
+              250
+            );
 
           }
 
         },
-        80
+        100
       );
 
     }
@@ -3139,17 +3273,16 @@ if(
     recognitionStarting =
       false;
 
-    /*
-      Estes erros não devem derrubar
-      a gravação inteira.
-    */
-
     if(
       event.error === 'no-speech'
     ){
 
-      statusMic.innerText =
-        'Continue falando...';
+      if(gravando){
+
+        statusMic.innerText =
+          'Continue falando...';
+
+      }
 
       return;
 
@@ -3167,14 +3300,16 @@ if(
       event.error === 'audio-capture'
     ){
 
-      gravando = false;
+      gravando =
+        false;
 
-      wantRestart = false;
+      wantRestart =
+        false;
+
+      atualizarVisualMic();
 
       statusMic.innerText =
         'Microfone não disponível.';
-
-      atualizarVisualMic();
 
       return;
 
@@ -3184,14 +3319,16 @@ if(
       event.error === 'not-allowed'
     ){
 
-      gravando = false;
+      gravando =
+        false;
 
-      wantRestart = false;
+      wantRestart =
+        false;
+
+      atualizarVisualMic();
 
       statusMic.innerText =
         'Permita o acesso ao microfone.';
-
-      atualizarVisualMic();
 
       return;
 
@@ -3201,13 +3338,23 @@ if(
       event.error === 'network'
     ){
 
-      statusMic.innerText =
-        'Falha de conexão com o reconhecimento.';
-
       /*
-        Não fazemos correção ou substituição
-        do texto já reconhecido.
+        Se já estamos segurando, não cancelamos
+        imediatamente. O onend poderá tentar
+        iniciar novamente.
       */
+
+      if(gravando){
+
+        statusMic.innerText =
+          'Reconectando reconhecimento...';
+
+      }else{
+
+        statusMic.innerText =
+          'Falha de conexão com o reconhecimento.';
+
+      }
 
       return;
 
@@ -3217,25 +3364,24 @@ if(
 
 
   /* =======================================================
-     SEM RESULTADO
+     SEM CORRESPONDÊNCIA
   ======================================================= */
 
   rec.onnomatch = () => {
 
-    statusMic.innerText =
-      'Continue falando...';
+    if(gravando){
+
+      statusMic.innerText =
+        'Continue falando...';
+
+    }
 
   };
 
 
   /* =======================================================
-     POINTER EVENTS
-     Mouse + touch, com proteção contra o pointerup
-     acontecer antes do SpeechRecognition.onstart.
+     APERTAR
   ======================================================= */
-
-  let micPointerId = null;
-  let micSoltadoEnquantoInicia = false;
 
   btnMic.addEventListener(
     'pointerdown',
@@ -3243,21 +3389,43 @@ if(
 
       event.preventDefault();
 
+      /*
+        Evita dois ponteiros simultâneos.
+      */
+
       if(
-        micPointerId !== null ||
+        micPointerId !== null
+      ){
+
+        return;
+
+      }
+
+      /*
+        Se já estiver gravando, não reinicia.
+      */
+
+      if(
         gravando ||
         recognitionStarting
       ){
+
         return;
+
       }
 
-      micPointerId = event.pointerId;
-      micSoltadoEnquantoInicia = false;
+      micPointerId =
+        event.pointerId;
+
+      micSoltadoEnquantoInicia =
+        false;
 
       try{
+
         btnMic.setPointerCapture(
           event.pointerId
         );
+
       }catch(_){}
 
       iniciarGravacao();
@@ -3266,9 +3434,13 @@ if(
   );
 
 
+  /* =======================================================
+     SOLTAR
+  ======================================================= */
+
   btnMic.addEventListener(
     'pointerup',
-    event => {
+    async event => {
 
       event.preventDefault();
 
@@ -3276,77 +3448,132 @@ if(
         micPointerId !== null &&
         event.pointerId !== micPointerId
       ){
+
         return;
+
       }
 
-      if(recognitionStarting && !gravando){
-        micSoltadoEnquantoInicia = true;
-        wantRestart = false;
+      /*
+        IMPORTANTE:
+
+        Se ainda estiver iniciando,
+        não finalizamos imediatamente.
+        Apenas marcamos que o usuário soltou.
+      */
+
+      if(
+        recognitionStarting &&
+        !gravando
+      ){
+
+        micSoltadoEnquantoInicia =
+          true;
+
+        wantRestart =
+          false;
+
         recognitionGeneration++;
+
         return;
+
       }
 
-      pararTudo();
-      micPointerId = null;
+      micPointerId =
+        null;
+
+      await pararTudo();
 
     }
   );
 
+
+  /* =======================================================
+     CANCELAR
+  ======================================================= */
 
   btnMic.addEventListener(
     'pointercancel',
-    event => {
+    async event => {
 
       event.preventDefault();
 
-      micSoltadoEnquantoInicia = false;
-      pararTudo();
-      micPointerId = null;
+      micSoltadoEnquantoInicia =
+        true;
+
+      micPointerId =
+        null;
+
+      await pararTudo();
 
     }
   );
 
 
-  btnMic.addEventListener(
-    'lostpointercapture',
-    () => {
+  /* =======================================================
+     PERDA DE FOCO
+  ======================================================= */
+
+  window.addEventListener(
+    'blur',
+    async () => {
 
       if(
-        micPointerId !== null &&
-        !gravando &&
-        !recognitionStarting
+        gravando ||
+        recognitionStarting
       ){
-        micPointerId = null;
+
+        micSoltadoEnquantoInicia =
+          true;
+
+        micPointerId =
+          null;
+
+        await pararTudo();
+
       }
 
     }
   );
 
 
-  /*
-    No desktop, se o usuário apertar e arrastar para fora,
-    encerramos somente quando o botão já estiver capturando.
-  */
-  btnMic.addEventListener(
-    'pointerleave',
-    event => {
+  /* =======================================================
+     VISIBILIDADE DA PÁGINA
+  ======================================================= */
+
+  document.addEventListener(
+    'visibilitychange',
+    async () => {
+
+      /*
+        Se o usuário sair da página enquanto
+        segura o botão, encerramos.
+      */
 
       if(
-        event.buttons & 1 &&
-        gravando
+        document.visibilityState !== 'visible' &&
+        (
+          gravando ||
+          recognitionStarting
+        )
       ){
-        pararTudo();
-        micPointerId = null;
+
+        micSoltadoEnquantoInicia =
+          true;
+
+        micPointerId =
+          null;
+
+        await pararTudo();
+
       }
 
     }
   );
 
 
-  /*
-    Impede menu de contexto no botão.
-  */
-
+  /* =======================================================
+     MENU DE CONTEXTO
+  ======================================================= */
 
   btnMic.addEventListener(
     'contextmenu',
@@ -3708,7 +3935,7 @@ async function analisarTurno(){
   document.getElementById(
     'textoGerencial'
   ).innerText =
-    '🧠 ANALISANDO...\\n\\nA IA está processando todas as ocorrências.\\n\\nAguarde...';
+    '🧠 ANALISANDO...\n\nA IA está processando todas as ocorrências.\n\nAguarde...';
 
   document.getElementById(
     'textoExecutivo'
@@ -3810,7 +4037,7 @@ async function analisarTurno(){
   }catch(error){
 
     const erro =
-      '❌ ERRO AO ANALISAR\\n\\n' +
+      '❌ ERRO AO ANALISAR\n\n' +
       error.message;
 
     document.getElementById(
@@ -3961,8 +4188,7 @@ function selecionarPainelIA(
 
   if(
     tipo === 'gerencial' ||
-    tipo === 'executivo' ||
-    false && tipo === 'fechamento'
+    tipo === 'executivo'
   ){
 
     atualizarAbasFechamento();
@@ -4052,16 +4278,11 @@ function normalizarTextoPublicacao(texto){
 
   let t =
     String(texto)
-      .replace(/\\r\\n/g,'\\n')
-      .replace(/\\r/g,'\\n');
+      .replace(/\r\n/g,'\n')
+      .replace(/\r/g,'\n');
 
-  /*
-    Converte negrito duplicado da IA (**texto**)
-    para o padrão de publicação (*texto*).
-    Também elimina duplicações acidentais de asteriscos.
-  */
   t = t.replace(
-    /\*{2,}([^*\\n]+?)\*{2,}/g,
+    /\*{2,}([^*\n]+?)\*{2,}/g,
     '*$1*'
   );
 
@@ -4070,24 +4291,18 @@ function normalizarTextoPublicacao(texto){
     '*'
   );
 
-  /*
-    Evita linhas com asterisco isolado ou repetido.
-  */
   t = t.replace(
     /^([ \t]*)\*{2,}([ \t]*)$/gm,
     '$1*$2'
   );
 
-  /*
-    Limpa espaços antes/depois de asteriscos de destaque.
-  */
   t = t.replace(
-    /\*\s+([^\\n]*?)\s+\*/g,
+    /\*\s+([^\n]*?)\s+\*/g,
     '*$1*'
   );
 
   return t
-    .replace(/\\n{3,}/g,'\\n\\n')
+    .replace(/\n{3,}/g,'\n\n')
     .trim();
 
 }

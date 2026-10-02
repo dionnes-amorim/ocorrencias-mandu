@@ -1,27 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
+
 <title>CTT - Diário de Turno</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link
+  href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+  rel="stylesheet"
+>
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+>
 
 <style>
+
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
   font-family:'Plus Jakarta Sans',sans-serif;
-  -webkit-tap-highlight-color:transparent
+  -webkit-tap-highlight-color:transparent;
+}
+
+html{
+  scroll-behavior:smooth;
 }
 
 body{
   background:#080c1a;
   color:#fff;
   min-height:100vh;
-  padding-bottom:110px
+  padding-bottom:110px;
 }
 
 body::before{
@@ -31,23 +50,28 @@ body::before{
   left:0;
   right:0;
   height:320px;
-  background:radial-gradient(
-    600px 300px at 50% 0%,
-    rgba(0,230,118,.18),
-    transparent
-  );
+  background:
+    radial-gradient(
+      600px 300px at 50% 0%,
+      rgba(0,230,118,.18),
+      transparent
+    );
   pointer-events:none;
-  z-index:0
+  z-index:0;
 }
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 .header{
   position:sticky;
   top:0;
   z-index:10;
   padding:20px 18px 16px;
-  background:rgba(8,12,26,.85);
+  background:rgba(8,12,26,.88);
   backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,.07)
+  border-bottom:1px solid rgba(255,255,255,.07);
 }
 
 .header h1{
@@ -56,7 +80,7 @@ body::before{
   letter-spacing:-.3px;
   display:flex;
   align-items:center;
-  gap:10px
+  gap:10px;
 }
 
 .header h1 i{
@@ -68,7 +92,7 @@ body::before{
   background:linear-gradient(135deg,#00e676,#00b894);
   border-radius:12px;
   color:#06281a;
-  font-size:18px
+  font-size:18px;
 }
 
 .sub{
@@ -76,7 +100,8 @@ body::before{
   opacity:.55;
   margin-top:8px;
   display:flex;
-  justify-content:space-between
+  justify-content:space-between;
+  align-items:center;
 }
 
 .badge-turno{
@@ -85,8 +110,45 @@ body::before{
   padding:4px 12px;
   border-radius:100px;
   font-size:11px;
-  font-weight:800
+  font-weight:800;
 }
+
+/* =========================================================
+   ESTATÍSTICAS
+========================================================= */
+
+.stats{
+  display:flex;
+  gap:10px;
+  padding:14px 16px 0;
+  position:relative;
+  z-index:1;
+}
+
+.stat{
+  flex:1;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  padding:12px;
+  text-align:center;
+}
+
+.stat b{
+  font-size:20px;
+  font-weight:800;
+}
+
+.stat small{
+  font-size:10px;
+  opacity:.45;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+/* =========================================================
+   MICROFONE
+========================================================= */
 
 .hero-mic{
   display:flex;
@@ -94,54 +156,90 @@ body::before{
   align-items:center;
   padding:28px 20px 10px;
   position:relative;
-  z-index:1
+  z-index:1;
 }
 
 .mic-wrap{
-  position:relative
+  position:relative;
+  width:132px;
+  height:132px;
 }
 
 #btnMic{
   width:132px;
   height:132px;
-  border-radius:44px;
+  border-radius:42px;
   border:none;
-  background:linear-gradient(
-    135deg,
-    #00e676 0%,
-    #00c853 100%
-  );
+
+  background:
+    linear-gradient(
+      135deg,
+      #00e676 0%,
+      #00c853 100%
+    );
+
   color:#06281a;
   font-size:48px;
   cursor:pointer;
-  box-shadow:0 20px 60px rgba(0,230,118,.35);
-  transition:.25s;
+
+  box-shadow:
+    0 20px 60px rgba(0,230,118,.35);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+
   position:relative;
   z-index:2;
+
   user-select:none;
-  -webkit-user-select:none
+  -webkit-user-select:none;
+
+  touch-action:none;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#btnMic:hover{
+  transform:translateY(-2px);
+}
+
+#btnMic:active{
+  transform:scale(.96);
 }
 
 #btnMic.gravando{
-  background:linear-gradient(
-    135deg,
-    #ff5252,
-    #ff1744
-  );
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff5252,
+      #ff1744
+    );
+
   color:#fff;
-  box-shadow:0 20px 60px rgba(255,82,82,.4);
-  animation:pulse 1.4s infinite;
-  border-radius:50%
+
+  box-shadow:
+    0 20px 65px rgba(255,82,82,.45);
+
+  animation:pulse 1.25s infinite;
+
+  border-radius:50%;
 }
 
 @keyframes pulse{
+
   0%,100%{
-    transform:scale(1)
+    transform:scale(1);
   }
 
   50%{
-    transform:scale(1.05)
+    transform:scale(1.045);
   }
+
 }
 
 .ring{
@@ -150,33 +248,35 @@ body::before{
   border-radius:50px;
   border:2px solid rgba(0,230,118,.4);
   opacity:0;
-  pointer-events:none
+  pointer-events:none;
 }
 
-.gravando ~.ring{
-  animation:ringPulse 1.8s infinite
+#btnMic.gravando ~ .ring{
+  animation:ringPulse 1.8s infinite;
 }
 
 .ring.r2{
-  animation-delay:.6s
+  animation-delay:.6s !important;
 }
 
 .ring.r3{
-  animation-delay:1.2s
+  animation-delay:1.2s !important;
 }
 
 @keyframes ringPulse{
+
   0%{
     transform:scale(.95);
     opacity:.8;
-    border-radius:50px
+    border-radius:50px;
   }
 
   100%{
     transform:scale(1.35);
     opacity:0;
-    border-radius:60px
+    border-radius:60px;
   }
+
 }
 
 #statusMic{
@@ -185,7 +285,7 @@ body::before{
   font-weight:600;
   text-align:center;
   opacity:.9;
-  min-height:20px
+  min-height:20px;
 }
 
 #silenceBar{
@@ -195,7 +295,7 @@ body::before{
   border-radius:100px;
   margin-top:10px;
   overflow:hidden;
-  display:none
+  display:none;
 }
 
 #silenceFill{
@@ -203,8 +303,12 @@ body::before{
   background:#00e676;
   border-radius:100px;
   transition:width 1s linear;
-  width:100%
+  width:100%;
 }
+
+/* =========================================================
+   DICA
+========================================================= */
 
 .tip{
   margin:16px;
@@ -215,12 +319,16 @@ body::before{
   font-size:12.5px;
   line-height:1.6;
   position:relative;
-  z-index:1
+  z-index:1;
 }
 
 .tip b{
-  color:#4dd0ff
+  color:#4dd0ff;
 }
+
+/* =========================================================
+   TRANSCRIÇÃO
+========================================================= */
 
 #transcricaoTemp{
   margin:0 16px;
@@ -231,15 +339,22 @@ body::before{
   font-size:14px;
   display:none;
   position:relative;
-  z-index:1
+  z-index:1;
+
+  max-height:150px;
+  overflow:auto;
 }
+
+/* =========================================================
+   MANUAL
+========================================================= */
 
 #manualAdd{
   display:flex;
   gap:8px;
   padding:14px 16px 0;
   position:relative;
-  z-index:1
+  z-index:1;
 }
 
 #manualAdd input{
@@ -250,11 +365,11 @@ body::before{
   padding:14px 16px;
   border-radius:14px;
   font-size:14px;
-  outline:none
+  outline:none;
 }
 
 #manualAdd input:focus{
-  border-color:#00e676
+  border-color:#00e676;
 }
 
 #manualAdd button{
@@ -264,8 +379,12 @@ body::before{
   width:52px;
   border-radius:14px;
   font-size:18px;
-  cursor:pointer
+  cursor:pointer;
 }
+
+/* =========================================================
+   FILTROS
+========================================================= */
 
 .filtros{
   display:flex;
@@ -274,11 +393,11 @@ body::before{
   padding:14px 16px 4px;
   scrollbar-width:none;
   position:relative;
-  z-index:1
+  z-index:1;
 }
 
 .filtros::-webkit-scrollbar{
-  display:none
+  display:none;
 }
 
 .filtros button{
@@ -290,14 +409,18 @@ body::before{
   font-size:13px;
   font-weight:600;
   white-space:nowrap;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .filtros button.ativo{
   background:#fff;
   color:#080c1a;
-  font-weight:800
+  font-weight:800;
 }
+
+/* =========================================================
+   SEÇÃO
+========================================================= */
 
 .section-head{
   display:flex;
@@ -305,7 +428,7 @@ body::before{
   align-items:center;
   padding:18px 18px 10px;
   position:relative;
-  z-index:1
+  z-index:1;
 }
 
 .section-head h3{
@@ -313,7 +436,7 @@ body::before{
   font-weight:700;
   opacity:.5;
   text-transform:uppercase;
-  letter-spacing:1px
+  letter-spacing:1px;
 }
 
 .btn-limpar{
@@ -324,13 +447,17 @@ body::before{
   border-radius:100px;
   font-size:12px;
   font-weight:800;
-  cursor:pointer
+  cursor:pointer;
 }
+
+/* =========================================================
+   LISTA
+========================================================= */
 
 #lista{
   padding:0 16px;
   position:relative;
-  z-index:1
+  z-index:1;
 }
 
 .card{
@@ -340,21 +467,25 @@ body::before{
   border-radius:18px;
   padding:15px;
   margin-bottom:10px;
+
   display:flex;
   gap:13px;
-  animation:in .35s ease
+
+  animation:in .35s ease;
 }
 
 @keyframes in{
+
   from{
     opacity:0;
-    transform:translateY(10px)
+    transform:translateY(10px);
   }
 
   to{
     opacity:1;
-    transform:translateY(0)
+    transform:translateY(0);
   }
+
 }
 
 .meta{
@@ -362,7 +493,7 @@ body::before{
   flex-direction:column;
   gap:7px;
   align-items:flex-start;
-  min-width:68px
+  min-width:68px;
 }
 
 .hora{
@@ -371,7 +502,7 @@ body::before{
   background:rgba(0,176,255,.15);
   color:#4dd0ff;
   padding:5px 10px;
-  border-radius:100px
+  border-radius:100px;
 }
 
 .frente{
@@ -380,19 +511,19 @@ body::before{
   background:#00e676;
   color:#06281a;
   padding:4px 10px;
-  border-radius:100px
+  border-radius:100px;
 }
 
 .card p{
   font-size:14px;
   line-height:1.5;
-  flex:1
+  flex:1;
 }
 
 .acts{
   display:flex;
   flex-direction:column;
-  gap:4px
+  gap:4px;
 }
 
 .acts button{
@@ -400,345 +531,460 @@ body::before{
   height:36px;
   border:none;
   border-radius:10px;
+
   display:flex;
   align-items:center;
   justify-content:center;
+
   cursor:pointer;
   font-size:15px;
-  transition:.2s
+  transition:.2s;
 }
 
 .acts .e{
   background:rgba(77,208,255,.16);
   color:#4dd0ff;
-  border:1px solid rgba(77,208,255,.35)
+  border:1px solid rgba(77,208,255,.35);
 }
 
 .acts .e:hover{
   background:#4dd0ff;
-  color:#080c1a
+  color:#080c1a;
 }
 
 .acts .d{
   background:rgba(255,82,82,.16);
   color:#ff5252;
-  border:1px solid rgba(255,82,82,.35)
+  border:1px solid rgba(255,82,82,.35);
 }
 
 .acts .d:hover{
   background:#ff5252;
-  color:#fff
+  color:#fff;
 }
 
 .empty{
   text-align:center;
   padding:40px 20px;
   opacity:.3;
-  font-size:13px
+  font-size:13px;
 }
+
+/* =========================================================
+   BARRA INFERIOR FIXA
+========================================================= */
 
 .bottom{
   position:fixed;
+
   bottom:0;
   left:0;
   right:0;
-  padding:14px 16px calc(14px + env(safe-area-inset-bottom));
-  background:rgba(8,12,26,.92);
-  backdrop-filter:blur(20px);
-  border-top:1px solid rgba(255,255,255,.07);
-  z-index:20
+
+  padding:
+    10px
+    14px
+    calc(10px + env(safe-area-inset-bottom));
+
+  background:rgba(8,12,26,.94);
+  backdrop-filter:blur(22px);
+
+  border-top:
+    1px solid rgba(255,255,255,.08);
+
+  box-shadow:
+    0 -15px 40px rgba(0,0,0,.25);
+
+  z-index:50;
 }
 
-.btn-organizar{
+.bottom-inner{
   width:100%;
-  padding:18px;
+  max-width:520px;
+  margin:auto;
+
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.btn-central{
+  min-height:54px;
+
   border:none;
-  border-radius:18px;
-  background:linear-gradient(
-    135deg,
-    #7c4dff,
-    #00b0ff
-  );
+  border-radius:16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c4dff,
+      #00b0ff
+    );
+
   color:#fff;
+
   font-weight:800;
-  font-size:16px;
+  font-size:13px;
+
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
-  box-shadow:0 12px 35px rgba(124,77,255,.4);
-  cursor:pointer
+  gap:9px;
+
+  box-shadow:
+    0 10px 30px rgba(124,77,255,.28);
+
+  cursor:pointer;
+
+  transition:
+    transform .15s ease,
+    filter .15s ease;
 }
+
+.btn-central:hover{
+  filter:brightness(1.08);
+}
+
+.btn-central:active{
+  transform:scale(.98);
+}
+
+.btn-fechar{
+  min-height:54px;
+
+  border:1px solid rgba(0,230,118,.3);
+  border-radius:16px;
+
+  background:rgba(0,230,118,.1);
+
+  color:#00e676;
+
+  font-weight:800;
+  font-size:13px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+
+  cursor:pointer;
+
+  transition:
+    transform .15s ease,
+    background .15s ease;
+}
+
+.btn-fechar:hover{
+  background:rgba(0,230,118,.18);
+}
+
+.btn-fechar:active{
+  transform:scale(.98);
+}
+
+/* =========================================================
+   MODAIS
+========================================================= */
 
 .modal{
   position:fixed;
   inset:0;
+
   background:rgba(0,0,0,.9);
+
   backdrop-filter:blur(10px);
+
   display:none;
+
   align-items:flex-end;
   justify-content:center;
-  z-index:100
+
+  z-index:100;
 }
 
 .modal.show{
-  display:flex
+  display:flex;
 }
 
 .sheet{
   background:#121a32;
-  border-radius:28px 28px 0 0;
+
+  border-radius:
+    28px
+    28px
+    0
+    0;
+
   width:100%;
   max-width:520px;
-  max-height:88vh;
+
+  max-height:92vh;
+
   overflow:auto;
-  padding:24px 20px calc(24px + env(safe-area-inset-bottom));
-  animation:up .35s ease
+
+  padding:
+    24px
+    20px
+    calc(24px + env(safe-area-inset-bottom));
+
+  animation:up .35s ease;
 }
 
 @keyframes up{
+
   from{
     transform:translateY(60px);
-    opacity:0
+    opacity:0;
   }
 
   to{
     transform:translateY(0);
-    opacity:1
+    opacity:1;
   }
+
 }
 
 .sheet pre{
   white-space:pre-wrap;
+
   font-size:13.5px;
   line-height:1.7;
+
   background:#080c1a;
+
   padding:18px;
+
   border-radius:16px;
+
   margin:16px 0;
-  border:1px solid rgba(255,255,255,.06)
+
+  border:1px solid rgba(255,255,255,.06);
 }
 
 .edit-area textarea{
   width:100%;
+
   background:#080c1a;
+
   border:1px solid rgba(255,255,255,.12);
+
   color:#fff;
+
   padding:14px;
+
   border-radius:14px;
+
   font-size:15px;
+
   min-height:100px;
+
   margin:12px 0;
-  outline:none
+
+  outline:none;
 }
 
 .row2{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px
+  gap:10px;
 }
 
 .btn{
   padding:15px;
+
   border-radius:14px;
+
   border:none;
+
   font-weight:800;
   font-size:14px;
-  cursor:pointer
+
+  cursor:pointer;
 }
 
 .btn-s{
   background:#00e676;
-  color:#06281a
+  color:#06281a;
 }
 
 .btn-c{
   background:rgba(255,255,255,.1);
-  color:#fff
+  color:#fff;
 }
 
 .btn-copy{
   width:100%;
+
   background:#00e676;
   color:#06281a;
+
   padding:17px;
+
   border-radius:16px;
+
   border:none;
+
   font-weight:800;
   font-size:15px;
+
   margin-top:6px;
-  cursor:pointer
-}
 
-.stats{
-  display:flex;
-  gap:10px;
-  padding:0 16px;
-  position:relative;
-  z-index:1
+  cursor:pointer;
 }
-
-.stat{
-  flex:1;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;
-  padding:12px;
-  text-align:center
-}
-
-.stat b{
-  font-size:20px;
-  font-weight:800
-}
-
-.stat small{
-  font-size:10px;
-  opacity:.45;
-  text-transform:uppercase;
-  letter-spacing:.5px
-}
-
 
 /* =========================================================
-   IA OPERACIONAL
+   IA
 ========================================================= */
 
 .ia-area{
-  padding:14px 16px 18px;
-  position:relative;
-  z-index:1
+  display:none;
 }
-
-
-/* =========================================================
-   IA UNIFICADA
-========================================================= */
-
-.ia-unificada{
-  width:100%;
-  padding:18px;
-  border:none;
-  border-radius:18px;
-  background:linear-gradient(
-    135deg,
-    #7c4dff,
-    #00b0ff
-  );
-  color:#fff;
-  font-weight:800;
-  font-size:16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  box-shadow:0 12px 35px rgba(124,77,255,.35);
-  cursor:pointer
-}
-
-
-/* =========================================================
-   CHAT
-========================================================= */
 
 .chat-sheet{
-  max-height:92vh
+  max-height:92vh;
 }
 
 .chat-lista{
   height:48vh;
+
   overflow-y:auto;
+
   padding:8px 0;
-  margin-top:10px
+
+  margin-top:10px;
+
+  scroll-behavior:smooth;
 }
 
 .chat-msg{
   display:flex;
-  margin-bottom:10px
+  margin-bottom:10px;
 }
 
 .chat-msg.user{
-  justify-content:flex-end
+  justify-content:flex-end;
 }
 
 .chat-balao{
   max-width:88%;
+
   padding:12px 14px;
+
   border-radius:15px;
+
   font-size:12.5px;
+
   line-height:1.6;
-  white-space:pre-wrap
+
+  white-space:pre-wrap;
 }
 
 .chat-msg.user .chat-balao{
   background:#7c4dff;
   color:#fff;
-  border-bottom-right-radius:5px
+  border-bottom-right-radius:5px;
 }
 
 .chat-msg.assistant .chat-balao{
   background:rgba(255,255,255,.06);
+
   border:1px solid rgba(255,255,255,.07);
-  border-bottom-left-radius:5px
+
+  border-bottom-left-radius:5px;
 }
 
 .chat-atalhos{
   display:flex;
+
   gap:7px;
+
   overflow-x:auto;
+
   scrollbar-width:none;
-  padding:4px 0 9px
+
+  padding:4px 0 9px;
 }
 
 .chat-atalhos::-webkit-scrollbar{
-  display:none
+  display:none;
 }
 
 .chat-atalho{
   white-space:nowrap;
+
   background:rgba(255,255,255,.06);
+
   color:#fff;
+
   border:1px solid rgba(255,255,255,.1);
+
   border-radius:100px;
+
   padding:8px 12px;
+
   font-size:10px;
-  cursor:pointer
+
+  cursor:pointer;
 }
 
 .chat-input-area{
   display:flex;
-  gap:7px
+  gap:7px;
 }
 
 .chat-input-area input{
   flex:1;
   min-width:0;
+
   background:#080c1a;
+
   border:1px solid rgba(255,255,255,.1);
+
   color:#fff;
+
   border-radius:14px;
+
   padding:13px;
+
   outline:none;
-  font-size:12px
+
+  font-size:12px;
+}
+
+.chat-input-area input:focus{
+  border-color:#7c4dff;
 }
 
 .chat-input-area button{
   width:48px;
+
   border:none;
+
   border-radius:14px;
+
   background:#7c4dff;
+
   color:#fff;
+
   font-size:16px;
-  cursor:pointer
+
+  cursor:pointer;
+}
+
+.chat-input-area button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
 }
 
 .chat-status{
   font-size:10px;
-  opacity:.45;
-  min-height:15px;
-  margin-top:7px
-}
 
+  opacity:.45;
+
+  min-height:15px;
+
+  margin-top:7px;
+}
 
 /* =========================================================
    ABAS IA
@@ -746,132 +992,219 @@ body::before{
 
 .fechamento-tabs{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr 1fr;
+
+  grid-template-columns:
+    1fr
+    1fr
+    1fr
+    1fr;
+
   gap:6px;
-  margin-top:15px
+
+  margin-top:15px;
 }
 
 .fechamento-tab{
   border:1px solid rgba(255,255,255,.08);
+
   background:rgba(255,255,255,.05);
+
   color:#fff;
+
   border-radius:11px;
+
   padding:10px 5px;
+
   font-size:10px;
+
   font-weight:800;
-  cursor:pointer
+
+  cursor:pointer;
 }
 
 .fechamento-tab.ativo{
   background:#7c4dff;
-  border-color:#7c4dff
+  border-color:#7c4dff;
 }
 
 .fechamento-info{
   font-size:10px;
+
   opacity:.45;
+
   margin-top:9px;
-  text-align:center
+
+  text-align:center;
 }
 
 .loading-ia{
   text-align:center;
+
   opacity:.6;
-  animation:iaPulse 1.2s infinite alternate
+
+  animation:iaPulse 1.2s infinite alternate;
 }
 
 @keyframes iaPulse{
-  from{opacity:.35}
-  to{opacity:1}
+
+  from{
+    opacity:.35;
+  }
+
+  to{
+    opacity:1;
+  }
+
 }
 
 .painel-ia{
-  display:none
+  display:none;
 }
 
 .painel-ia.ativo{
-  display:block
+  display:block;
 }
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
 
 @media(max-width:500px){
 
   .fechamento-tabs{
-    grid-template-columns:1fr 1fr
+    grid-template-columns:1fr 1fr;
+  }
+
+  .bottom-inner{
+    grid-template-columns:1.25fr 1fr;
   }
 
 }
 
 @media(max-width:380px){
 
-  .fechamento-tabs{
-    grid-template-columns:1fr 1fr
+  .btn-central,
+  .btn-fechar{
+    font-size:11px;
   }
 
 }
+
 </style>
+
 </head>
 
 <body>
 
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
 <div class="header">
 
   <h1>
+
     <i class="fa-solid fa-tractor"></i>
+
     Diário de Turno - MANDU
+
   </h1>
 
   <div class="sub">
+
     <span id="dataHoje"></span>
-    <span class="badge-turno" id="turnoAuto"></span>
+
+    <span
+      class="badge-turno"
+      id="turnoAuto">
+    </span>
+
   </div>
 
 </div>
 
 
-<div class="stats" style="margin-top:14px">
+<!-- =====================================================
+     ESTATÍSTICAS
+===================================================== -->
+
+<div class="stats">
 
   <div class="stat">
-    <b id="stTotal">0</b><br>
+
+    <b id="stTotal">0</b>
+
+    <br>
+
     <small>Ocorrências</small>
+
   </div>
 
   <div class="stat">
-    <b id="stFrentes">0</b><br>
+
+    <b id="stFrentes">0</b>
+
+    <br>
+
     <small>Frentes</small>
+
   </div>
 
   <div class="stat">
-    <b id="stUltima">--:--</b><br>
+
+    <b id="stUltima">--:--</b>
+
+    <br>
+
     <small>Última</small>
+
   </div>
 
 </div>
 
+
+<!-- =====================================================
+     MICROFONE
+===================================================== -->
 
 <div class="hero-mic">
 
   <div class="mic-wrap">
 
-    <button id="btnMic">
+    <button
+      id="btnMic"
+      type="button"
+      aria-label="Falar ocorrência"
+      title="Segure para falar">
+
       <i class="fa-solid fa-microphone"></i>
+
     </button>
 
     <div class="ring"></div>
+
     <div class="ring r2"></div>
+
     <div class="ring r3"></div>
 
   </div>
 
   <div id="statusMic">
-    Mantenha pressionado para falar
+    Segure para falar
   </div>
 
   <div id="silenceBar">
+
     <div id="silenceFill"></div>
+
   </div>
 
 </div>
 
+
+<!-- =====================================================
+     DICA
+===================================================== -->
 
 <div class="tip">
 
@@ -880,26 +1213,38 @@ body::before{
     style="color:#ffeb3b">
   </i>
 
-  Segure o botão verde para falar e solte quando terminar:
+  Fale naturalmente. Exemplo:
 
   <b>
-    "vinte e três e quinze... frente 502... acolhedora quebrou"
+    "vinte e três e quinze, frente quinhentos e dois, acolhedora quebrou"
   </b>
 
 </div>
 
 
+<!-- =====================================================
+     TRANSCRIÇÃO
+===================================================== -->
+
 <div id="transcricaoTemp"></div>
 
+
+<!-- =====================================================
+     LANÇAMENTO MANUAL
+===================================================== -->
 
 <div id="manualAdd">
 
   <input
     id="textoManual"
-    placeholder="Digite: 23:15 502 acolhedora quebrou"
+    placeholder="Digite uma ocorrência..."
+    autocomplete="off"
   >
 
-  <button onclick="addManual()">
+  <button
+    type="button"
+    onclick="addManual()"
+    title="Adicionar ocorrência">
 
     <i class="fa-solid fa-plus"></i>
 
@@ -907,6 +1252,10 @@ body::before{
 
 </div>
 
+
+<!-- =====================================================
+     FILTROS
+===================================================== -->
 
 <div class="filtros">
 
@@ -916,15 +1265,42 @@ body::before{
     Todas
   </button>
 
-  <button onclick="filtrar('FRENTE 501',this)">501</button>
-  <button onclick="filtrar('FRENTE 502',this)">502</button>
-  <button onclick="filtrar('FRENTE 503',this)">503</button>
-  <button onclick="filtrar('FRENTE 504',this)">504</button>
-  <button onclick="filtrar('FRENTE 505',this)">505</button>
-  <button onclick="filtrar('FRENTE 506',this)">506</button>
+  <button
+    onclick="filtrar('FRENTE 501',this)">
+    501
+  </button>
+
+  <button
+    onclick="filtrar('FRENTE 502',this)">
+    502
+  </button>
+
+  <button
+    onclick="filtrar('FRENTE 503',this)">
+    503
+  </button>
+
+  <button
+    onclick="filtrar('FRENTE 504',this)">
+    504
+  </button>
+
+  <button
+    onclick="filtrar('FRENTE 505',this)">
+    505
+  </button>
+
+  <button
+    onclick="filtrar('FRENTE 506',this)">
+    506
+  </button>
 
 </div>
 
+
+<!-- =====================================================
+     CABEÇALHO LISTA
+===================================================== -->
 
 <div class="section-head">
 
@@ -933,7 +1309,9 @@ body::before{
   <button
     class="btn-limpar"
     onclick="limparTudo()">
+
     Novo turno
+
   </button>
 
 </div>
@@ -943,35 +1321,34 @@ body::before{
 
 
 <!-- =====================================================
-     IA UNIFICADA
+     BARRA FIXA
 ===================================================== -->
-
-<div class="ia-area">
-
-  <button
-    class="ia-unificada"
-    onclick="abrirIA()">
-
-    <i class="fa-solid fa-brain"></i>
-
-    CENTRAL DE IA — TURNO
-
-  </button>
-
-</div>
-
 
 <div class="bottom">
 
-  <button
-    class="btn-organizar"
-    onclick="abrirIA('fechamento')">
+  <div class="bottom-inner">
 
-    <i class="fa-solid fa-wand-magic-sparkles"></i>
+    <button
+      class="btn-central"
+      onclick="abrirIA('chat')">
 
-    FECHAR TURNO + IA
+      <i class="fa-solid fa-brain"></i>
 
-  </button>
+      CENTRAL OPERACIONAL
+
+    </button>
+
+    <button
+      class="btn-fechar"
+      onclick="abrirIA('fechamento')">
+
+      <i class="fa-solid fa-clipboard-check"></i>
+
+      FECHAR TURNO
+
+    </button>
+
+  </div>
 
 </div>
 
@@ -980,7 +1357,9 @@ body::before{
      MODAL EDITAR
 ===================================================== -->
 
-<div id="modalEdit" class="modal">
+<div
+  id="modalEdit"
+  class="modal">
 
   <div class="sheet edit-area">
 
@@ -991,7 +1370,7 @@ body::before{
         style="color:#4dd0ff">
       </i>
 
-      Editar
+      Editar ocorrência
 
     </h3>
 
@@ -1009,7 +1388,11 @@ body::before{
 
       <button
         class="btn btn-c"
-        onclick="document.getElementById('modalEdit').classList.remove('show')">
+        onclick="
+          document
+          .getElementById('modalEdit')
+          .classList.remove('show')
+        ">
 
         Cancelar
 
@@ -1023,13 +1406,12 @@ body::before{
 
 
 <!-- =====================================================
-     MODAL IA UNIFICADA
+     MODAL IA
 ===================================================== -->
 
 <div
   id="modalFechamento"
-  class="modal"
-  onclick="if(event.target.id==='modalFechamento')fecharModalFechamento()">
+  class="modal">
 
   <div class="sheet chat-sheet">
 
@@ -1040,14 +1422,18 @@ body::before{
         style="color:#ff9800">
       </i>
 
-      Central de IA — Diário de Turno
+      Central Operacional
 
     </h3>
 
     <p
-      style="font-size:12px;opacity:.55;margin-top:4px">
+      style="
+        font-size:12px;
+        opacity:.55;
+        margin-top:4px;
+      ">
 
-      Chat operacional e fechamento completo do turno
+      Análise operacional e fechamento inteligente do turno
 
     </p>
 
@@ -1098,7 +1484,7 @@ body::before{
 
 
     <!-- =================================================
-         PAINEL CHAT
+         CHAT
     ================================================= -->
 
     <div
@@ -1115,8 +1501,8 @@ body::before{
 
             🧠 Estou pronto para analisar as ocorrências deste turno.
 
-            Pode perguntar sobre riscos, recorrências, rendimento,
-            ciclo, manutenção, frentes ou plano de ação.
+            Pergunte sobre riscos, recorrências, manutenção,
+            produtividade, frentes, continuidade ou plano de ação.
 
           </div>
 
@@ -1129,7 +1515,11 @@ body::before{
 
         <button
           class="chat-atalho"
-          onclick="usarAtalho('Quais problemas mais se repetiram hoje?')">
+          onclick="
+            usarAtalho(
+              'Quais problemas mais se repetiram hoje?'
+            )
+          ">
 
           🔁 Problemas repetidos
 
@@ -1137,7 +1527,11 @@ body::before{
 
         <button
           class="chat-atalho"
-          onclick="usarAtalho('O que está mais ameaçando a continuidade operacional?')">
+          onclick="
+            usarAtalho(
+              'O que está mais ameaçando a continuidade operacional?'
+            )
+          ">
 
           ⚠️ Riscos
 
@@ -1145,7 +1539,11 @@ body::before{
 
         <button
           class="chat-atalho"
-          onclick="usarAtalho('O que mudou nas últimas duas horas?')">
+          onclick="
+            usarAtalho(
+              'O que mudou nas últimas duas horas?'
+            )
+          ">
 
           ⏱️ Últimas 2h
 
@@ -1153,7 +1551,11 @@ body::before{
 
         <button
           class="chat-atalho"
-          onclick="usarAtalho('Monte meu plano de voo para as próximas 4 horas.')">
+          onclick="
+            usarAtalho(
+              'Monte meu plano de voo para as próximas 4 horas.'
+            )
+          ">
 
           🎯 Plano de voo
 
@@ -1161,7 +1563,11 @@ body::before{
 
         <button
           class="chat-atalho"
-          onclick="usarAtalho('O que eu preciso cobrar da manutenção?')">
+          onclick="
+            usarAtalho(
+              'O que eu preciso cobrar da manutenção?'
+            )
+          ">
 
           🔧 Manutenção
 
@@ -1175,7 +1581,8 @@ body::before{
         <input
           id="chatInput"
           placeholder="Pergunte sobre o turno..."
-          autocomplete="off">
+          autocomplete="off"
+        >
 
         <button
           id="chatEnviar"
@@ -1187,7 +1594,6 @@ body::before{
 
       </div>
 
-
       <div
         id="chatStatus"
         class="chat-status">
@@ -1197,7 +1603,7 @@ body::before{
 
 
     <!-- =================================================
-         PAINEL GERENCIAL
+         GERENCIAL
     ================================================= -->
 
     <div
@@ -1211,7 +1617,11 @@ body::before{
 
       <pre
         id="textoGerencial"
-        class="loading-ia">Aguardando fechamento do turno...</pre>
+        class="loading-ia">
+
+Aguardando fechamento do turno...
+
+      </pre>
 
       <button
         class="btn-copy"
@@ -1227,15 +1637,14 @@ body::before{
 
 
     <!-- =================================================
-         PAINEL EXECUTIVO
+         EXECUTIVO
     ================================================= -->
 
     <div
       id="painelExecutivo"
       class="painel-ia">
 
-      <div
-        class="fechamento-info">
+      <div class="fechamento-info">
 
         Resumo executivo para gestão
 
@@ -1243,7 +1652,11 @@ body::before{
 
       <pre
         id="textoExecutivo"
-        class="loading-ia">Aguardando fechamento do turno...</pre>
+        class="loading-ia">
+
+Aguardando fechamento do turno...
+
+      </pre>
 
       <button
         class="btn-copy"
@@ -1259,15 +1672,14 @@ body::before{
 
 
     <!-- =================================================
-         PAINEL FECHAMENTO
+         FECHAMENTO
     ================================================= -->
 
     <div
       id="painelFechamento"
       class="painel-ia">
 
-      <div
-        class="fechamento-info">
+      <div class="fechamento-info">
 
         Fechamento completo do turno
 
@@ -1275,7 +1687,11 @@ body::before{
 
       <pre
         id="textoFechamento"
-        class="loading-ia">Aguardando fechamento do turno...</pre>
+        class="loading-ia">
+
+Aguardando fechamento do turno...
+
+      </pre>
 
       <button
         class="btn-copy"
@@ -1307,37 +1723,36 @@ body::before{
 <script>
 
 /* =========================================================
-   API DO BACKEND
+   API
 ========================================================= */
 
 async function api(url, options = {}){
 
-  const resposta = await fetch(
-    url,
-    {
-      ...options,
+  const resposta =
+    await fetch(
+      url,
+      {
+        ...options,
 
-      headers:{
-        'Content-Type':'application/json',
-        ...(options.headers || {})
+        headers:{
+          'Content-Type':'application/json',
+          ...(options.headers || {})
+        }
       }
-    }
-  );
-
+    );
 
   let dados = null;
 
-
   try{
 
-    dados = await resposta.json();
+    dados =
+      await resposta.json();
 
   }catch(_){
 
     dados = {};
 
   }
-
 
   if(!resposta.ok){
 
@@ -1348,7 +1763,6 @@ async function api(url, options = {}){
     );
 
   }
-
 
   return dados;
 
@@ -1369,15 +1783,15 @@ let rec = null;
 
 let gravando = false;
 
-let wantRestart = true;
-
-let silenceTimer = null;
-
-let silenceCountdown = null;
+let wantRestart = false;
 
 let finalBuffer = '';
 
 let pollingTimer = null;
+
+let recognitionStarting = false;
+
+let recognitionGeneration = 0;
 
 
 /* =========================================================
@@ -1389,11 +1803,9 @@ let historicoChat = [];
 let chatEnviando = false;
 
 let fechamentoDados = {
-
   gerencial:'',
   executivo:'',
   fechamento:''
-
 };
 
 let fechamentoAtual = 'gerencial';
@@ -1407,16 +1819,14 @@ let painelIAAtual = 'chat';
 
 function getTurnoAuto(){
 
-  const h = new Date().getHours();
-
+  const h =
+    new Date().getHours();
 
   if(h >= 6 && h < 14)
     return 'TURNO A';
 
-
   if(h >= 14 && h < 22)
     return 'TURNO B';
-
 
   return 'TURNO C';
 
@@ -1427,7 +1837,9 @@ function getTurnoAuto(){
    CABEÇALHO
 ========================================================= */
 
-document.getElementById('dataHoje').innerText =
+document.getElementById(
+  'dataHoje'
+).innerText =
   new Date().toLocaleDateString(
     'pt-BR',
     {
@@ -1437,8 +1849,9 @@ document.getElementById('dataHoje').innerText =
     }
   );
 
-
-document.getElementById('turnoAuto').innerText =
+document.getElementById(
+  'turnoAuto'
+).innerText =
   getTurnoAuto();
 
 
@@ -1448,18 +1861,37 @@ document.getElementById('turnoAuto').innerText =
 
 function detectarHorario(texto){
 
-  const t = texto.toLowerCase();
+  const t =
+    String(texto || '')
+      .toLowerCase();
 
-  const m =
-    t.match(/(\d{1,2})[:h](\d{2})/);
+  let m =
+    t.match(
+      /\b(\d{1,2})\s*(?:[:h]\s*)?(\d{2})\b/
+    );
 
   if(m){
 
-    return (
-      String(m[1]).padStart(2,'0')
-      + ':'
-      + m[2]
-    );
+    const hora =
+      Number(m[1]);
+
+    const minuto =
+      Number(m[2]);
+
+    if(
+      hora >= 0 &&
+      hora <= 23 &&
+      minuto >= 0 &&
+      minuto <= 59
+    ){
+
+      return (
+        String(hora).padStart(2,'0')
+        + ':'
+        + String(minuto).padStart(2,'0')
+      );
+
+    }
 
   }
 
@@ -1474,13 +1906,16 @@ function detectarHorario(texto){
 
 function detectarFrente(texto){
 
-  const t = texto.toLowerCase();
-
+  const t =
+    String(texto || '')
+      .toLowerCase();
 
   const mp = {
 
     'um':'1',
+    'uma':'1',
     'dois':'2',
+    'duas':'2',
     'tres':'3',
     'três':'3',
     'quatro':'4',
@@ -1489,38 +1924,43 @@ function detectarFrente(texto){
 
   };
 
-
   let m =
-    t.match(/quinhent\w*\s*e?\s*(\w+)/);
+    t.match(
+      /quinhent\w*\s*e?\s*(um|uma|dois|duas|tres|três|quatro|cinco|seis)\b/
+    );
 
+  if(
+    m &&
+    mp[m[1]]
+  ){
 
-  if(m && mp[m[1]])
     return 'FRENTE 50' + mp[m[1]];
 
+  }
 
   m =
-    t.match(/\b50\s*([1-6])\b/);
-
+    t.match(
+      /\b50\s*([1-6])\b/
+    );
 
   if(m)
     return 'FRENTE 50' + m[1];
 
-
   m =
-    t.match(/\b50([1-6])\b/);
-
+    t.match(
+      /\b50([1-6])\b/
+    );
 
   if(m)
     return 'FRENTE 50' + m[1];
 
-
   m =
-    t.match(/frente\s*([1-6])\b/);
-
+    t.match(
+      /frente\s*(?:cinco\s*zero\s*)?([1-6])\b/
+    );
 
   if(m)
     return 'FRENTE 50' + m[1];
-
 
   return 'GERAL';
 
@@ -1533,22 +1973,26 @@ function detectarFrente(texto){
 
 function limparCabecalho(texto){
 
-  let t = texto;
-
-
-  t =
-    t.replace(
-      /^\s*(às|as)?\s*\d{1,2}[:h]\d{2}\s*[,.\-]?\s*/i,
-      ''
-    );
-
+  let t =
+    String(texto || '');
 
   t =
     t.replace(
-      /frente\s*(quinh\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,
+      /^\s*(às|as)?\s*\d{1,2}(?:[:h]\d{2})?\s*[,.\-]?\s*/i,
       ''
     );
 
+  t =
+    t.replace(
+      /frente\s*(quinh\w*\s*e?\s*(?:um|uma|dois|duas|tres|três|quatro|cinco|seis)|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?\s*/gi,
+      ''
+    );
+
+  t =
+    t.replace(
+      /\bquinhent\w*\s*(?:e\s*)?(?:um|uma|dois|duas|tres|três|quatro|cinco|seis)\b\s*[,.\-]?\s*/gi,
+      ''
+    );
 
   return t.trim();
 
@@ -1557,39 +2001,67 @@ function limparCabecalho(texto){
 
 /* =========================================================
    CORREÇÃO LEVE
+   Apenas ajustes extremamente seguros.
+   Não tenta reescrever a fala.
 ========================================================= */
 
 function correcaoLeve(texto){
 
-  let t = texto.trim();
+  let t =
+    String(texto || '')
+      .trim();
 
+  if(!t)
+    return '';
 
   const fx = [
 
-    [/colhedera/gi,'colhedora'],
-    [/caminhao/gi,'caminhão'],
-    [/manutencao/gi,'manutenção']
+    [
+      /\bcolhedera\b/gi,
+      'colhedora'
+    ],
+
+    [
+      /\bcolhedeira\b/gi,
+      'colhedora'
+    ],
+
+    [
+      /\bmanutencao\b/gi,
+      'manutenção'
+    ],
+
+    [
+      /\bcaminhao\b/gi,
+      'caminhão'
+    ],
+
+    [
+      /\btransbordo\b/gi,
+      'transbordo'
+    ]
 
   ];
 
-
   fx.forEach(
-    ([r,p]) => t = t.replace(r,p)
+    ([r,p]) => {
+      t =
+        t.replace(r,p);
+    }
   );
 
-
-  if(t)
-    t =
-      t.charAt(0).toUpperCase()
-      + t.slice(1);
-
+  t =
+    t.charAt(0).toUpperCase()
+    + t.slice(1);
 
   if(
     t &&
     !/[.!?]$/.test(t)
-  )
+  ){
+
     t += '.';
 
+  }
 
   return t;
 
@@ -1624,7 +2096,6 @@ async function loadSupa(){
     const data =
       await api('/api/ocorrencias');
 
-
     ocorrencias =
       Array.isArray(data)
         ? data.map(d => ({
@@ -1640,9 +2111,7 @@ async function loadSupa(){
           }))
         : [];
 
-
     render();
-
 
   }catch(error){
 
@@ -1651,11 +2120,13 @@ async function loadSupa(){
       error
     );
 
-
-    document.getElementById('lista').innerHTML =
-      '<div class="empty">ERRO AO CARREGAR OCORRÊNCIAS: '
-      + escapeHtml(error.message)
-      + '</div>';
+    document.getElementById(
+      'lista'
+    ).innerHTML =
+      '<div class="empty">' +
+      'ERRO AO CARREGAR OCORRÊNCIAS: ' +
+      escapeHtml(error.message) +
+      '</div>';
 
   }
 
@@ -1663,7 +2134,7 @@ async function loadSupa(){
 
 
 /* =========================================================
-   PROTEÇÃO HTML
+   ESCAPE HTML
 ========================================================= */
 
 function escapeHtml(valor){
@@ -1684,28 +2155,35 @@ function escapeHtml(valor){
 
 async function addOcorrencia(bruto){
 
-  if(!bruto || !bruto.trim())
+  if(
+    !bruto ||
+    !bruto.trim()
+  ){
+
     return;
 
+  }
 
   const hora =
     detectarHorario(bruto)
     || horaAgora();
 
-
   const frente =
     detectarFrente(bruto);
-
 
   const texto =
     correcaoLeve(
       limparCabecalho(bruto)
     );
 
+  if(
+    !texto ||
+    texto === '.'
+  ){
 
-  if(!texto || texto === '.')
     return;
 
+  }
 
   try{
 
@@ -1717,9 +2195,13 @@ async function addOcorrencia(bruto){
         body:JSON.stringify({
 
           hora,
+
           frente,
+
           texto,
+
           turno:getTurnoAuto(),
+
           unidade:'MANDU'
 
         })
@@ -1727,9 +2209,7 @@ async function addOcorrencia(bruto){
       }
     );
 
-
     await loadSupa();
-
 
   }catch(error){
 
@@ -1738,10 +2218,9 @@ async function addOcorrencia(bruto){
       error
     );
 
-
     alert(
-      'Erro ao inserir: '
-      + error.message
+      'Erro ao inserir: ' +
+      error.message
     );
 
   }
@@ -1750,7 +2229,7 @@ async function addOcorrencia(bruto){
 
 
 /* =========================================================
-   ADICIONAR MANUAL
+   MANUAL
 ========================================================= */
 
 async function addManual(){
@@ -1760,26 +2239,18 @@ async function addManual(){
       'textoManual'
     );
 
-
   const texto =
     i.value.trim();
-
 
   if(!texto)
     return;
 
-
   i.value = '';
-
 
   await addOcorrencia(texto);
 
 }
 
-
-/* =========================================================
-   ENTER NO MANUAL
-========================================================= */
 
 document
   .getElementById('textoManual')
@@ -1809,22 +2280,23 @@ async function deletar(id){
     !confirm(
       'Deseja excluir este registro?'
     )
-  )
+  ){
+
     return;
 
+  }
 
   try{
 
     await api(
-      '/api/ocorrencias/' + encodeURIComponent(id),
+      '/api/ocorrencias/' +
+      encodeURIComponent(id),
       {
         method:'DELETE'
       }
     );
 
-
     await loadSupa();
-
 
   }catch(error){
 
@@ -1833,10 +2305,9 @@ async function deletar(id){
       error
     );
 
-
     alert(
-      'Erro ao deletar: '
-      + error.message
+      'Erro ao deletar: ' +
+      error.message
     );
 
   }
@@ -1858,14 +2329,15 @@ async function limparTudo(){
 
   }
 
-
   if(
     !confirm(
       'Deseja iniciar um novo turno e limpar todas as ocorrências atuais?'
     )
-  )
+  ){
+
     return;
 
+  }
 
   try{
 
@@ -1876,7 +2348,6 @@ async function limparTudo(){
       }
     );
 
-
     historicoChat = [];
 
     fechamentoDados = {
@@ -1885,9 +2356,7 @@ async function limparTudo(){
       fechamento:''
     };
 
-
     await loadSupa();
-
 
   }catch(error){
 
@@ -1896,10 +2365,9 @@ async function limparTudo(){
       error
     );
 
-
     alert(
-      'Erro ao limpar: '
-      + error.message
+      'Erro ao limpar: ' +
+      error.message
     );
 
   }
@@ -1915,16 +2383,13 @@ function filtrar(f,b){
 
   filtroAtual = f;
 
-
   document
     .querySelectorAll('.filtros button')
     .forEach(
       x => x.classList.remove('ativo')
     );
 
-
   b.classList.add('ativo');
-
 
   render();
 
@@ -1939,21 +2404,19 @@ function abrirEdit(id){
 
   editId = id;
 
-
   const o =
     ocorrencias.find(
-      x => String(x.id) === String(id)
+      x =>
+        String(x.id) === String(id)
     );
-
 
   if(!o)
     return;
 
-
   document.getElementById(
     'editTexto'
-  ).value = o.texto;
-
+  ).value =
+    o.texto;
 
   document.getElementById(
     'modalEdit'
@@ -1974,10 +2437,8 @@ async function salvarEdit(){
       .value
       .trim();
 
-
   if(!v)
     return;
-
 
   try{
 
@@ -1996,14 +2457,11 @@ async function salvarEdit(){
       }
     );
 
-
     document
       .getElementById('modalEdit')
       .classList.remove('show');
 
-
     await loadSupa();
-
 
   }catch(error){
 
@@ -2012,10 +2470,9 @@ async function salvarEdit(){
       error
     );
 
-
     alert(
-      'Erro ao editar: '
-      + error.message
+      'Erro ao editar: ' +
+      error.message
     );
 
   }
@@ -2034,20 +2491,18 @@ function render(){
       'lista'
     );
 
-
   let f =
     filtroAtual === 'TODAS'
       ? ocorrencias
       : ocorrencias.filter(
-          o => o.frente === filtroAtual
+          o =>
+            o.frente === filtroAtual
         );
-
 
   document.getElementById(
     'stTotal'
   ).innerText =
     ocorrencias.length;
-
 
   document.getElementById(
     'stFrentes'
@@ -2058,7 +2513,6 @@ function render(){
       )
     ).size;
 
-
   document.getElementById(
     'stUltima'
   ).innerText =
@@ -2066,83 +2520,95 @@ function render(){
       ? ocorrencias[0].hora
       : '--:--';
 
-
   if(!f.length){
 
     lista.innerHTML =
-      '<div class="empty">Nenhuma ocorrência registrada.</div>';
+      '<div class="empty">' +
+      'Nenhuma ocorrência registrada.' +
+      '</div>';
 
     return;
 
   }
 
-
   lista.innerHTML =
-    f.map(o => `
+    f.map(
+      o => `
 
-      <div class="card">
+        <div class="card">
 
-        <div class="meta">
+          <div class="meta">
 
-          <span class="hora">
-            ${escapeHtml(o.hora)}
-          </span>
+            <span class="hora">
+              ${escapeHtml(o.hora)}
+            </span>
 
-          <span class="frente">
-            ${escapeHtml(
-              String(o.frente || '').replace('FRENTE ','')
-            )}
-          </span>
+            <span class="frente">
+              ${
+                escapeHtml(
+                  String(
+                    o.frente || ''
+                  ).replace(
+                    'FRENTE ',
+                    ''
+                  )
+                )
+              }
+            </span>
+
+          </div>
+
+          <p>
+            ${escapeHtml(o.texto)}
+          </p>
+
+          <div class="acts">
+
+            <button
+              class="e"
+              onclick="
+                abrirEdit('${escapeHtml(o.id)}')
+              "
+              title="Editar">
+
+              <i class="fa-solid fa-pen"></i>
+
+            </button>
+
+            <button
+              class="d"
+              onclick="
+                deletar('${escapeHtml(o.id)}')
+              "
+              title="Excluir">
+
+              <i class="fa-solid fa-trash"></i>
+
+            </button>
+
+          </div>
 
         </div>
 
-
-        <p>
-          ${escapeHtml(o.texto)}
-        </p>
-
-
-        <div class="acts">
-
-          <button
-            class="e"
-            onclick="abrirEdit('${escapeHtml(o.id)}')"
-            title="Editar">
-
-            <i class="fa-solid fa-pen"></i>
-
-          </button>
-
-
-          <button
-            class="d"
-            onclick="deletar('${escapeHtml(o.id)}')"
-            title="Excluir">
-
-            <i class="fa-solid fa-trash"></i>
-
-          </button>
-
-        </div>
-
-      </div>
-
-    `).join('');
+      `
+    ).join('');
 
 }
 
 
 /* =========================================================
-   MICROFONE
+   MICROFONE — RECONHECIMENTO MELHORADO
 ========================================================= */
 
 const btnMic =
-  document.getElementById('btnMic');
-
+  document.getElementById(
+    'btnMic'
+  );
 
 const statusMic =
-  document.getElementById('statusMic');
-
+  document.getElementById(
+    'statusMic'
+  );
 
 const tempDiv =
   document.getElementById(
@@ -2150,206 +2616,671 @@ const tempDiv =
   );
 
 
-function iniciarGravacao(){
+/*
+  Termos operacionais.
 
-  if(gravando)
+  Alguns navegadores modernos permitem
+  contextualização de reconhecimento.
+  Quando não suportado, simplesmente
+  ignoramos sem quebrar o reconhecimento.
+*/
+
+const termosOperacionais = [
+
+  'frente 501',
+  'frente 502',
+  'frente 503',
+  'frente 504',
+  'frente 505',
+  'frente 506',
+
+  'quinhentos e um',
+  'quinhentos e dois',
+  'quinhentos e três',
+  'quinhentos e quatro',
+  'quinhentos e cinco',
+  'quinhentos e seis',
+
+  'colhedora',
+  'colhedoras',
+
+  'transbordo',
+  'transbordos',
+
+  'tração',
+  'trações',
+
+  'caminhão',
+  'caminhões',
+
+  'moagem',
+
+  'plantio',
+
+  'muda',
+  'mudas',
+
+  'Mandu',
+
+  'Cruz Alta',
+
+  'São José',
+
+  'Vertente',
+
+  'Tanabi',
+
+  'Solinftec',
+
+  'manutenção',
+
+  'produção',
+
+  'produtividade',
+
+  'ATR',
+
+  'CTT',
+
+  'COA',
+
+  'usina',
+
+  'pátio',
+
+  'carregamento',
+
+  'descarregamento',
+
+  'palhada',
+
+  'ciclo',
+
+  'frente',
+
+  'indisponibilidade',
+
+  'quebra',
+
+  'parada'
+
+];
+
+
+function configurarContextoReconhecimento(){
+
+  if(!rec)
     return;
-
-
-  wantRestart = true;
-
 
   try{
 
-    rec.start();
+    /*
+      SpeechRecognitionPhrase é experimental
+      em alguns navegadores.
 
-  }catch(e){}
+      Não dependemos dela para funcionar.
+    */
 
-}
+    if(
+      'SpeechRecognitionPhrase'
+      in window
+    ){
 
+      const Phrase =
+        window.SpeechRecognitionPhrase;
 
-function pararTudo(){
+      rec.phrases =
+        termosOperacionais.map(
+          palavra =>
+            new Phrase(
+              palavra,
+              3.0
+            )
+        );
 
-  if(!gravando)
-    return;
+    }
 
+  }catch(error){
 
-  gravando = false;
-
-  wantRestart = false;
-
-
-  try{
-
-    rec.stop();
-
-  }catch(e){}
-
-
-  btnMic.classList.remove(
-    'gravando'
-  );
-
-
-  btnMic.innerHTML =
-    '<i class="fa-solid fa-microphone"></i>';
-
-
-  statusMic.innerText =
-    'Mantenha pressionado para falar';
-
-
-  tempDiv.style.display =
-    'none';
-
-
-  if(finalBuffer.trim()){
-
-    addOcorrencia(
-      finalBuffer.trim()
+    console.debug(
+      'Contexto de fala não disponível neste navegador.',
+      error
     );
-
-
-    finalBuffer = '';
 
   }
 
 }
 
 
-if(
-  'webkitSpeechRecognition' in window
-  ||
-  'SpeechRecognition' in window
-){
+function atualizarVisualMic(){
 
-  const SR =
-    window.SpeechRecognition
-    ||
-    window.webkitSpeechRecognition;
-
-
-  rec = new SR();
-
-
-  rec.lang = 'pt-BR';
-
-  rec.interimResults = true;
-
-  rec.continuous = true;
-
-
-  rec.onstart = () => {
-
-    gravando = true;
-
-    finalBuffer = '';
-
+  if(gravando){
 
     btnMic.classList.add(
       'gravando'
     );
 
-
     btnMic.innerHTML =
-      '<i class="fa-solid fa-stop"></i>';
-
+      '<i class="fa-solid fa-waveform-lines"></i>';
 
     statusMic.innerText =
       'Ouvindo... solte para registrar';
 
+  }else{
+
+    btnMic.classList.remove(
+      'gravando'
+    );
+
+    btnMic.innerHTML =
+      '<i class="fa-solid fa-microphone"></i>';
+
+    statusMic.innerText =
+      'Segure para falar';
+
+  }
+
+}
+
+
+function iniciarGravacao(){
+
+  if(
+    gravando ||
+    recognitionStarting
+  ){
+
+    return;
+
+  }
+
+  if(!rec){
+
+    statusMic.innerText =
+      'Reconhecimento de voz indisponível.';
+
+    return;
+
+  }
+
+  finalBuffer = '';
+
+  wantRestart = true;
+
+  recognitionGeneration++;
+
+  const generation =
+    recognitionGeneration;
+
+  recognitionStarting = true;
+
+  try{
+
+    configurarContextoReconhecimento();
+
+    rec.start();
+
+  }catch(error){
+
+    console.debug(
+      'Falha ao iniciar reconhecimento:',
+      error
+    );
+
+    recognitionStarting = false;
+
+  }
+
+  setTimeout(
+    () => {
+
+      if(
+        generation ===
+        recognitionGeneration
+      ){
+
+        recognitionStarting =
+          false;
+
+      }
+
+    },
+    500
+  );
+
+}
+
+
+function pararTudo(){
+
+  if(
+    !gravando &&
+    !recognitionStarting
+  ){
+
+    return;
+
+  }
+
+  wantRestart = false;
+
+  recognitionGeneration++;
+
+  gravando = false;
+
+  recognitionStarting = false;
+
+  try{
+
+    rec.stop();
+
+  }catch(error){
+
+    console.debug(
+      'stop:',
+      error
+    );
+
+  }
+
+  atualizarVisualMic();
+
+  if(
+    finalBuffer.trim()
+  ){
+
+    const textoFinal =
+      finalBuffer
+        .replace(/\s+/g,' ')
+        .trim();
+
+    finalBuffer = '';
+
+    tempDiv.innerText =
+      textoFinal;
 
     tempDiv.style.display =
       'block';
 
+    addOcorrencia(
+      textoFinal
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CONFIGURAÇÃO DO RECONHECIMENTO
+========================================================= */
+
+if(
+  'SpeechRecognition' in window ||
+  'webkitSpeechRecognition' in window
+){
+
+  const SR =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  rec =
+    new SR();
+
+  /*
+    Português brasileiro.
+  */
+
+  rec.lang =
+    'pt-BR';
+
+  /*
+    Mostra a transcrição enquanto
+    você está falando.
+  */
+
+  rec.interimResults =
+    true;
+
+  /*
+    Permite frases contínuas.
+  */
+
+  rec.continuous =
+    true;
+
+  /*
+    Mais de uma alternativa disponível
+    quando o mecanismo fornecer.
+  */
+
+  rec.maxAlternatives =
+    3;
+
+
+  configurarContextoReconhecimento();
+
+
+  /* =======================================================
+     INÍCIO
+  ======================================================= */
+
+  rec.onstart = () => {
+
+    recognitionStarting =
+      false;
+
+    gravando =
+      true;
+
+    atualizarVisualMic();
+
+    tempDiv.style.display =
+      'block';
 
     tempDiv.innerText =
-      '...';
+      finalBuffer.trim() ||
+      'Ouvindo...';
 
   };
 
 
-  rec.onresult = (e) => {
+  /* =======================================================
+     RESULTADO
+  ======================================================= */
+
+  rec.onresult = (event) => {
 
     let interim = '';
 
+    /*
+      O Web Speech API mantém os resultados finais
+      e os resultados intermediários podem ser
+      substituídos pelo próximo resultado.
+
+      Por isso NÃO concatenamos intermediários.
+    */
 
     for(
-      let i = e.resultIndex;
-      i < e.results.length;
+      let i = event.resultIndex;
+      i < event.results.length;
       i++
     ){
 
-      const tr =
-        e.results[i][0].transcript;
+      const resultado =
+        event.results[i];
 
+      /*
+        Escolhemos a alternativa mais provável.
+        Não fazemos "correção" artificial.
+      */
+
+      let melhor =
+        resultado[0];
 
       if(
-        e.results[i].isFinal
+        resultado.length > 1
       ){
 
+        let maiorConfianca =
+          Number(
+            melhor.confidence || 0
+          );
+
+        for(
+          let j = 1;
+          j < resultado.length;
+          j++
+        ){
+
+          const alternativa =
+            resultado[j];
+
+          const confianca =
+            Number(
+              alternativa.confidence || 0
+            );
+
+          if(
+            confianca >
+            maiorConfianca
+          ){
+
+            melhor =
+              alternativa;
+
+            maiorConfianca =
+              confianca;
+
+          }
+
+        }
+
+      }
+
+      const texto =
+        (melhor.transcript || '')
+          .trim();
+
+      if(!texto)
+        continue;
+
+      if(resultado.isFinal){
+
         finalBuffer +=
-          tr + ' ';
+          (finalBuffer ? ' ' : '')
+          + texto;
 
       }else{
 
-        interim += tr;
+        interim +=
+          (interim ? ' ' : '')
+          + texto;
 
       }
 
     }
 
+    const visual =
+      (
+        finalBuffer +
+        (
+          interim
+            ? ' ' + interim
+            : ''
+        )
+      )
+      .replace(/\s+/g,' ')
+      .trim();
 
     tempDiv.innerText =
-      (
-        finalBuffer + interim
-      ).trim()
-      || '...';
+      visual || 'Ouvindo...';
 
   };
 
 
+  /* =======================================================
+     FIM DA SESSÃO
+  ======================================================= */
+
   rec.onend = () => {
+
+    recognitionStarting =
+      false;
+
+    /*
+      O navegador pode encerrar uma sessão
+      contínua automaticamente.
+
+      Se o usuário ainda estiver segurando,
+      iniciamos outra sessão sem perder
+      finalBuffer.
+    */
 
     if(
       gravando &&
       wantRestart
     ){
 
-      try{
+      setTimeout(
+        () => {
 
-        rec.start();
+          if(
+            gravando &&
+            wantRestart
+          ){
 
-      }catch(e){}
+            try{
+
+              recognitionStarting =
+                true;
+
+              rec.start();
+
+            }catch(error){
+
+              recognitionStarting =
+                false;
+
+              console.debug(
+                'Reconhecimento reiniciado:',
+                error
+              );
+
+            }
+
+          }
+
+        },
+        80
+      );
 
     }
 
   };
 
 
+  /* =======================================================
+     ERROS
+  ======================================================= */
+
+  rec.onerror = (event) => {
+
+    console.debug(
+      'SpeechRecognition:',
+      event.error
+    );
+
+    recognitionStarting =
+      false;
+
+    /*
+      Estes erros não devem derrubar
+      a gravação inteira.
+    */
+
+    if(
+      event.error === 'no-speech'
+    ){
+
+      statusMic.innerText =
+        'Continue falando...';
+
+      return;
+
+    }
+
+    if(
+      event.error === 'aborted'
+    ){
+
+      return;
+
+    }
+
+    if(
+      event.error === 'audio-capture'
+    ){
+
+      gravando = false;
+
+      wantRestart = false;
+
+      statusMic.innerText =
+        'Microfone não disponível.';
+
+      atualizarVisualMic();
+
+      return;
+
+    }
+
+    if(
+      event.error === 'not-allowed'
+    ){
+
+      gravando = false;
+
+      wantRestart = false;
+
+      statusMic.innerText =
+        'Permita o acesso ao microfone.';
+
+      atualizarVisualMic();
+
+      return;
+
+    }
+
+    if(
+      event.error === 'network'
+    ){
+
+      statusMic.innerText =
+        'Falha de conexão com o reconhecimento.';
+
+      /*
+        Não fazemos correção ou substituição
+        do texto já reconhecido.
+      */
+
+      return;
+
+    }
+
+  };
+
+
+  /* =======================================================
+     SEM RESULTADO
+  ======================================================= */
+
+  rec.onnomatch = () => {
+
+    statusMic.innerText =
+      'Continue falando...';
+
+  };
+
+
+  /* =======================================================
+     POINTER EVENTS
+     Melhor para mouse + touch.
+  ======================================================= */
+
   btnMic.addEventListener(
-    'mousedown',
-    iniciarGravacao
-  );
+    'pointerdown',
+    event => {
 
+      event.preventDefault();
 
-  btnMic.addEventListener(
-    'mouseup',
-    pararTudo
-  );
+      try{
 
+        btnMic.setPointerCapture(
+          event.pointerId
+        );
 
-  btnMic.addEventListener(
-    'mouseleave',
-    pararTudo
-  );
-
-
-  btnMic.addEventListener(
-    'touchstart',
-    (e) => {
-
-      e.preventDefault();
+      }catch(_){}
 
       iniciarGravacao();
 
@@ -2358,12 +3289,61 @@ if(
 
 
   btnMic.addEventListener(
-    'touchend',
-    (e) => {
+    'pointerup',
+    event => {
 
-      e.preventDefault();
+      event.preventDefault();
 
       pararTudo();
+
+    }
+  );
+
+
+  btnMic.addEventListener(
+    'pointercancel',
+    event => {
+
+      event.preventDefault();
+
+      pararTudo();
+
+    }
+  );
+
+
+  btnMic.addEventListener(
+    'pointerleave',
+    event => {
+
+      /*
+        No desktop, se o usuário apertar
+        e arrastar para fora do botão,
+        ainda encerramos a captura.
+      */
+
+      if(
+        event.buttons &
+        1
+      ){
+
+        pararTudo();
+
+      }
+
+    }
+  );
+
+
+  /*
+    Impede menu de contexto no botão.
+  */
+
+  btnMic.addEventListener(
+    'contextmenu',
+    event => {
+
+      event.preventDefault();
 
     }
   );
@@ -2381,21 +3361,26 @@ if(
    IA UNIFICADA
 ========================================================= */
 
-function abrirIA(aba = 'chat'){
+function abrirIA(
+  aba = 'chat'
+){
 
   const modal =
     document.getElementById(
       'modalFechamento'
     );
 
+  modal.classList.add(
+    'show'
+  );
 
-  modal.classList.add('show');
+  selecionarPainelIA(
+    aba
+  );
 
-
-  selecionarPainelIA(aba);
-
-
-  if(aba === 'chat'){
+  if(
+    aba === 'chat'
+  ){
 
     setTimeout(
       () => {
@@ -2418,12 +3403,14 @@ function abrirIA(aba = 'chat'){
 
 
 /* =========================================================
-   CHAT OPERACIONAL
+   CHAT
 ========================================================= */
 
 function abrirChat(){
 
-  abrirIA('chat');
+  abrirIA(
+    'chat'
+  );
 
 }
 
@@ -2435,17 +3422,20 @@ function fecharChat(){
 }
 
 
-function usarAtalho(texto){
+function usarAtalho(
+  texto
+){
 
   const input =
     document.getElementById(
       'chatInput'
     );
 
+  if(!input)
+    return;
 
   input.value =
     texto;
-
 
   enviarChat();
 
@@ -2457,20 +3447,16 @@ async function enviarChat(){
   if(chatEnviando)
     return;
 
-
   const input =
     document.getElementById(
       'chatInput'
     );
 
-
   const pergunta =
     input.value.trim();
 
-
   if(!pergunta)
     return;
-
 
   if(!ocorrencias.length){
 
@@ -2479,46 +3465,42 @@ async function enviarChat(){
       'Ainda não existem ocorrências registradas neste turno para eu analisar.'
     );
 
-
-    input.value = '';
+    input.value =
+      '';
 
     return;
 
   }
 
-
-  chatEnviando = true;
-
+  chatEnviando =
+    true;
 
   const botao =
     document.getElementById(
       'chatEnviar'
     );
 
-
   const status =
     document.getElementById(
       'chatStatus'
     );
 
+  botao.disabled =
+    true;
 
-  botao.disabled = true;
-
-  input.disabled = true;
-
+  input.disabled =
+    true;
 
   adicionarMensagemChat(
     'user',
     pergunta
   );
 
-
-  input.value = '';
-
+  input.value =
+    '';
 
   status.innerText =
     '🧠 Analisando o turno...';
-
 
   try{
 
@@ -2546,12 +3528,9 @@ async function enviarChat(){
         }
       );
 
-
     const resposta =
-      data.resposta
-      ||
+      data.resposta ||
       'A IA não retornou uma resposta.';
-
 
     historicoChat.push({
 
@@ -2561,7 +3540,6 @@ async function enviarChat(){
 
     });
 
-
     historicoChat.push({
 
       role:'assistant',
@@ -2569,7 +3547,6 @@ async function enviarChat(){
       content:resposta
 
     });
-
 
     if(
       historicoChat.length > 12
@@ -2580,37 +3557,35 @@ async function enviarChat(){
 
     }
 
-
     adicionarMensagemChat(
       'assistant',
       resposta
     );
 
-
     status.innerText =
       'Análise concluída.';
-
 
   }catch(error){
 
     adicionarMensagemChat(
       'assistant',
-      '❌ Erro ao consultar a IA:\n'
-      + error.message
+      '❌ Erro ao consultar a IA:\n' +
+      error.message
     );
-
 
     status.innerText =
       'Erro na consulta.';
 
   }
 
+  chatEnviando =
+    false;
 
-  chatEnviando = false;
+  botao.disabled =
+    false;
 
-  botao.disabled = false;
-
-  input.disabled = false;
+  input.disabled =
+    false;
 
   input.focus();
 
@@ -2627,36 +3602,32 @@ function adicionarMensagemChat(
       'chatLista'
     );
 
-
   const div =
-    document.createElement('div');
-
+    document.createElement(
+      'div'
+    );
 
   div.className =
     'chat-msg ' + tipo;
 
-
   const balao =
-    document.createElement('div');
-
+    document.createElement(
+      'div'
+    );
 
   balao.className =
     'chat-balao';
 
-
   balao.innerText =
     texto;
-
 
   div.appendChild(
     balao
   );
 
-
   lista.appendChild(
     div
   );
-
 
   lista.scrollTop =
     lista.scrollHeight;
@@ -2665,7 +3636,7 @@ function adicionarMensagemChat(
 
 
 /* =========================================================
-   ENTER DO CHAT
+   ENTER CHAT
 ========================================================= */
 
 document
@@ -2704,15 +3675,14 @@ async function fecharTurno(){
 
   }
 
-
   const modal =
     document.getElementById(
       'modalFechamento'
     );
 
-
-  modal.classList.add('show');
-
+  modal.classList.add(
+    'show'
+  );
 
   fechamentoDados = {
 
@@ -2722,64 +3692,53 @@ async function fecharTurno(){
 
   };
 
-
   fechamentoAtual =
     'gerencial';
 
-
-  selecionarPainelIA('gerencial');
-
+  selecionarPainelIA(
+    'gerencial'
+  );
 
   document.getElementById(
     'textoGerencial'
   ).innerText =
     '🧠 PROCESSANDO FECHAMENTO...\n\nA IA está analisando todas as ocorrências do turno.\n\nAguarde...';
 
-
   document.getElementById(
     'textoExecutivo'
   ).innerText =
     '🧠 PROCESSANDO FECHAMENTO...';
 
-
   document.getElementById(
     'textoFechamento'
   ).innerText =
     '🧠 PROCESSANDO FECHAMENTO...';
-
 
   document.getElementById(
     'textoGerencial'
-  ).classList.add('loading-ia');
-
+  ).classList.add(
+    'loading-ia'
+  );
 
   document.getElementById(
     'textoExecutivo'
-  ).classList.add('loading-ia');
-
+  ).classList.add(
+    'loading-ia'
+  );
 
   document.getElementById(
     'textoFechamento'
-  ).classList.add('loading-ia');
-
+  ).classList.add(
+    'loading-ia'
+  );
 
   document.getElementById(
     'fechamentoInfo'
   ).innerText =
-    ocorrencias.length
-    + ' ocorrência(s) sendo analisada(s).';
-
+    ocorrencias.length +
+    ' ocorrência(s) sendo analisada(s).';
 
   try{
-
-    /*
-     * O backend /fechar-turno-ia já retorna:
-     * gerencial
-     * executivo
-     * fechamento
-     *
-     * Portanto fazemos apenas UMA chamada.
-     */
 
     const data =
       await api(
@@ -2799,95 +3758,105 @@ async function fecharTurno(){
         }
       );
 
-
     fechamentoDados = {
 
       gerencial:
-        data.gerencial
-        ||
-        extrairGerencial(data.fechamento || data.texto || ''),
+        data.gerencial ||
+        extrairGerencial(
+          data.fechamento ||
+          data.texto ||
+          ''
+        ),
 
       executivo:
-        data.executivo
-        ||
+        data.executivo ||
         'Não foi possível gerar o resumo executivo.',
 
       fechamento:
-        data.fechamento
-        ||
-        data.texto
-        ||
+        data.fechamento ||
+        data.texto ||
         'Não foi possível gerar o fechamento.'
 
     };
 
-
     document.getElementById(
       'textoGerencial'
-    ).classList.remove('loading-ia');
-
+    ).classList.remove(
+      'loading-ia'
+    );
 
     document.getElementById(
       'textoExecutivo'
-    ).classList.remove('loading-ia');
-
+    ).classList.remove(
+      'loading-ia'
+    );
 
     document.getElementById(
       'textoFechamento'
-    ).classList.remove('loading-ia');
-
+    ).classList.remove(
+      'loading-ia'
+    );
 
     document.getElementById(
       'fechamentoInfo'
     ).innerText =
-      (data.total || ocorrencias.length)
-      + ' ocorrência(s) • '
-      + (data.frentes || new Set(ocorrencias.map(o => o.frente)).size)
-      + ' frente(s) analisada(s).';
+      (
+        data.total ||
+        ocorrencias.length
+      ) +
+      ' ocorrência(s) • ' +
+      (
+        data.frentes ||
+        new Set(
+          ocorrencias.map(
+            o => o.frente
+          )
+        ).size
+      ) +
+      ' frente(s) analisada(s).';
 
-
-    selecionarPainelIA('gerencial');
-
+    selecionarPainelIA(
+      'gerencial'
+    );
 
   }catch(error){
 
     const erro =
-      '❌ ERRO AO FECHAR O TURNO\n\n'
-      + error.message;
-
-
-    document.getElementById(
-      'textoGerencial'
-    ).classList.remove('loading-ia');
-
-
-    document.getElementById(
-      'textoExecutivo'
-    ).classList.remove('loading-ia');
-
-
-    document.getElementById(
-      'textoFechamento'
-    ).classList.remove('loading-ia');
-
+      '❌ ERRO AO FECHAR O TURNO\n\n' +
+      error.message;
 
     document.getElementById(
       'textoGerencial'
+    ).classList.remove(
+      'loading-ia'
+    );
+
+    document.getElementById(
+      'textoExecutivo'
+    ).classList.remove(
+      'loading-ia'
+    );
+
+    document.getElementById(
+      'textoFechamento'
+    ).classList.remove(
+      'loading-ia'
+    );
+
+    document.getElementById(
+      'textoGerencial'
     ).innerText =
       erro;
-
 
     document.getElementById(
       'textoExecutivo'
     ).innerText =
       erro;
 
-
     document.getElementById(
       'textoFechamento'
     ).innerText =
       erro;
-
 
     document.getElementById(
       'fechamentoInfo'
@@ -2903,28 +3872,31 @@ async function fecharTurno(){
    EXTRAIR GERENCIAL
 ========================================================= */
 
-function extrairGerencial(texto){
+function extrairGerencial(
+  texto
+){
 
   if(!texto)
     return '';
 
-
   const marcador =
     '*⚡ RESUMO EXECUTIVO*';
 
-
   const pos =
-    texto.indexOf(marcador);
-
+    texto.indexOf(
+      marcador
+    );
 
   if(pos > -1){
 
     return texto
-      .substring(0,pos)
+      .substring(
+        0,
+        pos
+      )
       .trim();
 
   }
-
 
   return texto.trim();
 
@@ -2932,14 +3904,15 @@ function extrairGerencial(texto){
 
 
 /* =========================================================
-   SELECIONAR PAINEL IA
+   SELECIONAR PAINEL
 ========================================================= */
 
-function selecionarPainelIA(tipo){
+function selecionarPainelIA(
+  tipo
+){
 
   painelIAAtual =
     tipo;
-
 
   if(
     tipo === 'gerencial' ||
@@ -2952,7 +3925,6 @@ function selecionarPainelIA(tipo){
 
   }
 
-
   const mapaTabs = {
 
     chat:'tabChat',
@@ -2961,7 +3933,6 @@ function selecionarPainelIA(tipo){
     fechamento:'tabFechamento'
 
   };
-
 
   const mapaPaineis = {
 
@@ -2972,40 +3943,47 @@ function selecionarPainelIA(tipo){
 
   };
 
-
   document
-    .querySelectorAll('.fechamento-tab')
+    .querySelectorAll(
+      '.fechamento-tab'
+    )
     .forEach(
-      b => b.classList.remove('ativo')
+      b =>
+        b.classList.remove(
+          'ativo'
+        )
     );
 
-
   document
-    .querySelectorAll('.painel-ia')
+    .querySelectorAll(
+      '.painel-ia'
+    )
     .forEach(
-      p => p.classList.remove('ativo')
+      p =>
+        p.classList.remove(
+          'ativo'
+        )
     );
-
 
   const tab =
     document.getElementById(
       mapaTabs[tipo]
     );
 
-
   if(tab)
-    tab.classList.add('ativo');
-
+    tab.classList.add(
+      'ativo'
+    );
 
   const painel =
     document.getElementById(
       mapaPaineis[tipo]
     );
 
-
   if(painel)
-    painel.classList.add('ativo');
-
+    painel.classList.add(
+      'ativo'
+    );
 
   if(
     tipo === 'gerencial' ||
@@ -3021,12 +3999,16 @@ function selecionarPainelIA(tipo){
 
 
 /* =========================================================
-   COMPATIBILIDADE COM ABAS ANTIGAS
+   COMPATIBILIDADE
 ========================================================= */
 
-function selecionarFechamento(tipo){
+function selecionarFechamento(
+  tipo
+){
 
-  selecionarPainelIA(tipo);
+  selecionarPainelIA(
+    tipo
+  );
 
 }
 
@@ -3041,28 +4023,24 @@ function atualizarAbasFechamento(){
 
   };
 
-
   const tipo =
     fechamentoAtual;
-
 
   const botao =
     document.getElementById(
       mapa[tipo]
     );
 
-
   if(botao)
-    botao.classList.add('ativo');
-
+    botao.classList.add(
+      'ativo'
+    );
 
   const conteudo =
     fechamentoDados[tipo];
 
-
   if(!conteudo)
     return;
-
 
   const textoId = {
 
@@ -3072,19 +4050,16 @@ function atualizarAbasFechamento(){
 
   };
 
-
   const texto =
     document.getElementById(
       textoId[tipo]
     );
-
 
   if(texto){
 
     texto.classList.remove(
       'loading-ia'
     );
-
 
     texto.innerText =
       conteudo;
@@ -3095,23 +4070,24 @@ function atualizarAbasFechamento(){
 
 
 /* =========================================================
-   COPIAR ABA ATUAL
+   COPIAR
 ========================================================= */
 
 function copiarFechamentoAtual(){
 
   let texto = '';
 
-
   if(
-    fechamentoAtual === 'gerencial'
+    fechamentoAtual ===
+    'gerencial'
   ){
 
     texto =
       fechamentoDados.gerencial;
 
   }else if(
-    fechamentoAtual === 'executivo'
+    fechamentoAtual ===
+    'executivo'
   ){
 
     texto =
@@ -3124,10 +4100,8 @@ function copiarFechamentoAtual(){
 
   }
 
-
   if(!texto)
     return;
-
 
   copiarGenerico(
     texto,
@@ -3138,7 +4112,7 @@ function copiarFechamentoAtual(){
 
 
 /* =========================================================
-   FECHAR MODAL IA
+   FECHAR MODAL
 ========================================================= */
 
 function fecharModalFechamento(){
@@ -3147,7 +4121,9 @@ function fecharModalFechamento(){
     .getElementById(
       'modalFechamento'
     )
-    .classList.remove('show');
+    .classList.remove(
+      'show'
+    );
 
 }
 
@@ -3158,7 +4134,9 @@ function fecharModalFechamento(){
 
 function organizar(){
 
-  abrirIA('gerencial');
+  abrirIA(
+    'gerencial'
+  );
 
 }
 
@@ -3186,21 +4164,25 @@ function copiarGenerico(
 
     navigator.clipboard
       .writeText(texto)
-      .then(() => {
+      .then(
+        () => {
 
-        alert(
-          mensagem
-        );
+          alert(
+            mensagem
+          );
 
-      })
-      .catch(() => {
+        }
+      )
+      .catch(
+        () => {
 
-        copiarFallback(
-          texto,
-          mensagem
-        );
+          copiarFallback(
+            texto,
+            mensagem
+          );
 
-      });
+        }
+      );
 
   }else{
 
@@ -3220,32 +4202,29 @@ function copiarGenerico(
 
 function copiarFallback(
   texto,
-  mensagem = 'Texto copiado com sucesso!'
+  mensagem =
+    'Texto copiado com sucesso!'
 ){
 
   const area =
-    document.createElement('textarea');
-
+    document.createElement(
+      'textarea'
+    );
 
   area.value =
     texto;
 
-
   area.style.position =
     'fixed';
 
-
   area.style.left =
     '-9999px';
-
 
   document.body.appendChild(
     area
   );
 
-
   area.select();
-
 
   try{
 
@@ -3253,11 +4232,9 @@ function copiarFallback(
       'copy'
     );
 
-
     alert(
       mensagem
     );
-
 
   }catch(e){
 
@@ -3266,7 +4243,6 @@ function copiarFallback(
     );
 
   }
-
 
   document.body.removeChild(
     area
@@ -3281,18 +4257,21 @@ function copiarFallback(
 
 function iniciarAtualizacao(){
 
-  if(pollingTimer)
+  if(pollingTimer){
+
     clearInterval(
       pollingTimer
     );
 
+  }
 
   pollingTimer =
     setInterval(
       () => {
 
         if(
-          document.visibilityState === 'visible'
+          document.visibilityState ===
+          'visible'
         ){
 
           loadSupa();
@@ -3307,26 +4286,80 @@ function iniciarAtualizacao(){
 
 
 /* =========================================================
-   FECHAR MODAIS COM ESC
+   FECHAR COM ESC
 ========================================================= */
 
 document.addEventListener(
   'keydown',
   function(event){
 
-    if(event.key !== 'Escape')
+    if(
+      event.key !== 'Escape'
+    ){
+
       return;
 
+    }
 
     document
-      .querySelectorAll('.modal.show')
+      .querySelectorAll(
+        '.modal.show'
+      )
       .forEach(
         modal =>
-          modal.classList.remove('show')
+          modal.classList.remove(
+            'show'
+          )
       );
 
   }
 );
+
+
+/* =========================================================
+   CLICAR FORA DO MODAL
+========================================================= */
+
+document
+  .getElementById(
+    'modalFechamento'
+  )
+  .addEventListener(
+    'click',
+    function(event){
+
+      if(
+        event.target === this
+      ){
+
+        fecharModalFechamento();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById(
+    'modalEdit'
+  )
+  .addEventListener(
+    'click',
+    function(event){
+
+      if(
+        event.target === this
+      ){
+
+        this.classList.remove(
+          'show'
+        );
+
+      }
+
+    }
+  );
 
 
 /* =========================================================
@@ -3340,4 +4373,5 @@ iniciarAtualizacao();
 </script>
 
 </body>
+
 </html>

@@ -839,10 +839,10 @@ async function chamarIA(
     options.maxTokens || 2500;
 
   const timeoutMs =
-    options.timeoutMs || 45000;
+    options.timeoutMs || 30000;
 
   const maxTentativas =
-    options.maxTentativas || 2;
+    options.maxTentativas || 1;
 
   console.log(
     'IA - iniciando chamada OpenRouter...',
@@ -863,80 +863,91 @@ async function chamarIA(
     tentativa++
   ) {
 
+    const controller =
+      new AbortController();
+
+    let timeout = null;
+
     try {
 
       console.log(
         `IA - tentativa ${tentativa}/${maxTentativas}`
       );
 
-      const controller =
-        new AbortController();
-
-      const timeout =
+      timeout =
         setTimeout(
           () => {
+
+            console.error(
+              'IA - TIMEOUT: abortando requisição OpenRouter.'
+            );
+
             controller.abort();
+
           },
           timeoutMs
         );
 
-      let response;
+      const response =
+        await fetch(
+          OPENROUTER_URL,
+          {
+            method: 'POST',
 
-      try {
+            headers: {
+              'Authorization':
+                `Bearer ${OPENROUTER_API_KEY}`,
 
-        response =
-          await fetch(
-            OPENROUTER_URL,
-            {
-              method: 'POST',
+              'Content-Type':
+                'application/json',
 
-              headers: {
-                'Authorization':
-                  `Bearer ${OPENROUTER_API_KEY}`,
+              'HTTP-Referer':
+                'https://ocorrencias-mandu.onrender.com',
 
-                'Content-Type':
-                  'application/json',
+              'X-Title':
+                'CTT Diário de Turno - MANDU'
+            },
 
-                'HTTP-Referer':
-                  'https://ocorrencias-mandu.onrender.com',
+            body:
+              JSON.stringify({
+                model:
+                  AI_MODEL,
 
-                'X-Title':
-                  'CTT Diário de Turno - MANDU'
-              },
+                messages,
 
-              body:
-                JSON.stringify({
-                  model:
-                    AI_MODEL,
+                max_tokens:
+                  maxTokens,
 
-                  messages,
+                temperature:
+                  0.2,
 
-                  max_tokens:
-                    maxTokens,
+                reasoning: {
+                  effort:
+                    'minimal'
+                }
+              }),
 
-                  temperature:
-                    0.2,
-
-                  reasoning: {
-                    effort:
-                      'minimal'
-                  }
-                }),
-
-              signal:
-                controller.signal
-            }
-          );
-
-      } finally {
-
-        clearTimeout(
-          timeout
+            signal:
+              controller.signal
+          }
         );
-      }
 
+      console.log(
+        'IA - resposta HTTP recebida:',
+        response.status
+      );
+
+      // O timeout permanece ativo durante a leitura
+      // completa da resposta.
       const raw =
         await response.text();
+
+      if (!raw) {
+
+        throw new Error(
+          'OpenRouter retornou uma resposta vazia.'
+        );
+      }
 
       let data = null;
 
@@ -961,7 +972,7 @@ async function chamarIA(
 
         const detalhe =
           data?.error?.message ||
-          raw ||
+          raw.slice(0, 1000) ||
           `HTTP ${response.status}`;
 
         ultimoErro =
@@ -971,30 +982,6 @@ async function chamarIA(
           'IA - ERRO:',
           ultimoErro
         );
-
-        const temporario =
-          response.status === 429 ||
-          response.status >= 500;
-
-        if (
-          temporario &&
-          tentativa < maxTentativas
-        ) {
-
-          console.log(
-            'IA - erro temporário. Nova tentativa em 2 segundos.'
-          );
-
-          await new Promise(
-            resolve =>
-              setTimeout(
-                resolve,
-                2000
-              )
-          );
-
-          continue;
-        }
 
         throw new Error(
           ultimoErro
@@ -1020,7 +1007,9 @@ async function chamarIA(
       }
 
       console.log(
-        'IA - resposta recebida com sucesso.'
+        'IA - resposta recebida com sucesso:',
+        String(conteudo).length,
+        'caracteres'
       );
 
       return String(
@@ -1042,26 +1031,15 @@ async function chamarIA(
         ultimoErro
       );
 
-      const erroTemporario =
-        /429|fetch|network|timeout|temporarily|aborted|ECONN|socket|503|502|504/i
-          .test(
-            ultimoErro
-          );
-
       if (
-        tentativa < maxTentativas &&
-        erroTemporario
+        tentativa < maxTentativas
       ) {
-
-        console.log(
-          'IA - nova tentativa em 2 segundos.'
-        );
 
         await new Promise(
           resolve =>
             setTimeout(
               resolve,
-              2000
+              1500
             )
         );
 
@@ -1071,6 +1049,13 @@ async function chamarIA(
       throw new Error(
         ultimoErro
       );
+
+    } finally {
+
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+
     }
   }
 
@@ -1173,7 +1158,8 @@ ${contexto}
           ],
           {
             maxTokens: 2500,
-            timeoutMs: 45000
+            timeoutMs: 30000,
+            maxTentativas: 1
           }
         );
 
@@ -1312,7 +1298,8 @@ ${contexto}
           ],
           {
             maxTokens: 1800,
-            timeoutMs: 45000
+            timeoutMs: 30000,
+            maxTentativas: 1
           }
         );
 
@@ -1557,8 +1544,9 @@ ${contexto}
             }
           ],
           {
-            maxTokens: 4000,
-            timeoutMs: 45000
+            maxTokens: 2500,
+            timeoutMs: 30000,
+            maxTentativas: 1
           }
         );
 
@@ -1681,7 +1669,6 @@ ${contexto}
 
         fechamento,
 
-        // Compatibilidade adicional
         texto:
           fechamento,
 
@@ -1851,7 +1838,8 @@ Se perguntar qual frente precisa de atenção, explique quais dados sustentam a 
           ],
           {
             maxTokens: 2500,
-            timeoutMs: 45000
+            timeoutMs: 30000,
+            maxTentativas: 1
           }
         );
 

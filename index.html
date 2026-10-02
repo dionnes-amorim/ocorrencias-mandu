@@ -4,11 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CTT - Diário de Turno</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  -webkit-tap-highlight-color:transparent
+}
 
 body{
   background:#080c1a;
@@ -24,7 +31,11 @@ body::before{
   left:0;
   right:0;
   height:320px;
-  background:radial-gradient(600px 300px at 50% 0%,rgba(0,230,118,.18),transparent);
+  background:radial-gradient(
+    600px 300px at 50% 0%,
+    rgba(0,230,118,.18),
+    transparent
+  );
   pointer-events:none;
   z-index:0
 }
@@ -86,14 +97,20 @@ body::before{
   z-index:1
 }
 
-.mic-wrap{position:relative}
+.mic-wrap{
+  position:relative
+}
 
 #btnMic{
   width:132px;
   height:132px;
   border-radius:44px;
   border:none;
-  background:linear-gradient(135deg,#00e676 0%,#00c853 100%);
+  background:linear-gradient(
+    135deg,
+    #00e676 0%,
+    #00c853 100%
+  );
   color:#06281a;
   font-size:48px;
   cursor:pointer;
@@ -106,7 +123,11 @@ body::before{
 }
 
 #btnMic.gravando{
-  background:linear-gradient(135deg,#ff5252,#ff1744);
+  background:linear-gradient(
+    135deg,
+    #ff5252,
+    #ff1744
+  );
   color:#fff;
   box-shadow:0 20px 60px rgba(255,82,82,.4);
   animation:pulse 1.4s infinite;
@@ -114,8 +135,13 @@ body::before{
 }
 
 @keyframes pulse{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.05)}
+  0%,100%{
+    transform:scale(1)
+  }
+
+  50%{
+    transform:scale(1.05)
+  }
 }
 
 .ring{
@@ -127,13 +153,30 @@ body::before{
   pointer-events:none
 }
 
-.gravando ~.ring{animation:ringPulse 1.8s infinite}
-.ring.r2{animation-delay:.6s}
-.ring.r3{animation-delay:1.2s}
+.gravando ~.ring{
+  animation:ringPulse 1.8s infinite
+}
+
+.ring.r2{
+  animation-delay:.6s
+}
+
+.ring.r3{
+  animation-delay:1.2s
+}
 
 @keyframes ringPulse{
-  0%{transform:scale(.95);opacity:.8;border-radius:50px}
-  100%{transform:scale(1.35);opacity:0;border-radius:60px}
+  0%{
+    transform:scale(.95);
+    opacity:.8;
+    border-radius:50px
+  }
+
+  100%{
+    transform:scale(1.35);
+    opacity:0;
+    border-radius:60px
+  }
 }
 
 #statusMic{
@@ -175,7 +218,9 @@ body::before{
   z-index:1
 }
 
-.tip b{color:#4dd0ff}
+.tip b{
+  color:#4dd0ff
+}
 
 #transcricaoTemp{
   margin:0 16px;
@@ -208,7 +253,9 @@ body::before{
   outline:none
 }
 
-#manualAdd input:focus{border-color:#00e676}
+#manualAdd input:focus{
+  border-color:#00e676
+}
 
 #manualAdd button{
   background:#fff;
@@ -230,7 +277,9 @@ body::before{
   z-index:1
 }
 
-.filtros::-webkit-scrollbar{display:none}
+.filtros::-webkit-scrollbar{
+  display:none
+}
 
 .filtros button{
   background:rgba(255,255,255,.06);
@@ -297,8 +346,15 @@ body::before{
 }
 
 @keyframes in{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
+  from{
+    opacity:0;
+    transform:translateY(10px)
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0)
+  }
 }
 
 .meta{
@@ -352,24 +408,24 @@ body::before{
   transition:.2s
 }
 
-.acts.e{
+.acts .e{
   background:rgba(77,208,255,.16);
   color:#4dd0ff;
   border:1px solid rgba(77,208,255,.35)
 }
 
-.acts.e:hover{
+.acts .e:hover{
   background:#4dd0ff;
   color:#080c1a
 }
 
-.acts.d{
+.acts .d{
   background:rgba(255,82,82,.16);
   color:#ff5252;
   border:1px solid rgba(255,82,82,.35)
 }
 
-.acts.d:hover{
+.acts .d:hover{
   background:#ff5252;
   color:#fff
 }
@@ -398,7 +454,11 @@ body::before{
   padding:18px;
   border:none;
   border-radius:18px;
-  background:linear-gradient(135deg,#7c4dff,#00b0ff);
+  background:linear-gradient(
+    135deg,
+    #7c4dff,
+    #00b0ff
+  );
   color:#fff;
   font-weight:800;
   font-size:16px;
@@ -421,22 +481,31 @@ body::before{
   z-index:100
 }
 
-.modal.show{display:flex}
+.modal.show{
+  display:flex
+}
 
 .sheet{
   background:#121a32;
   border-radius:28px 28px 0 0;
   width:100%;
   max-width:520px;
-  max-height:92vh;
+  max-height:88vh;
   overflow:auto;
   padding:24px 20px calc(24px + env(safe-area-inset-bottom));
   animation:up .35s ease
 }
 
 @keyframes up{
-  from{transform:translateY(60px);opacity:0}
-  to{transform:translateY(0);opacity:1}
+  from{
+    transform:translateY(60px);
+    opacity:0
+  }
+
+  to{
+    transform:translateY(0);
+    opacity:1
+  }
 }
 
 .sheet pre{
@@ -530,38 +599,54 @@ body::before{
   letter-spacing:.5px
 }
 
-/* PAINEL ÚNICO */
-.painel-area{
-  padding:0 0 10px;
+
+/* =========================================================
+   IA OPERACIONAL
+========================================================= */
+
+.ia-area{
+  padding:14px 16px 18px;
   position:relative;
   z-index:1
 }
 
-.painel-secoes{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr 1fr;
-  gap:6px;
-  margin-top:15px
-}
 
-.painel-tab{
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.05);
+/* =========================================================
+   IA UNIFICADA
+========================================================= */
+
+.ia-unificada{
+  width:100%;
+  padding:18px;
+  border:none;
+  border-radius:18px;
+  background:linear-gradient(
+    135deg,
+    #7c4dff,
+    #00b0ff
+  );
   color:#fff;
-  border-radius:11px;
-  padding:10px 4px;
-  font-size:9px;
   font-weight:800;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  box-shadow:0 12px 35px rgba(124,77,255,.35);
   cursor:pointer
 }
 
-.painel-tab.ativo{
-  background:#7c4dff;
-  border-color:#7c4dff
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+.chat-sheet{
+  max-height:92vh
 }
 
 .chat-lista{
-  height:40vh;
+  height:48vh;
   overflow-y:auto;
   padding:8px 0;
   margin-top:10px
@@ -605,7 +690,9 @@ body::before{
   padding:4px 0 9px
 }
 
-.chat-atalhos::-webkit-scrollbar{display:none}
+.chat-atalhos::-webkit-scrollbar{
+  display:none
+}
 
 .chat-atalho{
   white-space:nowrap;
@@ -652,6 +739,34 @@ body::before{
   margin-top:7px
 }
 
+
+/* =========================================================
+   ABAS IA
+========================================================= */
+
+.fechamento-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:6px;
+  margin-top:15px
+}
+
+.fechamento-tab{
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  border-radius:11px;
+  padding:10px 5px;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer
+}
+
+.fechamento-tab.ativo{
+  background:#7c4dff;
+  border-color:#7c4dff
+}
+
 .fechamento-info{
   font-size:10px;
   opacity:.45;
@@ -670,20 +785,28 @@ body::before{
   to{opacity:1}
 }
 
-.btn-executivo{
-  background:#4dd0ff;
-  color:#06151b
+.painel-ia{
+  display:none
 }
 
-.btn-fechamento{
-  background:#ff9800;
-  color:#271700
+.painel-ia.ativo{
+  display:block
+}
+
+@media(max-width:500px){
+
+  .fechamento-tabs{
+    grid-template-columns:1fr 1fr
+  }
+
 }
 
 @media(max-width:380px){
-  .painel-secoes{
+
+  .fechamento-tabs{
     grid-template-columns:1fr 1fr
   }
+
 }
 </style>
 </head>
@@ -691,6 +814,7 @@ body::before{
 <body>
 
 <div class="header">
+
   <h1>
     <i class="fa-solid fa-tractor"></i>
     Diário de Turno - MANDU
@@ -700,9 +824,12 @@ body::before{
     <span id="dataHoje"></span>
     <span class="badge-turno" id="turnoAuto"></span>
   </div>
+
 </div>
 
+
 <div class="stats" style="margin-top:14px">
+
   <div class="stat">
     <b id="stTotal">0</b><br>
     <small>Ocorrências</small>
@@ -717,10 +844,14 @@ body::before{
     <b id="stUltima">--:--</b><br>
     <small>Última</small>
   </div>
+
 </div>
 
+
 <div class="hero-mic">
+
   <div class="mic-wrap">
+
     <button id="btnMic">
       <i class="fa-solid fa-microphone"></i>
     </button>
@@ -728,163 +859,316 @@ body::before{
     <div class="ring"></div>
     <div class="ring r2"></div>
     <div class="ring r3"></div>
+
   </div>
 
-  <div id="statusMic">Mantenha pressionado para falar</div>
+  <div id="statusMic">
+    Mantenha pressionado para falar
+  </div>
 
   <div id="silenceBar">
     <div id="silenceFill"></div>
   </div>
+
 </div>
 
+
 <div class="tip">
-  <i class="fa-solid fa-lightbulb" style="color:#ffeb3b"></i>
+
+  <i
+    class="fa-solid fa-lightbulb"
+    style="color:#ffeb3b">
+  </i>
+
   Segure o botão verde para falar e solte quando terminar:
-  <b>"vinte e três e quinze... frente 502... acolhedora quebrou"</b>
+
+  <b>
+    "vinte e três e quinze... frente 502... acolhedora quebrou"
+  </b>
+
 </div>
+
 
 <div id="transcricaoTemp"></div>
 
+
 <div id="manualAdd">
-  <input id="textoManual" placeholder="Digite: 23:15 502 acolhedora quebrou">
+
+  <input
+    id="textoManual"
+    placeholder="Digite: 23:15 502 acolhedora quebrou"
+  >
+
   <button onclick="addManual()">
+
     <i class="fa-solid fa-plus"></i>
+
   </button>
+
 </div>
 
+
 <div class="filtros">
-  <button class="ativo" onclick="filtrar('TODAS',this)">Todas</button>
+
+  <button
+    class="ativo"
+    onclick="filtrar('TODAS',this)">
+    Todas
+  </button>
+
   <button onclick="filtrar('FRENTE 501',this)">501</button>
   <button onclick="filtrar('FRENTE 502',this)">502</button>
   <button onclick="filtrar('FRENTE 503',this)">503</button>
   <button onclick="filtrar('FRENTE 504',this)">504</button>
   <button onclick="filtrar('FRENTE 505',this)">505</button>
   <button onclick="filtrar('FRENTE 506',this)">506</button>
+
 </div>
 
+
 <div class="section-head">
+
   <h3>Tempo real</h3>
-  <button class="btn-limpar" onclick="limparTudo()">Novo turno</button>
+
+  <button
+    class="btn-limpar"
+    onclick="limparTudo()">
+    Novo turno
+  </button>
+
 </div>
+
 
 <div id="lista"></div>
 
-<!-- BOTÃO ÚNICO -->
-<div class="bottom">
-  <button class="btn-organizar" onclick="abrirPainelTurno()">
+
+<!-- =====================================================
+     IA UNIFICADA
+===================================================== -->
+
+<div class="ia-area">
+
+  <button
+    class="ia-unificada"
+    onclick="abrirIA()">
+
     <i class="fa-solid fa-brain"></i>
-    FECHAR TURNO
+
+    CENTRAL DE IA — TURNO
+
   </button>
+
 </div>
 
-<!-- MODAL EDITAR -->
+
+<div class="bottom">
+
+  <button
+    class="btn-organizar"
+    onclick="abrirIA('fechamento')">
+
+    <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+    FECHAR TURNO + IA
+
+  </button>
+
+</div>
+
+
+<!-- =====================================================
+     MODAL EDITAR
+===================================================== -->
+
 <div id="modalEdit" class="modal">
+
   <div class="sheet edit-area">
+
     <h3 style="font-size:17px">
-      <i class="fa-solid fa-pen" style="color:#4dd0ff"></i>
+
+      <i
+        class="fa-solid fa-pen"
+        style="color:#4dd0ff">
+      </i>
+
       Editar
+
     </h3>
 
     <textarea id="editTexto"></textarea>
 
     <div class="row2">
-      <button class="btn btn-s" onclick="salvarEdit()">Salvar</button>
 
-      <button class="btn btn-c"
-        onclick="document.getElementById('modalEdit').classList.remove('show')">
-        Cancelar
+      <button
+        class="btn btn-s"
+        onclick="salvarEdit()">
+
+        Salvar
+
       </button>
+
+      <button
+        class="btn btn-c"
+        onclick="document.getElementById('modalEdit').classList.remove('show')">
+
+        Cancelar
+
+      </button>
+
     </div>
+
   </div>
+
 </div>
 
-<!-- PAINEL ÚNICO: CHAT + FECHAMENTO -->
-<div id="modalPainelTurno"
-     class="modal"
-     onclick="if(event.target.id==='modalPainelTurno')fecharPainelTurno()">
 
-  <div class="sheet">
+<!-- =====================================================
+     MODAL IA UNIFICADA
+===================================================== -->
+
+<div
+  id="modalFechamento"
+  class="modal"
+  onclick="if(event.target.id==='modalFechamento')fecharModalFechamento()">
+
+  <div class="sheet chat-sheet">
 
     <h3 style="font-size:17px">
-      <i class="fa-solid fa-brain" style="color:#ff9800"></i>
-      Fechamento do Turno
+
+      <i
+        class="fa-solid fa-brain"
+        style="color:#ff9800">
+      </i>
+
+      Central de IA — Diário de Turno
+
     </h3>
 
-    <p style="font-size:12px;opacity:.55;margin-top:4px">
-      Chat operacional e fechamento inteligente do turno
+    <p
+      style="font-size:12px;opacity:.55;margin-top:4px">
+
+      Chat operacional e fechamento completo do turno
+
     </p>
 
-    <div class="painel-secoes">
 
-      <button id="painelTabChat"
-              class="painel-tab ativo"
-              onclick="selecionarPainel('chat')">
+    <!-- =================================================
+         ABAS
+    ================================================= -->
+
+    <div class="fechamento-tabs">
+
+      <button
+        id="tabChat"
+        class="fechamento-tab ativo"
+        onclick="selecionarPainelIA('chat')">
+
         💬 CHAT
+
       </button>
 
-      <button id="painelTabGerencial"
-              class="painel-tab"
-              onclick="selecionarPainel('gerencial')">
+      <button
+        id="tabGerencial"
+        class="fechamento-tab"
+        onclick="selecionarPainelIA('gerencial')">
+
         📋 GERENCIAL
+
       </button>
 
-      <button id="painelTabExecutivo"
-              class="painel-tab"
-              onclick="selecionarPainel('executivo')">
+      <button
+        id="tabExecutivo"
+        class="fechamento-tab"
+        onclick="selecionarPainelIA('executivo')">
+
         ⚡ EXECUTIVO
+
       </button>
 
-      <button id="painelTabFechamento"
-              class="painel-tab"
-              onclick="selecionarPainel('fechamento')">
-        🧠 COMPLETO
+      <button
+        id="tabFechamento"
+        class="fechamento-tab"
+        onclick="selecionarPainelIA('fechamento')">
+
+        🧠 FECHAMENTO
+
       </button>
 
     </div>
 
-    <!-- CHAT -->
-    <div id="painelChat">
 
-      <div id="chatLista" class="chat-lista">
+    <!-- =================================================
+         PAINEL CHAT
+    ================================================= -->
+
+    <div
+      id="painelChat"
+      class="painel-ia ativo">
+
+      <div
+        id="chatLista"
+        class="chat-lista">
 
         <div class="chat-msg assistant">
+
           <div class="chat-balao">
+
             🧠 Estou pronto para analisar as ocorrências deste turno.
-            Pode perguntar sobre riscos, recorrências, rendimento, ciclo,
-            manutenção, frentes ou plano de ação.
+
+            Pode perguntar sobre riscos, recorrências, rendimento,
+            ciclo, manutenção, frentes ou plano de ação.
+
           </div>
+
         </div>
 
       </div>
 
+
       <div class="chat-atalhos">
 
-        <button class="chat-atalho"
-                onclick="usarAtalho('Quais problemas mais se repetiram hoje?')">
+        <button
+          class="chat-atalho"
+          onclick="usarAtalho('Quais problemas mais se repetiram hoje?')">
+
           🔁 Problemas repetidos
+
         </button>
 
-        <button class="chat-atalho"
-                onclick="usarAtalho('O que está mais ameaçando a continuidade operacional?')">
+        <button
+          class="chat-atalho"
+          onclick="usarAtalho('O que está mais ameaçando a continuidade operacional?')">
+
           ⚠️ Riscos
+
         </button>
 
-        <button class="chat-atalho"
-                onclick="usarAtalho('O que mudou nas últimas duas horas?')">
+        <button
+          class="chat-atalho"
+          onclick="usarAtalho('O que mudou nas últimas duas horas?')">
+
           ⏱️ Últimas 2h
+
         </button>
 
-        <button class="chat-atalho"
-                onclick="usarAtalho('Monte meu plano de voo para as próximas 4 horas.')">
+        <button
+          class="chat-atalho"
+          onclick="usarAtalho('Monte meu plano de voo para as próximas 4 horas.')">
+
           🎯 Plano de voo
+
         </button>
 
-        <button class="chat-atalho"
-                onclick="usarAtalho('O que eu preciso cobrar da manutenção?')">
+        <button
+          class="chat-atalho"
+          onclick="usarAtalho('O que eu preciso cobrar da manutenção?')">
+
           🔧 Manutenção
+
         </button>
 
       </div>
+
 
       <div class="chat-input-area">
 
@@ -893,110 +1177,228 @@ body::before{
           placeholder="Pergunte sobre o turno..."
           autocomplete="off">
 
-        <button id="chatEnviar" onclick="enviarChat()">
+        <button
+          id="chatEnviar"
+          onclick="enviarChat()">
+
           <i class="fa-solid fa-paper-plane"></i>
+
         </button>
 
       </div>
 
-      <div id="chatStatus" class="chat-status"></div>
+
+      <div
+        id="chatStatus"
+        class="chat-status">
+      </div>
 
     </div>
 
-    <!-- FECHAMENTO -->
-    <div id="painelFechamento" style="display:none">
 
-      <div id="fechamentoInfo" class="fechamento-info">
-        Fechamento ainda não processado.
+    <!-- =================================================
+         PAINEL GERENCIAL
+    ================================================= -->
+
+    <div
+      id="painelGerencial"
+      class="painel-ia">
+
+      <div
+        id="fechamentoInfo"
+        class="fechamento-info">
       </div>
 
-      <pre id="textoFechamento">Clique em "GERENCIAL", "EXECUTIVO" ou "COMPLETO" para gerar o fechamento.</pre>
+      <pre
+        id="textoGerencial"
+        class="loading-ia">Aguardando fechamento do turno...</pre>
 
       <button
-        id="btnCopiarFechamento"
         class="btn-copy"
         onclick="copiarFechamentoAtual()">
 
         <i class="fa-solid fa-copy"></i>
-        COPIAR TEXTO
+
+        COPIAR GERENCIAL
 
       </button>
 
     </div>
 
+
+    <!-- =================================================
+         PAINEL EXECUTIVO
+    ================================================= -->
+
+    <div
+      id="painelExecutivo"
+      class="painel-ia">
+
+      <div
+        class="fechamento-info">
+
+        Resumo executivo para gestão
+
+      </div>
+
+      <pre
+        id="textoExecutivo"
+        class="loading-ia">Aguardando fechamento do turno...</pre>
+
+      <button
+        class="btn-copy"
+        onclick="copiarFechamentoAtual()">
+
+        <i class="fa-solid fa-copy"></i>
+
+        COPIAR EXECUTIVO
+
+      </button>
+
+    </div>
+
+
+    <!-- =================================================
+         PAINEL FECHAMENTO
+    ================================================= -->
+
+    <div
+      id="painelFechamento"
+      class="painel-ia">
+
+      <div
+        class="fechamento-info">
+
+        Fechamento completo do turno
+
+      </div>
+
+      <pre
+        id="textoFechamento"
+        class="loading-ia">Aguardando fechamento do turno...</pre>
+
+      <button
+        class="btn-copy"
+        onclick="copiarFechamentoAtual()">
+
+        <i class="fa-solid fa-copy"></i>
+
+        COPIAR FECHAMENTO
+
+      </button>
+
+    </div>
+
+
     <button
       class="btn btn-c"
       style="width:100%;margin-top:10px"
-      onclick="fecharPainelTurno()">
+      onclick="fecharModalFechamento()">
 
       Fechar
 
     </button>
 
   </div>
+
 </div>
+
 
 <script>
 
 /* =========================================================
-   API
+   API DO BACKEND
 ========================================================= */
 
 async function api(url, options = {}){
 
-  const resposta = await fetch(url,{
-    ...options,
-    headers:{
-      'Content-Type':'application/json',
-      ...(options.headers || {})
+  const resposta = await fetch(
+    url,
+    {
+      ...options,
+
+      headers:{
+        'Content-Type':'application/json',
+        ...(options.headers || {})
+      }
     }
-  });
+  );
+
 
   let dados = null;
 
+
   try{
+
     dados = await resposta.json();
+
   }catch(_){
+
     dados = {};
+
   }
 
+
   if(!resposta.ok){
+
     throw new Error(
       dados.error ||
       dados.message ||
       `Erro HTTP ${resposta.status}`
     );
+
   }
 
+
   return dados;
+
 }
 
 
 /* =========================================================
-   ESTADO
+   VARIÁVEIS
 ========================================================= */
 
 let ocorrencias = [];
+
 let filtroAtual = 'TODAS';
+
 let editId = null;
 
 let rec = null;
+
 let gravando = false;
+
 let wantRestart = true;
 
+let silenceTimer = null;
+
+let silenceCountdown = null;
+
 let finalBuffer = '';
+
 let pollingTimer = null;
 
+
+/* =========================================================
+   IA
+========================================================= */
+
 let historicoChat = [];
+
 let chatEnviando = false;
 
 let fechamentoDados = {
+
   gerencial:'',
   executivo:'',
   fechamento:''
+
 };
 
 let fechamentoAtual = 'gerencial';
+
+let painelIAAtual = 'chat';
 
 
 /* =========================================================
@@ -1007,12 +1409,23 @@ function getTurnoAuto(){
 
   const h = new Date().getHours();
 
-  if(h >= 6 && h < 14) return 'TURNO A';
 
-  if(h >= 14 && h < 22) return 'TURNO B';
+  if(h >= 6 && h < 14)
+    return 'TURNO A';
+
+
+  if(h >= 14 && h < 22)
+    return 'TURNO B';
+
 
   return 'TURNO C';
+
 }
+
+
+/* =========================================================
+   CABEÇALHO
+========================================================= */
 
 document.getElementById('dataHoje').innerText =
   new Date().toLocaleDateString(
@@ -1024,41 +1437,48 @@ document.getElementById('dataHoje').innerText =
     }
   );
 
+
 document.getElementById('turnoAuto').innerText =
   getTurnoAuto();
 
 
 /* =========================================================
-   DETECÇÃO
+   DETECTAR HORÁRIO
 ========================================================= */
 
 function detectarHorario(texto){
 
   const t = texto.toLowerCase();
 
-  const m = t.match(
-    /(\d{1,2})[:h](\d{2})/
-  );
+  const m =
+    t.match(/(\d{1,2})[:h](\d{2})/);
 
   if(m){
 
     return (
-      String(m[1]).padStart(2,'0') +
-      ':' +
-      m[2]
+      String(m[1]).padStart(2,'0')
+      + ':'
+      + m[2]
     );
 
   }
 
   return null;
+
 }
 
+
+/* =========================================================
+   DETECTAR FRENTE
+========================================================= */
 
 function detectarFrente(texto){
 
   const t = texto.toLowerCase();
 
+
   const mp = {
+
     'um':'1',
     'dois':'2',
     'tres':'3',
@@ -1066,75 +1486,119 @@ function detectarFrente(texto){
     'quatro':'4',
     'cinco':'5',
     'seis':'6'
+
   };
 
-  let m = t.match(
-    /quinhent\w*\s*e?\s*(\w+)/
-  );
+
+  let m =
+    t.match(/quinhent\w*\s*e?\s*(\w+)/);
+
 
   if(m && mp[m[1]])
     return 'FRENTE 50' + mp[m[1]];
 
-  m = t.match(/\b50\s*([1-6])\b/);
+
+  m =
+    t.match(/\b50\s*([1-6])\b/);
+
 
   if(m)
     return 'FRENTE 50' + m[1];
 
-  m = t.match(/\b50([1-6])\b/);
+
+  m =
+    t.match(/\b50([1-6])\b/);
+
 
   if(m)
     return 'FRENTE 50' + m[1];
 
-  m = t.match(/frente\s*([1-6])\b/);
+
+  m =
+    t.match(/frente\s*([1-6])\b/);
+
 
   if(m)
     return 'FRENTE 50' + m[1];
+
 
   return 'GERAL';
+
 }
 
+
+/* =========================================================
+   LIMPAR CABEÇALHO
+========================================================= */
 
 function limparCabecalho(texto){
 
   let t = texto;
 
-  t = t.replace(
-    /^\s*(às|as)?\s*\d{1,2}[:h]\d{2}\s*[,.\-]?\s*/i,
-    ''
-  );
 
-  t = t.replace(
-    /frente\s*(quinh\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,
-    ''
-  );
+  t =
+    t.replace(
+      /^\s*(às|as)?\s*\d{1,2}[:h]\d{2}\s*[,.\-]?\s*/i,
+      ''
+    );
+
+
+  t =
+    t.replace(
+      /frente\s*(quinh\w*\s*e?\s*\w+|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?/gi,
+      ''
+    );
+
 
   return t.trim();
+
 }
 
+
+/* =========================================================
+   CORREÇÃO LEVE
+========================================================= */
 
 function correcaoLeve(texto){
 
   let t = texto.trim();
 
+
   const fx = [
+
     [/colhedera/gi,'colhedora'],
     [/caminhao/gi,'caminhão'],
     [/manutencao/gi,'manutenção']
+
   ];
+
 
   fx.forEach(
     ([r,p]) => t = t.replace(r,p)
   );
 
-  if(t)
-    t = t.charAt(0).toUpperCase() + t.slice(1);
 
-  if(t && !/[.!?]$/.test(t))
+  if(t)
+    t =
+      t.charAt(0).toUpperCase()
+      + t.slice(1);
+
+
+  if(
+    t &&
+    !/[.!?]$/.test(t)
+  )
     t += '.';
 
+
   return t;
+
 }
 
+
+/* =========================================================
+   HORA ATUAL
+========================================================= */
 
 function horaAgora(){
 
@@ -1150,29 +1614,35 @@ function horaAgora(){
 
 
 /* =========================================================
-   BANCO
+   CARREGAR OCORRÊNCIAS
 ========================================================= */
 
 async function loadSupa(){
 
   try{
 
-    const data = await api('/api/ocorrencias');
+    const data =
+      await api('/api/ocorrencias');
+
 
     ocorrencias =
       Array.isArray(data)
-      ? data.map(d => ({
-          id:d.id,
-          hora:d.hora,
-          frente:d.frente,
-          texto:d.texto,
-          turno:d.turno,
-          unidade:d.unidade,
-          created_at:d.created_at
-        }))
-      : [];
+        ? data.map(d => ({
+
+            id:d.id,
+            hora:d.hora,
+            frente:d.frente,
+            texto:d.texto,
+            turno:d.turno,
+            unidade:d.unidade,
+            created_at:d.created_at
+
+          }))
+        : [];
+
 
     render();
+
 
   }catch(error){
 
@@ -1181,16 +1651,20 @@ async function loadSupa(){
       error
     );
 
+
     document.getElementById('lista').innerHTML =
-      '<div class="empty">' +
-      'ERRO AO CARREGAR OCORRÊNCIAS: ' +
-      escapeHtml(error.message) +
-      '</div>';
+      '<div class="empty">ERRO AO CARREGAR OCORRÊNCIAS: '
+      + escapeHtml(error.message)
+      + '</div>';
 
   }
 
 }
 
+
+/* =========================================================
+   PROTEÇÃO HTML
+========================================================= */
 
 function escapeHtml(valor){
 
@@ -1204,25 +1678,34 @@ function escapeHtml(valor){
 }
 
 
+/* =========================================================
+   ADICIONAR OCORRÊNCIA
+========================================================= */
+
 async function addOcorrencia(bruto){
 
   if(!bruto || !bruto.trim())
     return;
 
+
   const hora =
-    detectarHorario(bruto) ||
-    horaAgora();
+    detectarHorario(bruto)
+    || horaAgora();
+
 
   const frente =
     detectarFrente(bruto);
+
 
   const texto =
     correcaoLeve(
       limparCabecalho(bruto)
     );
 
+
   if(!texto || texto === '.')
     return;
+
 
   try{
 
@@ -1230,17 +1713,23 @@ async function addOcorrencia(bruto){
       '/api/ocorrencias',
       {
         method:'POST',
+
         body:JSON.stringify({
+
           hora,
           frente,
           texto,
           turno:getTurnoAuto(),
           unidade:'MANDU'
+
         })
+
       }
     );
 
+
     await loadSupa();
+
 
   }catch(error){
 
@@ -1249,9 +1738,10 @@ async function addOcorrencia(bruto){
       error
     );
 
+
     alert(
-      'Erro ao inserir: ' +
-      error.message
+      'Erro ao inserir: '
+      + error.message
     );
 
   }
@@ -1259,23 +1749,37 @@ async function addOcorrencia(bruto){
 }
 
 
+/* =========================================================
+   ADICIONAR MANUAL
+========================================================= */
+
 async function addManual(){
 
   const i =
-    document.getElementById('textoManual');
+    document.getElementById(
+      'textoManual'
+    );
+
 
   const texto =
     i.value.trim();
 
+
   if(!texto)
     return;
 
+
   i.value = '';
+
 
   await addOcorrencia(texto);
 
 }
 
+
+/* =========================================================
+   ENTER NO MANUAL
+========================================================= */
 
 document
   .getElementById('textoManual')
@@ -1295,6 +1799,10 @@ document
   );
 
 
+/* =========================================================
+   DELETAR
+========================================================= */
+
 async function deletar(id){
 
   if(
@@ -1304,17 +1812,19 @@ async function deletar(id){
   )
     return;
 
+
   try{
 
     await api(
-      '/api/ocorrencias/' +
-      encodeURIComponent(id),
+      '/api/ocorrencias/' + encodeURIComponent(id),
       {
         method:'DELETE'
       }
     );
 
+
     await loadSupa();
+
 
   }catch(error){
 
@@ -1323,15 +1833,20 @@ async function deletar(id){
       error
     );
 
+
     alert(
-      'Erro ao deletar: ' +
-      error.message
+      'Erro ao deletar: '
+      + error.message
     );
 
   }
 
 }
 
+
+/* =========================================================
+   NOVO TURNO
+========================================================= */
 
 async function limparTudo(){
 
@@ -1340,7 +1855,9 @@ async function limparTudo(){
     await loadSupa();
 
     return;
+
   }
+
 
   if(
     !confirm(
@@ -1348,6 +1865,7 @@ async function limparTudo(){
     )
   )
     return;
+
 
   try{
 
@@ -1358,6 +1876,7 @@ async function limparTudo(){
       }
     );
 
+
     historicoChat = [];
 
     fechamentoDados = {
@@ -1366,7 +1885,9 @@ async function limparTudo(){
       fechamento:''
     };
 
+
     await loadSupa();
+
 
   }catch(error){
 
@@ -1375,9 +1896,10 @@ async function limparTudo(){
       error
     );
 
+
     alert(
-      'Erro ao limpar: ' +
-      error.message
+      'Erro ao limpar: '
+      + error.message
     );
 
   }
@@ -1386,12 +1908,13 @@ async function limparTudo(){
 
 
 /* =========================================================
-   FILTROS / RENDER
+   FILTRO
 ========================================================= */
 
 function filtrar(f,b){
 
   filtroAtual = f;
+
 
   document
     .querySelectorAll('.filtros button')
@@ -1399,28 +1922,38 @@ function filtrar(f,b){
       x => x.classList.remove('ativo')
     );
 
+
   b.classList.add('ativo');
+
 
   render();
 
 }
 
 
+/* =========================================================
+   EDITAR
+========================================================= */
+
 function abrirEdit(id){
 
   editId = id;
+
 
   const o =
     ocorrencias.find(
       x => String(x.id) === String(id)
     );
 
+
   if(!o)
     return;
+
 
   document.getElementById(
     'editTexto'
   ).value = o.texto;
+
 
   document.getElementById(
     'modalEdit'
@@ -1428,6 +1961,10 @@ function abrirEdit(id){
 
 }
 
+
+/* =========================================================
+   SALVAR EDIÇÃO
+========================================================= */
 
 async function salvarEdit(){
 
@@ -1437,8 +1974,10 @@ async function salvarEdit(){
       .value
       .trim();
 
+
   if(!v)
     return;
+
 
   try{
 
@@ -1447,17 +1986,24 @@ async function salvarEdit(){
       encodeURIComponent(editId),
       {
         method:'PUT',
+
         body:JSON.stringify({
+
           texto:correcaoLeve(v)
+
         })
+
       }
     );
+
 
     document
       .getElementById('modalEdit')
       .classList.remove('show');
 
+
     await loadSupa();
+
 
   }catch(error){
 
@@ -1466,9 +2012,10 @@ async function salvarEdit(){
       error
     );
 
+
     alert(
-      'Erro ao editar: ' +
-      error.message
+      'Erro ao editar: '
+      + error.message
     );
 
   }
@@ -1476,22 +2023,31 @@ async function salvarEdit(){
 }
 
 
+/* =========================================================
+   RENDER
+========================================================= */
+
 function render(){
 
   const lista =
-    document.getElementById('lista');
+    document.getElementById(
+      'lista'
+    );
+
 
   let f =
     filtroAtual === 'TODAS'
-    ? ocorrencias
-    : ocorrencias.filter(
-        o => o.frente === filtroAtual
-      );
+      ? ocorrencias
+      : ocorrencias.filter(
+          o => o.frente === filtroAtual
+        );
+
 
   document.getElementById(
     'stTotal'
   ).innerText =
     ocorrencias.length;
+
 
   document.getElementById(
     'stFrentes'
@@ -1502,27 +2058,29 @@ function render(){
       )
     ).size;
 
+
   document.getElementById(
     'stUltima'
   ).innerText =
     ocorrencias.length
-    ? ocorrencias[0].hora
-    : '--:--';
+      ? ocorrencias[0].hora
+      : '--:--';
+
 
   if(!f.length){
 
     lista.innerHTML =
-      '<div class="empty">' +
-      'Nenhuma ocorrência registrada.' +
-      '</div>';
+      '<div class="empty">Nenhuma ocorrência registrada.</div>';
 
     return;
+
   }
 
-  lista.innerHTML =
-    f.map(o =>
 
-      `<div class="card">
+  lista.innerHTML =
+    f.map(o => `
+
+      <div class="card">
 
         <div class="meta">
 
@@ -1532,16 +2090,17 @@ function render(){
 
           <span class="frente">
             ${escapeHtml(
-              String(o.frente || '')
-                .replace('FRENTE ','')
+              String(o.frente || '').replace('FRENTE ','')
             )}
           </span>
 
         </div>
 
+
         <p>
           ${escapeHtml(o.texto)}
         </p>
+
 
         <div class="acts">
 
@@ -1554,6 +2113,7 @@ function render(){
 
           </button>
 
+
           <button
             class="d"
             onclick="deletar('${escapeHtml(o.id)}')"
@@ -1565,9 +2125,9 @@ function render(){
 
         </div>
 
-      </div>`
+      </div>
 
-    ).join('');
+    `).join('');
 
 }
 
@@ -1579,11 +2139,15 @@ function render(){
 const btnMic =
   document.getElementById('btnMic');
 
+
 const statusMic =
   document.getElementById('statusMic');
 
+
 const tempDiv =
-  document.getElementById('transcricaoTemp');
+  document.getElementById(
+    'transcricaoTemp'
+  );
 
 
 function iniciarGravacao(){
@@ -1591,29 +2155,15 @@ function iniciarGravacao(){
   if(gravando)
     return;
 
-  if(!rec){
-
-    statusMic.innerText =
-      'Reconhecimento de voz não disponível.';
-
-    return;
-
-  }
 
   wantRestart = true;
+
 
   try{
 
     rec.start();
 
-  }catch(e){
-
-    console.error(
-      'Erro ao iniciar microfone:',
-      e
-    );
-
-  }
+  }catch(e){}
 
 }
 
@@ -1623,36 +2173,42 @@ function pararTudo(){
   if(!gravando)
     return;
 
+
   gravando = false;
+
   wantRestart = false;
 
+
   try{
+
     rec.stop();
-  }catch(e){
-    console.error(
-      'Erro ao parar microfone:',
-      e
-    );
-  }
+
+  }catch(e){}
+
 
   btnMic.classList.remove(
     'gravando'
   );
 
+
   btnMic.innerHTML =
     '<i class="fa-solid fa-microphone"></i>';
+
 
   statusMic.innerText =
     'Mantenha pressionado para falar';
 
+
   tempDiv.style.display =
     'none';
+
 
   if(finalBuffer.trim()){
 
     addOcorrencia(
       finalBuffer.trim()
     );
+
 
     finalBuffer = '';
 
@@ -1662,37 +2218,50 @@ function pararTudo(){
 
 
 if(
-  'webkitSpeechRecognition' in window ||
+  'webkitSpeechRecognition' in window
+  ||
   'SpeechRecognition' in window
 ){
 
   const SR =
-    window.SpeechRecognition ||
+    window.SpeechRecognition
+    ||
     window.webkitSpeechRecognition;
+
 
   rec = new SR();
 
+
   rec.lang = 'pt-BR';
+
   rec.interimResults = true;
+
   rec.continuous = true;
+
 
   rec.onstart = () => {
 
     gravando = true;
+
     finalBuffer = '';
+
 
     btnMic.classList.add(
       'gravando'
     );
 
+
     btnMic.innerHTML =
       '<i class="fa-solid fa-stop"></i>';
+
 
     statusMic.innerText =
       'Ouvindo... solte para registrar';
 
+
     tempDiv.style.display =
       'block';
+
 
     tempDiv.innerText =
       '...';
@@ -1704,6 +2273,7 @@ if(
 
     let interim = '';
 
+
     for(
       let i = e.resultIndex;
       i < e.results.length;
@@ -1712,6 +2282,7 @@ if(
 
       const tr =
         e.results[i][0].transcript;
+
 
       if(
         e.results[i].isFinal
@@ -1728,44 +2299,12 @@ if(
 
     }
 
+
     tempDiv.innerText =
       (
-        finalBuffer +
-        interim
-      ).trim() || '...';
-
-  };
-
-
-  rec.onerror = (event) => {
-
-    console.error(
-      'Erro SpeechRecognition:',
-      event.error
-    );
-
-    if(
-      event.error === 'not-allowed' ||
-      event.error === 'service-not-allowed'
-    ){
-
-      statusMic.innerText =
-        'Permissão do microfone bloqueada.';
-
-    }else if(
-      event.error === 'no-speech'
-    ){
-
-      statusMic.innerText =
-        'Nenhuma fala detectada.';
-
-    }else{
-
-      statusMic.innerText =
-        'Erro no reconhecimento de voz: ' +
-        event.error;
-
-    }
+        finalBuffer + interim
+      ).trim()
+      || '...';
 
   };
 
@@ -1777,25 +2316,11 @@ if(
       wantRestart
     ){
 
-      setTimeout(() => {
+      try{
 
-        if(
-          gravando &&
-          wantRestart
-        ){
+        rec.start();
 
-          try{
-            rec.start();
-          }catch(e){
-            console.error(
-              'Erro ao reiniciar reconhecimento:',
-              e
-            );
-          }
-
-        }
-
-      },100);
+      }catch(e){}
 
     }
 
@@ -1807,10 +2332,12 @@ if(
     iniciarGravacao
   );
 
+
   btnMic.addEventListener(
     'mouseup',
     pararTudo
   );
+
 
   btnMic.addEventListener(
     'mouseleave',
@@ -1851,112 +2378,74 @@ if(
 
 
 /* =========================================================
-   PAINEL ÚNICO
+   IA UNIFICADA
 ========================================================= */
 
-function abrirPainelTurno(){
+function abrirIA(aba = 'chat'){
 
-  document
-    .getElementById('modalPainelTurno')
-    .classList.add('show');
-
-  selecionarPainel('chat');
-
-}
-
-
-function fecharPainelTurno(){
-
-  document
-    .getElementById('modalPainelTurno')
-    .classList.remove('show');
-
-}
-
-
-function selecionarPainel(tipo){
-
-  const tabs = {
-    chat:'painelTabChat',
-    gerencial:'painelTabGerencial',
-    executivo:'painelTabExecutivo',
-    fechamento:'painelTabFechamento'
-  };
-
-  document
-    .querySelectorAll('.painel-tab')
-    .forEach(
-      b => b.classList.remove('ativo')
-    );
-
-  const tab =
+  const modal =
     document.getElementById(
-      tabs[tipo]
-    );
-
-  if(tab)
-    tab.classList.add('ativo');
-
-
-  const chat =
-    document.getElementById(
-      'painelChat'
-    );
-
-  const fechamento =
-    document.getElementById(
-      'painelFechamento'
+      'modalFechamento'
     );
 
 
-  if(tipo === 'chat'){
+  modal.classList.add('show');
 
-    chat.style.display =
-      'block';
 
-    fechamento.style.display =
-      'none';
+  selecionarPainelIA(aba);
 
-    return;
+
+  if(aba === 'chat'){
+
+    setTimeout(
+      () => {
+
+        const input =
+          document.getElementById(
+            'chatInput'
+          );
+
+        if(input)
+          input.focus();
+
+      },
+      250
+    );
 
   }
-
-
-  chat.style.display =
-    'none';
-
-  fechamento.style.display =
-    'block';
-
-
-  if(
-    !fechamentoDados.gerencial &&
-    !fechamentoDados.executivo &&
-    !fechamentoDados.fechamento
-  ){
-
-    gerarFechamento();
-
-  }
-
-
-  fechamentoAtual =
-    tipo;
-
-  atualizarAbasFechamento();
 
 }
 
 
 /* =========================================================
-   CHAT
+   CHAT OPERACIONAL
 ========================================================= */
+
+function abrirChat(){
+
+  abrirIA('chat');
+
+}
+
+
+function fecharChat(){
+
+  fecharModalFechamento();
+
+}
+
 
 function usarAtalho(texto){
 
-  document.getElementById(
-    'chatInput'
-  ).value = texto;
+  const input =
+    document.getElementById(
+      'chatInput'
+    );
+
+
+  input.value =
+    texto;
+
 
   enviarChat();
 
@@ -1968,13 +2457,16 @@ async function enviarChat(){
   if(chatEnviando)
     return;
 
+
   const input =
     document.getElementById(
       'chatInput'
     );
 
+
   const pergunta =
     input.value.trim();
+
 
   if(!pergunta)
     return;
@@ -1987,6 +2479,7 @@ async function enviarChat(){
       'Ainda não existem ocorrências registradas neste turno para eu analisar.'
     );
 
+
     input.value = '';
 
     return;
@@ -1996,10 +2489,12 @@ async function enviarChat(){
 
   chatEnviando = true;
 
+
   const botao =
     document.getElementById(
       'chatEnviar'
     );
+
 
   const status =
     document.getElementById(
@@ -2008,6 +2503,7 @@ async function enviarChat(){
 
 
   botao.disabled = true;
+
   input.disabled = true;
 
 
@@ -2016,7 +2512,9 @@ async function enviarChat(){
     pergunta
   );
 
+
   input.value = '';
+
 
   status.innerText =
     '🧠 Analisando o turno...';
@@ -2029,30 +2527,47 @@ async function enviarChat(){
         '/chat-ia',
         {
           method:'POST',
+
           body:JSON.stringify({
+
             ocorrencias:
-              ocorrencias.slice().reverse(),
+              ocorrencias
+                .slice()
+                .reverse(),
+
             pergunta,
+
             historico:
-              historicoChat.slice(-10)
+              historicoChat
+                .slice(-10)
+
           })
+
         }
       );
 
 
     const resposta =
-      data.resposta ||
+      data.resposta
+      ||
       'A IA não retornou uma resposta.';
 
 
     historicoChat.push({
+
       role:'user',
+
       content:pergunta
+
     });
 
+
     historicoChat.push({
+
       role:'assistant',
+
       content:resposta
+
     });
 
 
@@ -2080,9 +2595,10 @@ async function enviarChat(){
 
     adicionarMensagemChat(
       'assistant',
-      '❌ Erro ao consultar a IA:\n' +
-      error.message
+      '❌ Erro ao consultar a IA:\n'
+      + error.message
     );
+
 
     status.innerText =
       'Erro na consulta.';
@@ -2093,6 +2609,7 @@ async function enviarChat(){
   chatEnviando = false;
 
   botao.disabled = false;
+
   input.disabled = false;
 
   input.focus();
@@ -2110,28 +2627,36 @@ function adicionarMensagemChat(
       'chatLista'
     );
 
+
   const div =
     document.createElement('div');
+
 
   div.className =
     'chat-msg ' + tipo;
 
+
   const balao =
     document.createElement('div');
+
 
   balao.className =
     'chat-balao';
 
+
   balao.innerText =
     texto;
+
 
   div.appendChild(
     balao
   );
 
+
   lista.appendChild(
     div
   );
+
 
   lista.scrollTop =
     lista.scrollHeight;
@@ -2139,13 +2664,19 @@ function adicionarMensagemChat(
 }
 
 
+/* =========================================================
+   ENTER DO CHAT
+========================================================= */
+
 document
   .getElementById('chatInput')
   .addEventListener(
     'keydown',
     function(event){
 
-      if(event.key === 'Enter'){
+      if(
+        event.key === 'Enter'
+      ){
 
         event.preventDefault();
 
@@ -2158,251 +2689,440 @@ document
 
 
 /* =========================================================
-   FECHAMENTO
+   FECHAR TURNO
 ========================================================= */
 
-async function gerarFechamento(){
+async function fecharTurno(){
 
   if(!ocorrencias.length){
 
-    document.getElementById(
-      'textoFechamento'
-    ).innerText =
-      'Adicione pelo menos uma ocorrência antes de fechar o turno.';
+    alert(
+      'Adicione pelo menos uma ocorrência antes de fechar o turno.'
+    );
 
     return;
 
   }
 
 
-  const texto =
+  const modal =
     document.getElementById(
-      'textoFechamento'
+      'modalFechamento'
     );
 
-  const info =
-    document.getElementById(
-      'fechamentoInfo'
-    );
+
+  modal.classList.add('show');
 
 
   fechamentoDados = {
+
     gerencial:'',
     executivo:'',
     fechamento:''
+
   };
 
 
-  texto.classList.add(
-    'loading-ia'
-  );
+  fechamentoAtual =
+    'gerencial';
 
 
-  texto.innerText =
-    '🧠 PROCESSANDO FECHAMENTO...\n\n' +
-    'A IA está analisando todas as ocorrências do turno.\n\n' +
-    'Aguarde...';
+  selecionarPainelIA('gerencial');
 
 
-  info.innerText =
-    ocorrencias.length +
-    ' ocorrência(s) sendo analisada(s).';
+  document.getElementById(
+    'textoGerencial'
+  ).innerText =
+    '🧠 PROCESSANDO FECHAMENTO...\n\nA IA está analisando todas as ocorrências do turno.\n\nAguarde...';
+
+
+  document.getElementById(
+    'textoExecutivo'
+  ).innerText =
+    '🧠 PROCESSANDO FECHAMENTO...';
+
+
+  document.getElementById(
+    'textoFechamento'
+  ).innerText =
+    '🧠 PROCESSANDO FECHAMENTO...';
+
+
+  document.getElementById(
+    'textoGerencial'
+  ).classList.add('loading-ia');
+
+
+  document.getElementById(
+    'textoExecutivo'
+  ).classList.add('loading-ia');
+
+
+  document.getElementById(
+    'textoFechamento'
+  ).classList.add('loading-ia');
+
+
+  document.getElementById(
+    'fechamentoInfo'
+  ).innerText =
+    ocorrencias.length
+    + ' ocorrência(s) sendo analisada(s).';
 
 
   try{
 
     /*
-      UMA ÚNICA CHAMADA.
+     * O backend /fechar-turno-ia já retorna:
+     * gerencial
+     * executivo
+     * fechamento
+     *
+     * Portanto fazemos apenas UMA chamada.
+     */
 
-      O server.js já retorna:
-      - gerencial
-      - executivo
-      - fechamento
-      - texto
-    */
-
-    const resultado =
+    const data =
       await api(
         '/fechar-turno-ia',
         {
           method:'POST',
+
           body:JSON.stringify({
+
             ocorrencias:
-              ocorrencias.slice().reverse()
+              ocorrencias
+                .slice()
+                .reverse()
+
           })
+
         }
       );
 
 
-    const fechamento =
-      resultado.fechamento ||
-      resultado.texto ||
-      'Não foi possível gerar o fechamento.';
-
-
-    const executivo =
-      resultado.executivo ||
-      'Não foi possível gerar o resumo executivo.';
-
-
-    /*
-      Se o backend já entregar o gerencial,
-      usamos diretamente.
-
-      Caso não entregue, tentamos retirar
-      a parte executiva do fechamento.
-    */
-
-    const gerencial =
-      resultado.gerencial ||
-      extrairGerencial(fechamento);
-
-
     fechamentoDados = {
 
-      gerencial,
+      gerencial:
+        data.gerencial
+        ||
+        extrairGerencial(data.fechamento || data.texto || ''),
 
-      executivo,
+      executivo:
+        data.executivo
+        ||
+        'Não foi possível gerar o resumo executivo.',
 
-      fechamento
+      fechamento:
+        data.fechamento
+        ||
+        data.texto
+        ||
+        'Não foi possível gerar o fechamento.'
 
     };
 
 
-    texto.classList.remove(
-      'loading-ia'
-    );
+    document.getElementById(
+      'textoGerencial'
+    ).classList.remove('loading-ia');
 
 
-    info.innerText =
-      'Análise concluída pela IA.';
+    document.getElementById(
+      'textoExecutivo'
+    ).classList.remove('loading-ia');
 
 
-    atualizarAbasFechamento();
+    document.getElementById(
+      'textoFechamento'
+    ).classList.remove('loading-ia');
+
+
+    document.getElementById(
+      'fechamentoInfo'
+    ).innerText =
+      (data.total || ocorrencias.length)
+      + ' ocorrência(s) • '
+      + (data.frentes || new Set(ocorrencias.map(o => o.frente)).size)
+      + ' frente(s) analisada(s).';
+
+
+    selecionarPainelIA('gerencial');
 
 
   }catch(error){
 
-    texto.classList.remove(
-      'loading-ia'
-    );
-
-    texto.innerText =
-      '❌ ERRO AO FECHAR O TURNO\n\n' +
-      error.message;
+    const erro =
+      '❌ ERRO AO FECHAR O TURNO\n\n'
+      + error.message;
 
 
-    info.innerText =
+    document.getElementById(
+      'textoGerencial'
+    ).classList.remove('loading-ia');
+
+
+    document.getElementById(
+      'textoExecutivo'
+    ).classList.remove('loading-ia');
+
+
+    document.getElementById(
+      'textoFechamento'
+    ).classList.remove('loading-ia');
+
+
+    document.getElementById(
+      'textoGerencial'
+    ).innerText =
+      erro;
+
+
+    document.getElementById(
+      'textoExecutivo'
+    ).innerText =
+      erro;
+
+
+    document.getElementById(
+      'textoFechamento'
+    ).innerText =
+      erro;
+
+
+    document.getElementById(
+      'fechamentoInfo'
+    ).innerText =
       'Não foi possível concluir a análise.';
-
-
-    console.error(
-      'Erro ao fechar turno:',
-      error
-    );
 
   }
 
 }
 
+
+/* =========================================================
+   EXTRAIR GERENCIAL
+========================================================= */
 
 function extrairGerencial(texto){
 
   if(!texto)
     return '';
 
-  const marcadores = [
-    '*⚡ RESUMO EXECUTIVO*',
-    '⚡ RESUMO EXECUTIVO',
-    'RESUMO EXECUTIVO'
-  ];
 
-  for(
-    const marcador of marcadores
-  ){
+  const marcador =
+    '*⚡ RESUMO EXECUTIVO*';
 
-    const pos =
-      texto.indexOf(marcador);
 
-    if(pos > -1){
+  const pos =
+    texto.indexOf(marcador);
 
-      return texto
-        .substring(0,pos)
-        .trim();
 
-    }
+  if(pos > -1){
+
+    return texto
+      .substring(0,pos)
+      .trim();
 
   }
+
 
   return texto.trim();
 
 }
 
 
-function atualizarAbasFechamento(){
+/* =========================================================
+   SELECIONAR PAINEL IA
+========================================================= */
 
-  const texto =
+function selecionarPainelIA(tipo){
+
+  painelIAAtual =
+    tipo;
+
+
+  if(
+    tipo === 'gerencial' ||
+    tipo === 'executivo' ||
+    tipo === 'fechamento'
+  ){
+
+    fechamentoAtual =
+      tipo;
+
+  }
+
+
+  const mapaTabs = {
+
+    chat:'tabChat',
+    gerencial:'tabGerencial',
+    executivo:'tabExecutivo',
+    fechamento:'tabFechamento'
+
+  };
+
+
+  const mapaPaineis = {
+
+    chat:'painelChat',
+    gerencial:'painelGerencial',
+    executivo:'painelExecutivo',
+    fechamento:'painelFechamento'
+
+  };
+
+
+  document
+    .querySelectorAll('.fechamento-tab')
+    .forEach(
+      b => b.classList.remove('ativo')
+    );
+
+
+  document
+    .querySelectorAll('.painel-ia')
+    .forEach(
+      p => p.classList.remove('ativo')
+    );
+
+
+  const tab =
     document.getElementById(
-      'textoFechamento'
+      mapaTabs[tipo]
     );
 
-  const info =
+
+  if(tab)
+    tab.classList.add('ativo');
+
+
+  const painel =
     document.getElementById(
-      'fechamentoInfo'
+      mapaPaineis[tipo]
     );
 
 
-  const conteudo =
-    fechamentoDados[
-      fechamentoAtual
-    ];
+  if(painel)
+    painel.classList.add('ativo');
 
 
-  if(conteudo){
+  if(
+    tipo === 'gerencial' ||
+    tipo === 'executivo' ||
+    tipo === 'fechamento'
+  ){
 
-    texto.classList.remove(
-      'loading-ia'
-    );
-
-    texto.innerText =
-      conteudo;
-
-
-    if(
-      fechamentoAtual === 'gerencial'
-    ){
-
-      info.innerText =
-        'Mensagem gerencial detalhada por frente.';
-
-    }else if(
-      fechamentoAtual === 'executivo'
-    ){
-
-      info.innerText =
-        'Versão resumida para grupo de gestão.';
-
-    }else{
-
-      info.innerText =
-        'Fechamento completo do turno.';
-
-    }
+    atualizarAbasFechamento();
 
   }
 
 }
 
 
-function copiarFechamentoAtual(){
+/* =========================================================
+   COMPATIBILIDADE COM ABAS ANTIGAS
+========================================================= */
+
+function selecionarFechamento(tipo){
+
+  selecionarPainelIA(tipo);
+
+}
+
+
+function atualizarAbasFechamento(){
+
+  const mapa = {
+
+    gerencial:'tabGerencial',
+    executivo:'tabExecutivo',
+    fechamento:'tabFechamento'
+
+  };
+
+
+  const tipo =
+    fechamentoAtual;
+
+
+  const botao =
+    document.getElementById(
+      mapa[tipo]
+    );
+
+
+  if(botao)
+    botao.classList.add('ativo');
+
+
+  const conteudo =
+    fechamentoDados[tipo];
+
+
+  if(!conteudo)
+    return;
+
+
+  const textoId = {
+
+    gerencial:'textoGerencial',
+    executivo:'textoExecutivo',
+    fechamento:'textoFechamento'
+
+  };
+
 
   const texto =
-    fechamentoDados[
-      fechamentoAtual
-    ] ||
     document.getElementById(
-      'textoFechamento'
-    ).innerText;
+      textoId[tipo]
+    );
+
+
+  if(texto){
+
+    texto.classList.remove(
+      'loading-ia'
+    );
+
+
+    texto.innerText =
+      conteudo;
+
+  }
+
+}
+
+
+/* =========================================================
+   COPIAR ABA ATUAL
+========================================================= */
+
+function copiarFechamentoAtual(){
+
+  let texto = '';
+
+
+  if(
+    fechamentoAtual === 'gerencial'
+  ){
+
+    texto =
+      fechamentoDados.gerencial;
+
+  }else if(
+    fechamentoAtual === 'executivo'
+  ){
+
+    texto =
+      fechamentoDados.executivo;
+
+  }else{
+
+    texto =
+      fechamentoDados.fechamento;
+
+  }
 
 
   if(!texto)
@@ -2418,7 +3138,40 @@ function copiarFechamentoAtual(){
 
 
 /* =========================================================
-   COPIAR
+   FECHAR MODAL IA
+========================================================= */
+
+function fecharModalFechamento(){
+
+  document
+    .getElementById(
+      'modalFechamento'
+    )
+    .classList.remove('show');
+
+}
+
+
+/* =========================================================
+   COMPATIBILIDADE
+========================================================= */
+
+function organizar(){
+
+  abrirIA('gerencial');
+
+}
+
+
+function copiarTexto(){
+
+  copiarFechamentoAtual();
+
+}
+
+
+/* =========================================================
+   COPIAR GENÉRICO
 ========================================================= */
 
 function copiarGenerico(
@@ -2433,16 +3186,21 @@ function copiarGenerico(
 
     navigator.clipboard
       .writeText(texto)
-      .then(
-        () => alert(mensagem)
-      )
-      .catch(
-        () =>
-          copiarFallback(
-            texto,
-            mensagem
-          )
-      );
+      .then(() => {
+
+        alert(
+          mensagem
+        );
+
+      })
+      .catch(() => {
+
+        copiarFallback(
+          texto,
+          mensagem
+        );
+
+      });
 
   }else{
 
@@ -2456,30 +3214,38 @@ function copiarGenerico(
 }
 
 
+/* =========================================================
+   FALLBACK COPIAR
+========================================================= */
+
 function copiarFallback(
   texto,
   mensagem = 'Texto copiado com sucesso!'
 ){
 
   const area =
-    document.createElement(
-      'textarea'
-    );
+    document.createElement('textarea');
+
 
   area.value =
     texto;
 
+
   area.style.position =
     'fixed';
 
+
   area.style.left =
     '-9999px';
+
 
   document.body.appendChild(
     area
   );
 
+
   area.select();
+
 
   try{
 
@@ -2487,7 +3253,11 @@ function copiarFallback(
       'copy'
     );
 
-    alert(mensagem);
+
+    alert(
+      mensagem
+    );
+
 
   }catch(e){
 
@@ -2496,6 +3266,7 @@ function copiarFallback(
     );
 
   }
+
 
   document.body.removeChild(
     area
@@ -2515,13 +3286,13 @@ function iniciarAtualizacao(){
       pollingTimer
     );
 
+
   pollingTimer =
     setInterval(
       () => {
 
         if(
-          document.visibilityState ===
-          'visible'
+          document.visibilityState === 'visible'
         ){
 
           loadSupa();
@@ -2536,7 +3307,7 @@ function iniciarAtualizacao(){
 
 
 /* =========================================================
-   ESC
+   FECHAR MODAIS COM ESC
 ========================================================= */
 
 document.addEventListener(
@@ -2546,15 +3317,12 @@ document.addEventListener(
     if(event.key !== 'Escape')
       return;
 
+
     document
-      .querySelectorAll(
-        '.modal.show'
-      )
+      .querySelectorAll('.modal.show')
       .forEach(
         modal =>
-          modal.classList.remove(
-            'show'
-          )
+          modal.classList.remove('show')
       );
 
   }
@@ -2562,7 +3330,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   INICIALIZAÇÃO
+   CARGA INICIAL
 ========================================================= */
 
 loadSupa();

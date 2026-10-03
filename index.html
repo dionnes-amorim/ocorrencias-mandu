@@ -11,6 +11,7 @@
 >
 
 <title>Diário de Turno</title>
+<link rel="icon" type="image/x-icon" href="logo.ico">
 
 <link
   href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
@@ -83,16 +84,13 @@ body::before{
   gap:10px;
 }
 
-.header h1 i{
+.header h1 .logo{
   width:36px;
   height:36px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#00e676,#00b894);
-  border-radius:12px;
-  color:#06281a;
-  font-size:18px;
+  flex:0 0 36px;
+  display:block;
+  object-fit:contain;
+  border-radius:8px;
 }
 
 .sub{
@@ -875,7 +873,7 @@ body::before{
 <div class="header">
 
   <h1>
-    <i class="fa-solid fa-tractor"></i>
+    <img src="logo.ico" alt="Logo" class="logo">
     Diário de Ocorrências - MANDU
   </h1>
 

@@ -198,6 +198,7 @@ body::before{
   user-select:none;
   -webkit-user-select:none;
   -webkit-touch-callout:none;
+  -webkit-user-drag:none;
 
   touch-action:none;
 
@@ -206,7 +207,6 @@ body::before{
   justify-content:center;
 
   outline:none;
-  -webkit-user-drag:none;
 }
 
 #btnMic.pressionado,
@@ -254,10 +254,6 @@ body::before{
   transform:scale(.96);
 }
 
-#btnMic:hover{
-  transform:translateY(-2px);
-}
-
 #btnMic:active{
   transform:scale(.97);
 }
@@ -301,13 +297,11 @@ body::before{
   0%{
     transform:scale(.95);
     opacity:.8;
-    border-radius:50px;
   }
 
   100%{
     transform:scale(1.35);
     opacity:0;
-    border-radius:60px;
   }
 
 }
@@ -335,7 +329,6 @@ body::before{
   height:100%;
   background:#00e676;
   border-radius:100px;
-  transition:width 1s linear;
   width:100%;
 }
 
@@ -499,10 +492,8 @@ body::before{
   border-radius:18px;
   padding:15px;
   margin-bottom:10px;
-
   display:flex;
   gap:13px;
-
   animation:in .35s ease;
 }
 
@@ -563,14 +554,11 @@ body::before{
   height:36px;
   border:none;
   border-radius:10px;
-
   display:flex;
   align-items:center;
   justify-content:center;
-
   cursor:pointer;
   font-size:15px;
-  transition:.2s;
 }
 
 .acts .e{
@@ -579,20 +567,10 @@ body::before{
   border:1px solid rgba(77,208,255,.35);
 }
 
-.acts .e:hover{
-  background:#4dd0ff;
-  color:#080c1a;
-}
-
 .acts .d{
   background:rgba(255,82,82,.16);
   color:#ff5252;
   border:1px solid rgba(255,82,82,.35);
-}
-
-.acts .d:hover{
-  background:#ff5252;
-  color:#fff;
 }
 
 .empty{
@@ -611,21 +589,14 @@ body::before{
   bottom:0;
   left:0;
   right:0;
-
   padding:
     10px
     14px
     calc(10px + env(safe-area-inset-bottom));
-
   background:rgba(8,12,26,.94);
   backdrop-filter:blur(22px);
-
-  border-top:
-    1px solid rgba(255,255,255,.08);
-
-  box-shadow:
-    0 -15px 40px rgba(0,0,0,.25);
-
+  border-top:1px solid rgba(255,255,255,.08);
+  box-shadow:0 -15px 40px rgba(0,0,0,.25);
   z-index:50;
 }
 
@@ -633,51 +604,22 @@ body::before{
   width:100%;
   max-width:520px;
   margin:auto;
-
-  display:grid;
-  grid-template-columns:1fr;
-  gap:8px;
 }
 
 .btn-central{
+  width:100%;
   min-height:54px;
-
   border:none;
   border-radius:16px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #7c4dff,
-      #00b0ff
-    );
-
+  background:linear-gradient(135deg,#7c4dff,#00b0ff);
   color:#fff;
-
   font-weight:800;
   font-size:13px;
-
   display:flex;
   align-items:center;
   justify-content:center;
   gap:9px;
-
-  box-shadow:
-    0 10px 30px rgba(124,77,255,.28);
-
   cursor:pointer;
-
-  transition:
-    transform .15s ease,
-    filter .15s ease;
-}
-
-.btn-central:hover{
-  filter:brightness(1.08);
-}
-
-.btn-central:active{
-  transform:scale(.98);
 }
 
 /* =========================================================
@@ -687,16 +629,11 @@ body::before{
 .modal{
   position:fixed;
   inset:0;
-
   background:rgba(0,0,0,.9);
-
   backdrop-filter:blur(10px);
-
   display:none;
-
   align-items:flex-end;
   justify-content:center;
-
   z-index:100;
 }
 
@@ -706,78 +643,35 @@ body::before{
 
 .sheet{
   background:#121a32;
-
-  border-radius:
-    28px
-    28px
-    0
-    0;
-
+  border-radius:28px 28px 0 0;
   width:100%;
   max-width:520px;
-
   max-height:92vh;
-
   overflow:auto;
-
-  padding:
-    24px
-    20px
-    calc(24px + env(safe-area-inset-bottom));
-
-  animation:up .35s ease;
-}
-
-@keyframes up{
-
-  from{
-    transform:translateY(60px);
-    opacity:0;
-  }
-
-  to{
-    transform:translateY(0);
-    opacity:1;
-  }
-
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom));
 }
 
 .sheet pre{
   white-space:pre-wrap;
-
   font-size:13.5px;
   line-height:1.7;
-
   background:#080c1a;
-
   padding:18px;
-
   border-radius:16px;
-
   margin:16px 0;
-
   border:1px solid rgba(255,255,255,.06);
 }
 
 .edit-area textarea{
   width:100%;
-
   background:#080c1a;
-
   border:1px solid rgba(255,255,255,.12);
-
   color:#fff;
-
   padding:14px;
-
   border-radius:14px;
-
   font-size:15px;
-
   min-height:100px;
-
   margin:12px 0;
-
   outline:none;
 }
 
@@ -789,14 +683,10 @@ body::before{
 
 .btn{
   padding:15px;
-
   border-radius:14px;
-
   border:none;
-
   font-weight:800;
   font-size:14px;
-
   cursor:pointer;
 }
 
@@ -812,21 +702,14 @@ body::before{
 
 .btn-copy{
   width:100%;
-
   background:#00e676;
   color:#06281a;
-
   padding:17px;
-
   border-radius:16px;
-
   border:none;
-
   font-weight:800;
   font-size:15px;
-
   margin-top:6px;
-
   cursor:pointer;
 }
 
@@ -834,24 +717,15 @@ body::before{
    IA
 ========================================================= */
 
-.ia-area{
-  display:none;
-}
-
 .chat-sheet{
   max-height:92vh;
 }
 
 .chat-lista{
   height:48vh;
-
   overflow-y:auto;
-
   padding:8px 0;
-
   margin-top:10px;
-
-  scroll-behavior:smooth;
 }
 
 .chat-msg{
@@ -865,15 +739,10 @@ body::before{
 
 .chat-balao{
   max-width:88%;
-
   padding:12px 14px;
-
   border-radius:15px;
-
   font-size:12.5px;
-
   line-height:1.6;
-
   white-space:pre-wrap;
 }
 
@@ -885,43 +754,26 @@ body::before{
 
 .chat-msg.assistant .chat-balao{
   background:rgba(255,255,255,.06);
-
   border:1px solid rgba(255,255,255,.07);
-
   border-bottom-left-radius:5px;
 }
 
 .chat-atalhos{
   display:flex;
-
   gap:7px;
-
   overflow-x:auto;
-
   scrollbar-width:none;
-
   padding:4px 0 9px;
-}
-
-.chat-atalhos::-webkit-scrollbar{
-  display:none;
 }
 
 .chat-atalho{
   white-space:nowrap;
-
   background:rgba(255,255,255,.06);
-
   color:#fff;
-
   border:1px solid rgba(255,255,255,.1);
-
   border-radius:100px;
-
   padding:8px 12px;
-
   font-size:10px;
-
   cursor:pointer;
 }
 
@@ -933,89 +785,51 @@ body::before{
 .chat-input-area input{
   flex:1;
   min-width:0;
-
   background:#080c1a;
-
   border:1px solid rgba(255,255,255,.1);
-
   color:#fff;
-
   border-radius:14px;
-
   padding:13px;
-
   outline:none;
-
   font-size:12px;
-}
-
-.chat-input-area input:focus{
-  border-color:#7c4dff;
 }
 
 .chat-input-area button{
   width:48px;
-
   border:none;
-
   border-radius:14px;
-
   background:#7c4dff;
-
   color:#fff;
-
   font-size:16px;
-
   cursor:pointer;
 }
 
 .chat-input-area button:disabled{
   opacity:.45;
-  cursor:not-allowed;
 }
 
 .chat-status{
   font-size:10px;
-
   opacity:.45;
-
   min-height:15px;
-
   margin-top:7px;
 }
 
-/* =========================================================
-   ABAS IA
-========================================================= */
-
 .fechamento-tabs{
   display:grid;
-
-  grid-template-columns:
-    1fr
-    1fr
-    1fr;
-
+  grid-template-columns:1fr 1fr 1fr;
   gap:6px;
-
   margin-top:15px;
 }
 
 .fechamento-tab{
   border:1px solid rgba(255,255,255,.08);
-
   background:rgba(255,255,255,.05);
-
   color:#fff;
-
   border-radius:11px;
-
   padding:10px 5px;
-
   font-size:10px;
-
   font-weight:800;
-
   cursor:pointer;
 }
 
@@ -1026,32 +840,14 @@ body::before{
 
 .fechamento-info{
   font-size:10px;
-
   opacity:.45;
-
   margin-top:9px;
-
   text-align:center;
 }
 
 .loading-ia{
   text-align:center;
-
   opacity:.6;
-
-  animation:iaPulse 1.2s infinite alternate;
-}
-
-@keyframes iaPulse{
-
-  from{
-    opacity:.35;
-  }
-
-  to{
-    opacity:1;
-  }
-
 }
 
 .painel-ia{
@@ -1062,26 +858,10 @@ body::before{
   display:block;
 }
 
-/* =========================================================
-   RESPONSIVO
-========================================================= */
-
 @media(max-width:500px){
 
   .fechamento-tabs{
     grid-template-columns:1fr 1fr 1fr;
-  }
-
-  .bottom-inner{
-    grid-template-columns:1fr;
-  }
-
-}
-
-@media(max-width:380px){
-
-  .btn-central{
-    font-size:11px;
   }
 
 }
@@ -1100,14 +880,8 @@ body::before{
   </h1>
 
   <div class="sub">
-
     <span id="dataHoje"></span>
-
-    <span
-      class="badge-turno"
-      id="turnoAuto">
-    </span>
-
+    <span class="badge-turno" id="turnoAuto"></span>
   </div>
 
 </div>
@@ -1150,9 +924,7 @@ body::before{
       aria-label="Segure para falar"
       title="Segure para falar"
     >
-
       <i class="fa-solid fa-microphone"></i>
-
     </button>
 
     <div class="ring"></div>
@@ -1179,8 +951,8 @@ body::before{
     style="color:#ffeb3b">
   </i>
 
-  Segure o microfone para falar. Enquanto você fala,
-  o texto aparece em tempo real no campo abaixo.
+  Segure o microfone para falar.
+  O texto aparecerá em tempo real.
 
   <b>
     Arraste para o lado para cancelar.
@@ -1214,9 +986,7 @@ body::before{
 
 <div class="filtros">
 
-  <button
-    class="ativo"
-    onclick="filtrar('TODAS',this)">
+  <button class="ativo" onclick="filtrar('TODAS',this)">
     Todas
   </button>
 
@@ -1242,6 +1012,7 @@ body::before{
 
 </div>
 
+
 <div id="lista"></div>
 
 
@@ -1264,9 +1035,11 @@ body::before{
 </div>
 
 
-<div
-  id="modalEdit"
-  class="modal">
+<!-- =====================================================
+     MODAL EDITAR
+===================================================== -->
+
+<div id="modalEdit" class="modal">
 
   <div class="sheet edit-area">
 
@@ -1293,11 +1066,7 @@ body::before{
 
       <button
         class="btn btn-c"
-        onclick="
-          document
-          .getElementById('modalEdit')
-          .classList.remove('show')
-        ">
+        onclick="document.getElementById('modalEdit').classList.remove('show')">
         Cancelar
       </button>
 
@@ -1308,9 +1077,11 @@ body::before{
 </div>
 
 
-<div
-  id="modalFechamento"
-  class="modal">
+<!-- =====================================================
+     MODAL IA
+===================================================== -->
+
+<div id="modalFechamento" class="modal">
 
   <div class="sheet chat-sheet">
 
@@ -1336,39 +1107,42 @@ body::before{
 
     </p>
 
+
     <div class="fechamento-tabs">
 
       <button
         id="tabChat"
         class="fechamento-tab ativo"
         onclick="selecionarPainelIA('chat')">
+
         💬 CHAT
+
       </button>
 
       <button
         id="tabGerencial"
         class="fechamento-tab"
         onclick="selecionarPainelIA('gerencial')">
+
         📋 GERENCIAL
+
       </button>
 
       <button
         id="tabExecutivo"
         class="fechamento-tab"
         onclick="selecionarPainelIA('executivo')">
+
         ⚡ EXECUTIVO
+
       </button>
 
     </div>
 
 
-    <div
-      id="painelChat"
-      class="painel-ia ativo">
+    <div id="painelChat" class="painel-ia ativo">
 
-      <div
-        id="chatLista"
-        class="chat-lista">
+      <div id="chatLista" class="chat-lista">
 
         <div class="chat-msg assistant">
 
@@ -1439,17 +1213,12 @@ body::before{
 
       </div>
 
-      <div
-        id="chatStatus"
-        class="chat-status">
-      </div>
+      <div id="chatStatus" class="chat-status"></div>
 
     </div>
 
 
-    <div
-      id="painelGerencial"
-      class="painel-ia">
+    <div id="painelGerencial" class="painel-ia">
 
       <div
         id="fechamentoInfo"
@@ -1477,9 +1246,7 @@ Aguardando fechamento do turno...
     </div>
 
 
-    <div
-      id="painelExecutivo"
-      class="painel-ia">
+    <div id="painelExecutivo" class="painel-ia">
 
       <div class="fechamento-info">
         Resumo executivo para gestão
@@ -1528,26 +1295,19 @@ Aguardando fechamento do turno...
 
 async function api(url, options = {}){
 
-  const resposta =
-    await fetch(
-      url,
-      {
-        ...options,
+  const resposta = await fetch(url,{
+    ...options,
+    headers:{
+      'Content-Type':'application/json',
+      ...(options.headers || {})
+    }
+  });
 
-        headers:{
-          'Content-Type':'application/json',
-          ...(options.headers || {})
-        }
-      }
-    );
-
-  let dados = null;
+  let dados = {};
 
   try{
     dados = await resposta.json();
-  }catch(_){
-    dados = {};
-  }
+  }catch(_){}
 
   if(!resposta.ok){
 
@@ -1565,58 +1325,16 @@ async function api(url, options = {}){
 
 
 /* =========================================================
-   VARIÁVEIS
+   ESTADO
 ========================================================= */
 
 let ocorrencias = [];
 let filtroAtual = 'TODAS';
 let editId = null;
 
-
-/* =========================================================
-   MICROFONE — ESTADO
-========================================================= */
-
-let rec = null;
-
-let gravando = false;
-let recognitionStarting = false;
-let wantRestart = false;
-
-let finalBuffer = '';
-let interimBuffer = '';
-
-let micPointerId = null;
-let micPressionado = false;
-let micCancelado = false;
-
-let finalizandoMicrofone = false;
-let finalizacaoTimer = null;
-
-let recognitionGeneration = 0;
-
-let ultimoX = 0;
-let inicioX = 0;
-let movimentoHorizontal = 0;
-
-let recognitionRetryTimer = null;
-
-const DISTANCIA_CANCELAMENTO = 80;
-
-
-/* =========================================================
-   POLLING
-========================================================= */
-
 let pollingTimer = null;
 
-
-/* =========================================================
-   IA
-========================================================= */
-
 let historicoChat = [];
-
 let chatEnviando = false;
 
 let fechamentoDados = {
@@ -1647,10 +1365,6 @@ function getTurnoAuto(){
 }
 
 
-/* =========================================================
-   CABEÇALHO
-========================================================= */
-
 document.getElementById('dataHoje').innerText =
   new Date().toLocaleDateString(
     'pt-BR',
@@ -1671,13 +1385,11 @@ document.getElementById('turnoAuto').innerText =
 
 function detectarHorario(texto){
 
-  const t =
-    String(texto || '').toLowerCase();
+  const t = String(texto || '').toLowerCase();
 
-  const m =
-    t.match(
-      /\b(\d{1,2})\s*(?:[:h]\s*)?(\d{2})\b/
-    );
+  const m = t.match(
+    /\b(\d{1,2})\s*(?:[:h]\s*)?(\d{2})\b/
+  );
 
   if(m){
 
@@ -1692,9 +1404,9 @@ function detectarHorario(texto){
     ){
 
       return (
-        String(hora).padStart(2,'0')
-        + ':'
-        + String(minuto).padStart(2,'0')
+        String(hora).padStart(2,'0') +
+        ':' +
+        String(minuto).padStart(2,'0')
       );
 
     }
@@ -1712,11 +1424,9 @@ function detectarHorario(texto){
 
 function detectarFrente(texto){
 
-  const t =
-    String(texto || '').toLowerCase();
+  const t = String(texto || '').toLowerCase();
 
   const mp = {
-
     'um':'1',
     'uma':'1',
     'dois':'2',
@@ -1726,36 +1436,28 @@ function detectarFrente(texto){
     'quatro':'4',
     'cinco':'5',
     'seis':'6'
-
   };
 
-  let m =
-    t.match(
-      /quinhent\w*\s*e?\s*(um|uma|dois|duas|tres|três|quatro|cinco|seis)\b/
-    );
+  let m = t.match(
+    /quinhent\w*\s*e?\s*(um|uma|dois|duas|tres|três|quatro|cinco|seis)\b/
+  );
 
-  if(m && mp[m[1]]){
-
+  if(m && mp[m[1]])
     return 'FRENTE 50' + mp[m[1]];
 
-  }
-
-  m =
-    t.match(/\b50\s*([1-6])\b/);
+  m = t.match(/\b50\s*([1-6])\b/);
 
   if(m)
     return 'FRENTE 50' + m[1];
 
-  m =
-    t.match(/\b50([1-6])\b/);
+  m = t.match(/\b50([1-6])\b/);
 
   if(m)
     return 'FRENTE 50' + m[1];
 
-  m =
-    t.match(
-      /frente\s*(?:cinco\s*zero\s*)?([1-6])\b/
-    );
+  m = t.match(
+    /frente\s*(?:cinco\s*zero\s*)?([1-6])\b/
+  );
 
   if(m)
     return 'FRENTE 50' + m[1];
@@ -1773,23 +1475,20 @@ function limparCabecalho(texto){
 
   let t = String(texto || '');
 
-  t =
-    t.replace(
-      /^\s*(às|as)?\s*\d{1,2}(?:[:h]\d{2})?\s*[,.\-]?\s*/i,
-      ''
-    );
+  t = t.replace(
+    /^\s*(às|as)?\s*\d{1,2}(?:[:h]\d{2})?\s*[,.\-]?\s*/i,
+    ''
+  );
 
-  t =
-    t.replace(
-      /frente\s*(quinh\w*\s*e?\s*(?:um|uma|dois|duas|tres|três|quatro|cinco|seis)|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?\s*/gi,
-      ''
-    );
+  t = t.replace(
+    /frente\s*(quinh\w*\s*e?\s*(?:um|uma|dois|duas|tres|três|quatro|cinco|seis)|50\s*[1-6]|50[1-6]|[1-6])\s*[,.\-]?\s*/gi,
+    ''
+  );
 
-  t =
-    t.replace(
-      /\bquinhent\w*\s*(?:e\s*)?(?:um|uma|dois|duas|tres|três|quatro|cinco|seis)\b\s*[,.\-]?\s*/gi,
-      ''
-    );
+  t = t.replace(
+    /\bquinhent\w*\s*(?:e\s*)?(?:um|uma|dois|duas|tres|três|quatro|cinco|seis)\b\s*[,.\-]?\s*/gi,
+    ''
+  );
 
   return t.trim();
 
@@ -1797,13 +1496,12 @@ function limparCabecalho(texto){
 
 
 /* =========================================================
-   CORREÇÃO LEVE
+   CORREÇÃO
 ========================================================= */
 
 function correcaoLeve(texto){
 
-  let t =
-    String(texto || '').trim();
+  let t = String(texto || '').trim();
 
   if(!t)
     return '';
@@ -1814,7 +1512,7 @@ function correcaoLeve(texto){
     [/\bcolhedeira\b/gi,'colhedora'],
     [/\bmanutencao\b/gi,'manutenção'],
     [/\bcaminhao\b/gi,'caminhão'],
-    [/\btransbordo\b/gi,'transbordo']
+    [/\bcaminhoes\b/gi,'caminhões']
 
   ];
 
@@ -1823,15 +1521,11 @@ function correcaoLeve(texto){
   });
 
   t =
-    t.charAt(0).toUpperCase()
-    + t.slice(1);
+    t.charAt(0).toUpperCase() +
+    t.slice(1);
 
-  if(
-    t &&
-    !/[.!?]$/.test(t)
-  ){
+  if(t && !/[.!?]$/.test(t))
     t += '.';
-  }
 
   return t;
 
@@ -1839,7 +1533,7 @@ function correcaoLeve(texto){
 
 
 /* =========================================================
-   HORA ATUAL
+   HORA
 ========================================================= */
 
 function horaAgora(){
@@ -1856,53 +1550,7 @@ function horaAgora(){
 
 
 /* =========================================================
-   CARREGAR OCORRÊNCIAS
-========================================================= */
-
-async function loadSupa(){
-
-  try{
-
-    const data =
-      await api('/api/ocorrencias');
-
-    ocorrencias =
-      Array.isArray(data)
-        ? data.map(d => ({
-
-            id:d.id,
-            hora:d.hora,
-            frente:d.frente,
-            texto:d.texto,
-            turno:d.turno,
-            unidade:d.unidade,
-            created_at:d.created_at
-
-          }))
-        : [];
-
-    render();
-
-  }catch(error){
-
-    console.error(
-      'Erro ao atualizar lista:',
-      error
-    );
-
-    document.getElementById('lista').innerHTML =
-      '<div class="empty">' +
-      'ERRO AO CARREGAR OCORRÊNCIAS: ' +
-      escapeHtml(error.message) +
-      '</div>';
-
-  }
-
-}
-
-
-/* =========================================================
-   ESCAPE HTML
+   ESCAPE
 ========================================================= */
 
 function escapeHtml(valor){
@@ -1918,21 +1566,58 @@ function escapeHtml(valor){
 
 
 /* =========================================================
-   ADICIONAR OCORRÊNCIA
+   CARREGAR
+========================================================= */
+
+async function loadSupa(){
+
+  try{
+
+    const data =
+      await api('/api/ocorrencias');
+
+    ocorrencias =
+      Array.isArray(data)
+        ? data.map(d => ({
+            id:d.id,
+            hora:d.hora,
+            frente:d.frente,
+            texto:d.texto,
+            turno:d.turno,
+            unidade:d.unidade,
+            created_at:d.created_at
+          }))
+        : [];
+
+    render();
+
+  }catch(error){
+
+    console.error(error);
+
+    document.getElementById('lista').innerHTML =
+      '<div class="empty">' +
+      'ERRO AO CARREGAR OCORRÊNCIAS: ' +
+      escapeHtml(error.message) +
+      '</div>';
+
+  }
+
+}
+
+
+/* =========================================================
+   ADICIONAR
 ========================================================= */
 
 async function addOcorrencia(bruto){
 
-  if(
-    !bruto ||
-    !bruto.trim()
-  ){
+  if(!bruto || !bruto.trim())
     return;
-  }
 
   const hora =
-    detectarHorario(bruto)
-    || horaAgora();
+    detectarHorario(bruto) ||
+    horaAgora();
 
   const frente =
     detectarFrente(bruto);
@@ -1942,12 +1627,8 @@ async function addOcorrencia(bruto){
       limparCabecalho(bruto)
     );
 
-  if(
-    !texto ||
-    texto === '.'
-  ){
+  if(!texto || texto === '.')
     return;
-  }
 
   try{
 
@@ -1955,17 +1636,13 @@ async function addOcorrencia(bruto){
       '/api/ocorrencias',
       {
         method:'POST',
-
         body:JSON.stringify({
-
           hora,
           frente,
           texto,
           turno:getTurnoAuto(),
           unidade:'MANDU'
-
         })
-
       }
     );
 
@@ -1973,10 +1650,7 @@ async function addOcorrencia(bruto){
 
   }catch(error){
 
-    console.error(
-      'Erro ao inserir:',
-      error
-    );
+    console.error(error);
 
     alert(
       'Erro ao inserir: ' +
@@ -1994,16 +1668,16 @@ async function addOcorrencia(bruto){
 
 async function addManual(){
 
-  const i =
+  const input =
     document.getElementById('textoManual');
 
   const texto =
-    i.value.trim();
+    input.value.trim();
 
   if(!texto)
     return;
 
-  i.value = '';
+  input.value = '';
 
   await addOcorrencia(texto);
 
@@ -2014,7 +1688,7 @@ document
   .getElementById('textoManual')
   .addEventListener(
     'keydown',
-    function(event){
+    event => {
 
       if(event.key === 'Enter'){
 
@@ -2029,18 +1703,13 @@ document
 
 
 /* =========================================================
-   DELETAR
+   DELETE
 ========================================================= */
 
 async function deletar(id){
 
-  if(
-    !confirm(
-      'Deseja excluir este registro?'
-    )
-  ){
+  if(!confirm('Deseja excluir este registro?'))
     return;
-  }
 
   try{
 
@@ -2055,11 +1724,6 @@ async function deletar(id){
     await loadSupa();
 
   }catch(error){
-
-    console.error(
-      'Erro ao deletar:',
-      error
-    );
 
     alert(
       'Erro ao deletar: ' +
@@ -2085,13 +1749,10 @@ async function limparTudo(){
 
   }
 
-  if(
-    !confirm(
-      'Deseja iniciar um novo turno e limpar todas as ocorrências atuais?'
-    )
-  ){
+  if(!confirm(
+    'Deseja iniciar um novo turno e limpar todas as ocorrências atuais?'
+  ))
     return;
-  }
 
   try{
 
@@ -2112,11 +1773,6 @@ async function limparTudo(){
     await loadSupa();
 
   }catch(error){
-
-    console.error(
-      'Erro ao iniciar novo turno:',
-      error
-    );
 
     alert(
       'Erro ao limpar: ' +
@@ -2159,8 +1815,7 @@ function abrirEdit(id){
 
   const o =
     ocorrencias.find(
-      x =>
-        String(x.id) === String(id)
+      x => String(x.id) === String(id)
     );
 
   if(!o)
@@ -2175,10 +1830,6 @@ function abrirEdit(id){
 
 }
 
-
-/* =========================================================
-   SALVAR EDIÇÃO
-========================================================= */
 
 async function salvarEdit(){
 
@@ -2198,13 +1849,9 @@ async function salvarEdit(){
       encodeURIComponent(editId),
       {
         method:'PUT',
-
         body:JSON.stringify({
-
           texto:correcaoLeve(v)
-
         })
-
       }
     );
 
@@ -2215,11 +1862,6 @@ async function salvarEdit(){
     await loadSupa();
 
   }catch(error){
-
-    console.error(
-      'Erro ao editar:',
-      error
-    );
 
     alert(
       'Erro ao editar: ' +
@@ -2240,12 +1882,11 @@ function render(){
   const lista =
     document.getElementById('lista');
 
-  let f =
+  const f =
     filtroAtual === 'TODAS'
       ? ocorrencias
       : ocorrencias.filter(
-          o =>
-            o.frente === filtroAtual
+          o => o.frente === filtroAtual
         );
 
   document.getElementById('stTotal').innerText =
@@ -2253,9 +1894,7 @@ function render(){
 
   document.getElementById('stFrentes').innerText =
     new Set(
-      ocorrencias.map(
-        o => o.frente
-      )
+      ocorrencias.map(o => o.frente)
     ).size;
 
   document.getElementById('stUltima').innerText =
@@ -2275,72 +1914,64 @@ function render(){
   }
 
   lista.innerHTML =
-    f.map(
-      o => `
+    f.map(o => `
 
-        <div class="card">
+      <div class="card">
 
-          <div class="meta">
+        <div class="meta">
 
-            <span class="hora">
-              ${escapeHtml(o.hora)}
-            </span>
+          <span class="hora">
+            ${escapeHtml(o.hora)}
+          </span>
 
-            <span class="frente">
-              ${
-                escapeHtml(
-                  String(
-                    o.frente || ''
-                  ).replace(
-                    'FRENTE ',
-                    ''
-                  )
-                )
-              }
-            </span>
-
-          </div>
-
-          <p>
-            ${escapeHtml(o.texto)}
-          </p>
-
-          <div class="acts">
-
-            <button
-              class="e"
-              onclick="
-                abrirEdit('${escapeHtml(o.id)}')
-              "
-              title="Editar">
-
-              <i class="fa-solid fa-pen"></i>
-
-            </button>
-
-            <button
-              class="d"
-              onclick="
-                deletar('${escapeHtml(o.id)}')
-              "
-              title="Excluir">
-
-              <i class="fa-solid fa-trash"></i>
-
-            </button>
-
-          </div>
+          <span class="frente">
+            ${
+              escapeHtml(
+                String(o.frente || '')
+                  .replace('FRENTE ','')
+              )
+            }
+          </span>
 
         </div>
 
-      `
-    ).join('');
+        <p>
+          ${escapeHtml(o.texto)}
+        </p>
+
+        <div class="acts">
+
+          <button
+            class="e"
+            onclick="abrirEdit('${escapeHtml(o.id)}')"
+            title="Editar">
+
+            <i class="fa-solid fa-pen"></i>
+
+          </button>
+
+          <button
+            class="d"
+            onclick="deletar('${escapeHtml(o.id)}')"
+            title="Excluir">
+
+            <i class="fa-solid fa-trash"></i>
+
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join('');
 
 }
 
 
 /* =========================================================
+   =========================================================
    MICROFONE — NOVA IMPLEMENTAÇÃO
+   =========================================================
 ========================================================= */
 
 const btnMic =
@@ -2356,167 +1987,48 @@ const textoManual =
   document.getElementById('textoManual');
 
 
-/* =========================================================
-   TERMOS OPERACIONAIS
-========================================================= */
+let recognition = null;
 
-const termosOperacionais = [
+let mediaStream = null;
 
-  'frente 501',
-  'frente 502',
-  'frente 503',
-  'frente 504',
-  'frente 505',
-  'frente 506',
+let micPressionado = false;
+let gravando = false;
+let micCancelado = false;
 
-  'quinhentos e um',
-  'quinhentos e dois',
-  'quinhentos e três',
-  'quinhentos e quatro',
-  'quinhentos e cinco',
-  'quinhentos e seis',
+let micPointerId = null;
 
-  'colhedora',
-  'colhedoras',
+let inicioX = 0;
+let ultimoX = 0;
 
-  'transbordo',
-  'transbordos',
+let movimentoHorizontal = 0;
 
-  'tração',
-  'trações',
+let finalBuffer = '';
+let interimBuffer = '';
 
-  'caminhão',
-  'caminhões',
+let reconhecimentoIniciando = false;
+let reconhecimentoAtivo = false;
 
-  'moagem',
-  'plantio',
-  'muda',
-  'mudas',
+let tentativaReconhecimento = 0;
+let finalizandoMicrofone = false;
 
-  'Mandu',
-  'Cruz Alta',
-  'São José',
-  'Vertente',
-  'Tanabi',
+let retryRecognitionTimer = null;
+let finalizacaoTimer = null;
 
-  'Solinftec',
-  'manutenção',
-  'produção',
-  'produtividade',
-  'ATR',
-  'CTT',
-  'COA',
-  'usina',
-  'pátio',
-  'carregamento',
-  'descarregamento',
-  'palhada',
-  'ciclo',
-  'frente',
-  'indisponibilidade',
-  'quebra',
-  'parada'
-
-];
+const DISTANCIA_CANCELAMENTO = 80;
 
 
 /* =========================================================
-   CRIAR RECONHECIMENTO
+   SUPORTE
 ========================================================= */
 
-function criarReconhecimento(){
-
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-  if(!SpeechRecognition){
-
-    rec = null;
-
-    return false;
-
-  }
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
 
 
-  try{
+function navegadorTemReconhecimento(){
 
-    rec =
-      new SpeechRecognition();
-
-    rec.lang =
-      'pt-BR';
-
-    rec.continuous =
-      true;
-
-    rec.interimResults =
-      true;
-
-    rec.maxAlternatives =
-      1;
-
-
-    configurarEventosReconhecimento();
-
-    configurarContextoReconhecimento();
-
-    return true;
-
-  }catch(error){
-
-    console.error(
-      'Erro ao criar reconhecimento:',
-      error
-    );
-
-    rec = null;
-
-    return false;
-
-  }
-
-}
-
-
-/* =========================================================
-   CONTEXTO
-========================================================= */
-
-function configurarContextoReconhecimento(){
-
-  if(!rec)
-    return;
-
-  try{
-
-    if(
-      'SpeechRecognitionPhrase'
-      in window
-    ){
-
-      const Phrase =
-        window.SpeechRecognitionPhrase;
-
-      rec.phrases =
-        termosOperacionais.map(
-          palavra =>
-            new Phrase(
-              palavra,
-              3.0
-            )
-        );
-
-    }
-
-  }catch(error){
-
-    console.debug(
-      'Contexto de fala não disponível.',
-      error
-    );
-
-  }
+  return !!SpeechRecognition;
 
 }
 
@@ -2542,14 +2054,6 @@ function atualizarVisualMic(){
     micCancelado
   );
 
-  btnMic.setAttribute(
-    'aria-pressed',
-    micPressionado
-      ? 'true'
-      : 'false'
-  );
-
-
   if(micCancelado){
 
     btnMic.innerHTML =
@@ -2559,33 +2063,30 @@ function atualizarVisualMic(){
 
   }
 
-
   btnMic.innerHTML =
     '<i class="fa-solid fa-microphone"></i>';
-
 
   if(gravando){
 
     statusMic.innerText =
       '🔴 Ouvindo... solte para registrar';
 
-    return;
+  }else if(reconhecimentoIniciando){
 
-  }
+    statusMic.innerText =
+      '🎙️ Ativando microfone...';
 
-
-  if(micPressionado){
+  }else if(micPressionado){
 
     statusMic.innerText =
       'Preparando microfone...';
 
-    return;
+  }else{
+
+    statusMic.innerText =
+      'Segure para falar';
 
   }
-
-
-  statusMic.innerText =
-    'Segure para falar';
 
 }
 
@@ -2633,212 +2134,21 @@ function atualizarTranscricao(){
 
 
 /* =========================================================
-   LIMPAR
+   PEDIR MICROFONE REAL
 ========================================================= */
 
-function limparEstadoMicrofone(){
+async function solicitarMicrofone(){
 
-  clearTimeout(
-    recognitionRetryTimer
-  );
+  if(
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ){
 
-  clearTimeout(
-    finalizacaoTimer
-  );
-
-  micPressionado =
-    false;
-
-  micCancelado =
-    false;
-
-  gravando =
-    false;
-
-  recognitionStarting =
-    false;
-
-  wantRestart =
-    false;
-
-  micPointerId =
-    null;
-
-  movimentoHorizontal =
-    0;
-
-  inicioX =
-    0;
-
-  ultimoX =
-    0;
-
-  atualizarVisualMic();
-
-}
-
-
-/* =========================================================
-   PARAR RECONHECIMENTO SEM DESTRUIR RESULTADO
-========================================================= */
-
-function pararReconhecimento(){
-
-  wantRestart =
-    false;
-
-  recognitionGeneration++;
-
-  clearTimeout(
-    recognitionRetryTimer
-  );
-
-  if(!rec)
-    return;
-
-  try{
-
-    rec.stop();
-
-  }catch(error){
-
-    console.debug(
-      'stop():',
-      error
+    throw new Error(
+      'Este navegador não disponibiliza acesso ao microfone.'
     );
 
-    try{
-
-      rec.abort();
-
-    }catch(_){}
-
   }
-
-}
-
-
-/* =========================================================
-   FINALIZAR
-========================================================= */
-
-async function finalizarMicrofone(){
-
-  if(finalizandoMicrofone)
-    return;
-
-  finalizandoMicrofone =
-    true;
-
-  clearTimeout(
-    finalizacaoTimer
-  );
-
-  clearTimeout(
-    recognitionRetryTimer
-  );
-
-
-  if(micCancelado){
-
-    finalBuffer = '';
-    interimBuffer = '';
-
-    textoManual.value = '';
-
-    tempDiv.innerText = '';
-
-    tempDiv.style.display =
-      'none';
-
-    limparEstadoMicrofone();
-
-    finalizandoMicrofone =
-      false;
-
-    return;
-
-  }
-
-
-  const textoFinal =
-    (
-      finalBuffer ||
-      interimBuffer ||
-      textoManual.value ||
-      ''
-    )
-    .replace(/\s+/g,' ')
-    .trim();
-
-
-  finalBuffer = '';
-  interimBuffer = '';
-
-
-  if(!textoFinal){
-
-    textoManual.value = '';
-
-    tempDiv.innerText = '';
-
-    tempDiv.style.display =
-      'none';
-
-    limparEstadoMicrofone();
-
-    finalizandoMicrofone =
-      false;
-
-    return;
-
-  }
-
-
-  textoManual.value =
-    textoFinal;
-
-  tempDiv.innerText =
-    textoFinal;
-
-  tempDiv.style.display =
-    'block';
-
-
-  try{
-
-    await addOcorrencia(
-      textoFinal
-    );
-
-    textoManual.value = '';
-
-    tempDiv.innerText = '';
-
-    tempDiv.style.display =
-      'none';
-
-  }finally{
-
-    limparEstadoMicrofone();
-
-    finalizandoMicrofone =
-      false;
-
-  }
-
-}
-
-
-/* =========================================================
-   INICIAR
-========================================================= */
-
-async function iniciarGravacao(){
-
-  if(!micPressionado)
-    return;
-
 
   if(
     !window.isSecureContext &&
@@ -2846,167 +2156,184 @@ async function iniciarGravacao(){
     location.hostname !== '127.0.0.1'
   ){
 
-    statusMic.innerText =
-      'Microfone exige conexão HTTPS.';
-
-    micPressionado =
-      false;
-
-    atualizarVisualMic();
-
-    return;
+    throw new Error(
+      'O microfone exige HTTPS.'
+    );
 
   }
 
+  /*
+    Aqui está uma das mudanças principais.
 
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+    Primeiro abrimos o microfone REAL do navegador.
+    Isso força o Chrome/Edge a tratar a ação como
+    uma solicitação efetiva de acesso ao dispositivo.
+  */
 
+  mediaStream =
+    await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:true,
+        noiseSuppression:true,
+        autoGainControl:true
+      },
+      video:false
+    });
+
+  console.log(
+    '[MIC] Acesso ao microfone concedido.'
+  );
+
+}
+
+
+/* =========================================================
+   LIBERAR MICROFONE
+========================================================= */
+
+function liberarMicrofone(){
+
+  if(!mediaStream)
+    return;
+
+  try{
+
+    mediaStream
+      .getTracks()
+      .forEach(
+        track => track.stop()
+      );
+
+  }catch(error){
+
+    console.debug(
+      '[MIC] erro ao liberar stream:',
+      error
+    );
+
+  }
+
+  mediaStream = null;
+
+}
+
+
+/* =========================================================
+   CRIAR RECONHECIMENTO
+========================================================= */
+
+function criarReconhecimento(){
+
+  if(!SpeechRecognition){
+
+    return null;
+
+  }
+
+  const r =
+    new SpeechRecognition();
+
+  r.lang =
+    'pt-BR';
+
+  r.continuous =
+    true;
+
+  r.interimResults =
+    true;
+
+  r.maxAlternatives =
+    1;
+
+  configurarEventosReconhecimento(r);
+
+  return r;
+
+}
+
+
+/* =========================================================
+   INICIAR SPEECH
+========================================================= */
+
+function iniciarSpeech(){
+
+  if(!micPressionado)
+    return;
+
+  if(micCancelado)
+    return;
 
   if(!SpeechRecognition){
 
     statusMic.innerText =
-      'Reconhecimento de voz indisponível neste navegador.';
-
-    micPressionado =
-      false;
-
-    atualizarVisualMic();
+      'Reconhecimento de voz não suportado neste navegador.';
 
     return;
 
   }
 
+  clearTimeout(
+    retryRecognitionTimer
+  );
 
-  /*
-    Sempre cria uma instância nova.
-    Isso evita reutilizar uma instância que
-    entrou em estado inválido após erro.
-  */
-
-  if(!criarReconhecimento()){
-
-    statusMic.innerText =
-      'Não foi possível iniciar o reconhecimento.';
-
-    micPressionado =
-      false;
-
-    atualizarVisualMic();
-
-    return;
-
-  }
-
-
-  finalBuffer = '';
-  interimBuffer = '';
-
-  micCancelado = false;
-
-
-  textoManual.value = '';
-
-  tempDiv.innerText = '';
-
-  tempDiv.style.display =
-    'none';
-
-
-  wantRestart =
-    true;
-
-  recognitionGeneration++;
-
-  const generation =
-    recognitionGeneration;
-
-
-  recognitionStarting =
+  reconhecimentoIniciando =
     true;
 
   atualizarVisualMic();
 
+  recognition =
+    criarReconhecimento();
+
+  if(!recognition){
+
+    reconhecimentoIniciando =
+      false;
+
+    statusMic.innerText =
+      'Não foi possível criar o reconhecimento de voz.';
+
+    return;
+
+  }
 
   try{
 
-    rec.start();
+    console.log(
+      '[MIC] Chamando recognition.start()'
+    );
+
+    recognition.start();
 
   }catch(error){
 
-    recognitionStarting =
+    reconhecimentoIniciando =
       false;
 
-    console.debug(
-      'start():',
+    console.error(
+      '[MIC] start() falhou:',
       error
     );
 
-
     /*
-      InvalidStateError:
-      tenta criar outra instância.
+      Em alguns navegadores start()
+      pode retornar InvalidStateError.
+      Fazemos uma nova tentativa.
     */
 
     if(
-      error.name ===
-      'InvalidStateError'
+      error.name === 'InvalidStateError'
     ){
 
-      criarReconhecimento();
-
-      setTimeout(
-        () => {
-
-          if(
-            generation !==
-            recognitionGeneration
-          ){
-            return;
-          }
-
-          if(
-            !micPressionado ||
-            micCancelado ||
-            !wantRestart
-          ){
-            return;
-          }
-
-          try{
-
-            recognitionStarting =
-              true;
-
-            rec.start();
-
-          }catch(e){
-
-            recognitionStarting =
-              false;
-
-            console.error(
-              'Segundo start falhou:',
-              e
-            );
-
-            statusMic.innerText =
-              'Não foi possível iniciar o reconhecimento.';
-
-          }
-
-        },
-        120
-      );
+      retryRecognition(250);
 
       return;
 
     }
 
-
     statusMic.innerText =
-      'Falha ao iniciar o reconhecimento.';
+      'Falha ao iniciar reconhecimento: ' +
+      error.message;
 
   }
 
@@ -3014,47 +2341,35 @@ async function iniciarGravacao(){
 
 
 /* =========================================================
-   EVENTOS DO RECONHECIMENTO
+   EVENTOS SPEECH
 ========================================================= */
 
-function configurarEventosReconhecimento(){
-
-  if(!rec)
-    return;
-
+function configurarEventosReconhecimento(r){
 
   /* -------------------------------------------------------
      START
   ------------------------------------------------------- */
 
-  rec.onstart = () => {
+  r.onstart = () => {
 
-    recognitionStarting =
+    console.log(
+      '[MIC] reconhecimento iniciado'
+    );
+
+    reconhecimentoIniciando =
       false;
 
-
-    if(
-      !micPressionado ||
-      micCancelado ||
-      !wantRestart ||
-      micPointerId === null
-    ){
-
-      try{
-
-        rec.stop();
-
-      }catch(_){}
-
-      return;
-
-    }
-
+    reconhecimentoAtivo =
+      true;
 
     gravando =
       true;
 
+    tentativaReconhecimento =
+      0;
+
     atualizarVisualMic();
+
     atualizarTranscricao();
 
   };
@@ -3064,7 +2379,7 @@ function configurarEventosReconhecimento(){
      RESULT
   ------------------------------------------------------- */
 
-  rec.onresult = (event) => {
+  r.onresult = event => {
 
     let interim = '';
 
@@ -3081,12 +2396,10 @@ function configurarEventosReconhecimento(){
         (
           resultado[0]?.transcript ||
           ''
-        )
-        .trim();
+        ).trim();
 
       if(!texto)
         continue;
-
 
       if(resultado.isFinal){
 
@@ -3112,7 +2425,6 @@ function configurarEventosReconhecimento(){
 
     }
 
-
     interimBuffer =
       interim;
 
@@ -3122,114 +2434,158 @@ function configurarEventosReconhecimento(){
 
 
   /* -------------------------------------------------------
+     ERROR
+  ------------------------------------------------------- */
+
+  r.onerror = event => {
+
+    console.warn(
+      '[MIC] erro:',
+      event.error
+    );
+
+    reconhecimentoIniciando =
+      false;
+
+    reconhecimentoAtivo =
+      false;
+
+    if(event.error === 'no-speech'){
+
+      if(micPressionado){
+
+        statusMic.innerText =
+          '🔴 Continue falando...';
+
+      }
+
+      return;
+
+    }
+
+
+    if(event.error === 'aborted'){
+
+      return;
+
+    }
+
+
+    if(
+      event.error === 'not-allowed' ||
+      event.error === 'service-not-allowed'
+    ){
+
+      gravando =
+        false;
+
+      micPressionado =
+        false;
+
+      micPointerId =
+        null;
+
+      atualizarVisualMic();
+
+      liberarMicrofone();
+
+      statusMic.innerText =
+        '⚠️ Acesso ao microfone foi bloqueado.';
+
+      return;
+
+    }
+
+
+    if(event.error === 'audio-capture'){
+
+      gravando =
+        false;
+
+      statusMic.innerText =
+        '⚠️ O microfone não está disponível.';
+
+      return;
+
+    }
+
+
+    if(event.error === 'network'){
+
+      if(micPressionado && !micCancelado){
+
+        gravando =
+          false;
+
+        atualizarVisualMic();
+
+        statusMic.innerText =
+          '🔄 Reconectando reconhecimento...';
+
+        retryRecognition(300);
+
+      }else{
+
+        statusMic.innerText =
+          'Serviço de reconhecimento indisponível.';
+
+      }
+
+      return;
+
+    }
+
+
+    if(micPressionado){
+
+      gravando =
+        false;
+
+      atualizarVisualMic();
+
+      statusMic.innerText =
+        '🔄 Tentando recuperar...';
+
+      retryRecognition(400);
+
+    }
+
+  };
+
+
+  /* -------------------------------------------------------
      END
   ------------------------------------------------------- */
 
-  rec.onend = () => {
+  r.onend = () => {
 
-    recognitionStarting =
+    console.log(
+      '[MIC] reconhecimento encerrado'
+    );
+
+    reconhecimentoAtivo =
       false;
 
-    gravando =
+    reconhecimentoIniciando =
       false;
-
 
     /*
       Se ainda estiver segurando,
-      recria a instância e continua.
+      reinicia automaticamente.
     */
 
     if(
       micPressionado &&
       !micCancelado &&
-      wantRestart &&
-      micPointerId !== null
+      !finalizandoMicrofone
     ){
+
+      gravando =
+        false;
 
       atualizarVisualMic();
 
-      clearTimeout(
-        recognitionRetryTimer
-      );
-
-
-      recognitionRetryTimer =
-        setTimeout(
-          () => {
-
-            if(
-              !micPressionado ||
-              micCancelado ||
-              !wantRestart ||
-              micPointerId === null
-            ){
-
-              return;
-
-            }
-
-
-            /*
-              Nova instância a cada reinício.
-            */
-
-            if(!criarReconhecimento()){
-
-              statusMic.innerText =
-                'Não foi possível reiniciar o reconhecimento.';
-
-              return;
-
-            }
-
-
-            try{
-
-              recognitionStarting =
-                true;
-
-              rec.start();
-
-            }catch(error){
-
-              recognitionStarting =
-                false;
-
-              console.debug(
-                'Reinício do reconhecimento:',
-                error
-              );
-
-
-              clearTimeout(
-                recognitionRetryTimer
-              );
-
-
-              recognitionRetryTimer =
-                setTimeout(
-                  () => {
-
-                    if(
-                      micPressionado &&
-                      !micCancelado &&
-                      wantRestart &&
-                      micPointerId !== null
-                    ){
-
-                      iniciarReconhecimentoNovamente();
-
-                    }
-
-                  },
-                  300
-                );
-
-            }
-
-          },
-          120
-        );
+      retryRecognition(180);
 
       return;
 
@@ -3237,8 +2593,7 @@ function configurarEventosReconhecimento(){
 
 
     /*
-      Se soltou, aguarda um pequeno intervalo
-      para consolidar o último resultado.
+      Se soltou o botão, finaliza.
     */
 
     if(
@@ -3253,251 +2608,9 @@ function configurarEventosReconhecimento(){
 
       finalizacaoTimer =
         setTimeout(
-          () => {
-
-            finalizarMicrofone();
-
-          },
-          180
+          finalizarMicrofone,
+          150
         );
-
-    }
-
-  };
-
-
-  /* -------------------------------------------------------
-     ERROR
-  ------------------------------------------------------- */
-
-  rec.onerror = (event) => {
-
-    const erro =
-      event.error || 'unknown';
-
-    console.debug(
-      'SpeechRecognition error:',
-      erro
-    );
-
-    recognitionStarting =
-      false;
-
-
-    /*
-      no-speech não é uma falha fatal.
-      Se ainda estiver segurando,
-      deixa o ciclo continuar.
-    */
-
-    if(
-      erro === 'no-speech'
-    ){
-
-      if(micPressionado){
-
-        statusMic.innerText =
-          '🔴 Continue falando...';
-
-      }
-
-      return;
-
-    }
-
-
-    /*
-      aborted geralmente ocorre quando nós mesmos
-      chamamos abort/stop.
-    */
-
-    if(
-      erro === 'aborted'
-    ){
-
-      return;
-
-    }
-
-
-    /*
-      Permissão.
-    */
-
-    if(
-      erro === 'not-allowed' ||
-      erro === 'service-not-allowed'
-    ){
-
-      wantRestart =
-        false;
-
-      gravando =
-        false;
-
-      recognitionStarting =
-        false;
-
-      micPressionado =
-        false;
-
-      micPointerId =
-        null;
-
-      atualizarVisualMic();
-
-      statusMic.innerText =
-        'Permita o acesso ao microfone no navegador.';
-
-      return;
-
-    }
-
-
-    /*
-      Microfone físico indisponível.
-    */
-
-    if(
-      erro === 'audio-capture'
-    ){
-
-      wantRestart =
-        false;
-
-      gravando =
-        false;
-
-      recognitionStarting =
-        false;
-
-      micPressionado =
-        false;
-
-      micPointerId =
-        null;
-
-      atualizarVisualMic();
-
-      statusMic.innerText =
-        'Microfone não disponível ou ocupado por outro aplicativo.';
-
-      return;
-
-    }
-
-
-    /*
-      NETWORK:
-      alguns Chrome/Edge encerram o serviço de fala
-      com erro de rede mesmo estando conectado.
-
-      Se o usuário ainda estiver segurando,
-      não finaliza a ocorrência.
-      Recria o reconhecimento.
-    */
-
-    if(
-      erro === 'network'
-    ){
-
-      if(
-        micPressionado &&
-        !micCancelado &&
-        wantRestart
-      ){
-
-        gravando =
-          false;
-
-        recognitionStarting =
-          false;
-
-        atualizarVisualMic();
-
-        statusMic.innerText =
-          '🔴 Reconectando reconhecimento...';
-
-        clearTimeout(
-          recognitionRetryTimer
-        );
-
-        recognitionRetryTimer =
-          setTimeout(
-            () => {
-
-              if(
-                micPressionado &&
-                !micCancelado &&
-                wantRestart &&
-                micPointerId !== null
-              ){
-
-                iniciarReconhecimentoNovamente();
-
-              }
-
-            },
-            250
-          );
-
-        return;
-
-      }
-
-
-      statusMic.innerText =
-        'Serviço de reconhecimento indisponível.';
-
-      return;
-
-    }
-
-
-    /*
-      Qualquer outro erro:
-      mostra o erro real no console e uma mensagem
-      mais útil para o operador.
-    */
-
-    console.error(
-      'Erro do reconhecimento:',
-      event
-    );
-
-
-    if(micPressionado){
-
-      statusMic.innerText =
-        '🔴 Tentando recuperar o reconhecimento...';
-
-      clearTimeout(
-        recognitionRetryTimer
-      );
-
-      recognitionRetryTimer =
-        setTimeout(
-          () => {
-
-            if(
-              micPressionado &&
-              !micCancelado &&
-              wantRestart &&
-              micPointerId !== null
-            ){
-
-              iniciarReconhecimentoNovamente();
-
-            }
-
-          },
-          300
-        );
-
-    }else{
-
-      statusMic.innerText =
-        'Falha no reconhecimento. Tente novamente.';
 
     }
 
@@ -3508,9 +2621,9 @@ function configurarEventosReconhecimento(){
      NOMATCH
   ------------------------------------------------------- */
 
-  rec.onnomatch = () => {
+  r.onnomatch = () => {
 
-    if(gravando){
+    if(micPressionado){
 
       statusMic.innerText =
         '🔴 Continue falando...';
@@ -3523,80 +2636,257 @@ function configurarEventosReconhecimento(){
 
 
 /* =========================================================
-   REINICIAR RECONHECIMENTO
+   RETRY
 ========================================================= */
 
-function iniciarReconhecimentoNovamente(){
+function retryRecognition(delay = 250){
+
+  clearTimeout(
+    retryRecognitionTimer
+  );
 
   if(
     !micPressionado ||
     micCancelado ||
-    !wantRestart ||
-    micPointerId === null
+    finalizandoMicrofone
   ){
 
     return;
 
   }
 
+  retryRecognitionTimer =
+    setTimeout(
+      () => {
 
-  clearTimeout(
-    recognitionRetryTimer
-  );
+        if(
+          !micPressionado ||
+          micCancelado ||
+          finalizandoMicrofone
+        ){
 
+          return;
+
+        }
+
+        iniciarSpeech();
+
+      },
+      delay
+    );
+
+}
+
+
+/* =========================================================
+   INICIAR MICROFONE COMPLETO
+========================================================= */
+
+async function iniciarMicrofoneCompleto(){
+
+  if(!micPressionado)
+    return;
+
+  if(micCancelado)
+    return;
+
+  reconhecimentoIniciando =
+    true;
+
+  atualizarVisualMic();
+
+  /*
+    Primeiro testa/acessa o dispositivo físico.
+  */
+
+  try{
+
+    await solicitarMicrofone();
+
+  }catch(error){
+
+    console.error(
+      '[MIC] getUserMedia:',
+      error
+    );
+
+    reconhecimentoIniciando =
+      false;
+
+    gravando =
+      false;
+
+    micPressionado =
+      false;
+
+    micPointerId =
+      null;
+
+    atualizarVisualMic();
+
+    if(
+      error.name === 'NotAllowedError' ||
+      error.name === 'PermissionDeniedError'
+    ){
+
+      statusMic.innerText =
+        '⚠️ Permita o microfone nas configurações do navegador.';
+
+    }else if(
+      error.name === 'NotFoundError'
+    ){
+
+      statusMic.innerText =
+        '⚠️ Nenhum microfone foi encontrado.';
+
+    }else{
+
+      statusMic.innerText =
+        '⚠️ Não foi possível acessar o microfone.';
+
+    }
+
+    return;
+
+  }
+
+
+  /*
+    O usuário pode ter soltado enquanto
+    o navegador mostrava a permissão.
+  */
 
   if(
-    recognitionStarting ||
-    gravando
+    !micPressionado ||
+    micCancelado
   ){
 
+    liberarMicrofone();
+
+    return;
+
+  }
+
+
+  /*
+    Agora sim inicia SpeechRecognition.
+  */
+
+  iniciarSpeech();
+
+}
+
+
+/* =========================================================
+   FINALIZAR
+========================================================= */
+
+async function finalizarMicrofone(){
+
+  if(finalizandoMicrofone)
+    return;
+
+  finalizandoMicrofone =
+    true;
+
+  clearTimeout(
+    retryRecognitionTimer
+  );
+
+  clearTimeout(
+    finalizacaoTimer
+  );
+
+  if(micCancelado){
+
+    finalBuffer = '';
+    interimBuffer = '';
+
+    textoManual.value = '';
+
+    tempDiv.innerText = '';
+
+    tempDiv.style.display =
+      'none';
+
+    finalizarEstadoMicrofone();
+
     return;
 
   }
 
 
-  if(!criarReconhecimento()){
+  const textoFinal =
+    (
+      finalBuffer ||
+      interimBuffer ||
+      textoManual.value ||
+      ''
+    )
+    .replace(/\s+/g,' ')
+    .trim();
 
-    statusMic.innerText =
-      'Não foi possível recuperar o reconhecimento.';
+
+  if(recognition){
+
+    try{
+
+      recognition.stop();
+
+    }catch(_){}
+
+  }
+
+
+  liberarMicrofone();
+
+
+  finalBuffer = '';
+  interimBuffer = '';
+
+
+  if(!textoFinal){
+
+    textoManual.value = '';
+
+    tempDiv.innerText = '';
+
+    tempDiv.style.display =
+      'none';
+
+    finalizarEstadoMicrofone();
 
     return;
 
   }
+
+
+  textoManual.value =
+    textoFinal;
+
+  tempDiv.innerText =
+    textoFinal;
+
+  tempDiv.style.display =
+    'block';
 
 
   try{
 
-    recognitionStarting =
-      true;
-
-    rec.start();
-
-  }catch(error){
-
-    recognitionStarting =
-      false;
-
-    console.debug(
-      'Falha ao recuperar reconhecimento:',
-      error
+    await addOcorrencia(
+      textoFinal
     );
 
+  }finally{
 
-    clearTimeout(
-      recognitionRetryTimer
-    );
+    textoManual.value = '';
 
+    tempDiv.innerText = '';
 
-    recognitionRetryTimer =
-      setTimeout(
-        () => {
+    tempDiv.style.display =
+      'none';
 
-          iniciarReconhecimentoNovamente();
-
-        },
-        400
-      );
+    finalizarEstadoMicrofone();
 
   }
 
@@ -3604,70 +2894,45 @@ function iniciarReconhecimentoNovamente(){
 
 
 /* =========================================================
-   PARAR TUDO
+   ESTADO FINAL
 ========================================================= */
 
-function pararTudo(){
+function finalizarEstadoMicrofone(){
 
-  wantRestart =
+  reconhecimentoIniciando =
     false;
 
-  recognitionGeneration++;
-
-  clearTimeout(
-    recognitionRetryTimer
-  );
-
-
-  if(rec){
-
-    try{
-
-      rec.stop();
-
-    }catch(error){
-
-      console.debug(
-        'stop:',
-        error
-      );
-
-      try{
-        rec.abort();
-      }catch(_){}
-
-    }
-
-  }
-
+  reconhecimentoAtivo =
+    false;
 
   gravando =
-    false;
-
-  recognitionStarting =
     false;
 
   micPressionado =
     false;
 
+  micCancelado =
+    false;
+
+  micPointerId =
+    null;
+
+  movimentoHorizontal =
+    0;
+
+  inicioX =
+    0;
+
+  ultimoX =
+    0;
+
+  recognition =
+    null;
+
+  finalizandoMicrofone =
+    false;
 
   atualizarVisualMic();
-
-
-  clearTimeout(
-    finalizacaoTimer
-  );
-
-
-  finalizacaoTimer =
-    setTimeout(
-      () => {
-
-        finalizarMicrofone();
-
-      },
-      220
-    );
 
 }
 
@@ -3678,16 +2943,27 @@ function pararTudo(){
 
 function cancelarMicrofone(){
 
+  console.log(
+    '[MIC] cancelado pelo usuário'
+  );
+
   micCancelado =
     true;
 
-  wantRestart =
+  micPressionado =
     false;
 
-  recognitionGeneration++;
+  gravando =
+    false;
+
+  reconhecimentoIniciando =
+    false;
+
+  reconhecimentoAtivo =
+    false;
 
   clearTimeout(
-    recognitionRetryTimer
+    retryRecognitionTimer
   );
 
   clearTimeout(
@@ -3695,14 +2971,18 @@ function cancelarMicrofone(){
   );
 
 
-  gravando =
-    false;
+  if(recognition){
 
-  recognitionStarting =
-    false;
+    try{
 
-  micPressionado =
-    false;
+      recognition.abort();
+
+    }catch(_){}
+
+  }
+
+
+  liberarMicrofone();
 
 
   finalBuffer = '';
@@ -3715,16 +2995,6 @@ function cancelarMicrofone(){
   tempDiv.style.display =
     'none';
 
-
-  if(rec){
-
-    try{
-      rec.abort();
-    }catch(_){}
-
-  }
-
-
   atualizarVisualMic();
 
   statusMic.innerText =
@@ -3734,17 +3004,13 @@ function cancelarMicrofone(){
   setTimeout(
     () => {
 
-      if(
-        !micPressionado &&
-        !gravando
-      ){
+      micCancelado =
+        false;
 
-        micCancelado =
-          false;
+      micPointerId =
+        null;
 
-        atualizarVisualMic();
-
-      }
+      atualizarVisualMic();
 
     },
     500
@@ -3754,399 +3020,402 @@ function cancelarMicrofone(){
 
 
 /* =========================================================
-   SUPORTE DO NAVEGADOR
+   POINTER DOWN
 ========================================================= */
 
-const SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition;
+btnMic.addEventListener(
+  'pointerdown',
+  event => {
 
+    event.preventDefault();
 
-if(!SpeechRecognition){
+    if(
+      micPointerId !== null
+    ){
 
-  statusMic.innerText =
-    'Reconhecimento de voz não suportado neste navegador.';
-
-}else{
-
-
-  /* =======================================================
-     POINTERDOWN
-  ======================================================= */
-
-  btnMic.addEventListener(
-    'pointerdown',
-    event => {
-
-      event.preventDefault();
-
-
-      if(
-        micPointerId !== null
-      ){
-
-        return;
-
-      }
-
-
-      if(
-        gravando ||
-        recognitionStarting ||
-        finalizandoMicrofone
-      ){
-
-        return;
-
-      }
-
-
-      micPointerId =
-        event.pointerId;
-
-
-      inicioX =
-        event.clientX;
-
-      ultimoX =
-        event.clientX;
-
-      movimentoHorizontal =
-        0;
-
-
-      micPressionado =
-        true;
-
-      micCancelado =
-        false;
-
-
-      try{
-
-        btnMic.setPointerCapture(
-          event.pointerId
-        );
-
-      }catch(_){}
-
-
-      /*
-        Fica vermelho ANTES mesmo de iniciar
-        o reconhecimento.
-      */
-
-      atualizarVisualMic();
-
-
-      iniciarGravacao();
+      return;
 
     }
-  );
 
 
-  /* =======================================================
-     POINTERMOVE
-  ======================================================= */
+    if(finalizandoMicrofone){
 
-  btnMic.addEventListener(
-    'pointermove',
-    event => {
-
-      if(
-        micPointerId === null ||
-        event.pointerId !== micPointerId ||
-        !micPressionado
-      ){
-
-        return;
-
-      }
-
-
-      event.preventDefault();
-
-
-      ultimoX =
-        event.clientX;
-
-
-      movimentoHorizontal =
-        ultimoX - inicioX;
-
-
-      if(
-        Math.abs(movimentoHorizontal) >=
-        DISTANCIA_CANCELAMENTO
-      ){
-
-        if(!micCancelado){
-
-          micCancelado =
-            true;
-
-          wantRestart =
-            false;
-
-          recognitionGeneration++;
-
-          clearTimeout(
-            recognitionRetryTimer
-          );
-
-          clearTimeout(
-            finalizacaoTimer
-          );
-
-
-          if(rec){
-
-            try{
-              rec.abort();
-            }catch(_){}
-
-          }
-
-
-          gravando =
-            false;
-
-          recognitionStarting =
-            false;
-
-
-          finalBuffer = '';
-          interimBuffer = '';
-
-          textoManual.value = '';
-
-          tempDiv.innerText = '';
-
-          tempDiv.style.display =
-            'none';
-
-
-          atualizarVisualMic();
-
-          statusMic.innerText =
-            '↔ Solte para cancelar';
-
-        }
-
-      }
+      return;
 
     }
-  );
 
 
-  /* =======================================================
-     POINTERUP
-  ======================================================= */
+    micPointerId =
+      event.pointerId;
 
-  btnMic.addEventListener(
-    'pointerup',
-    event => {
+    inicioX =
+      event.clientX;
 
-      event.preventDefault();
+    ultimoX =
+      event.clientX;
+
+    movimentoHorizontal =
+      0;
+
+    micPressionado =
+      true;
+
+    micCancelado =
+      false;
+
+    finalBuffer =
+      '';
+
+    interimBuffer =
+      '';
+
+    textoManual.value =
+      '';
+
+    tempDiv.innerText =
+      '';
+
+    tempDiv.style.display =
+      'none';
 
 
-      if(
-        micPointerId !== null &&
-        event.pointerId !== micPointerId
-      ){
+    try{
 
-        return;
+      btnMic.setPointerCapture(
+        event.pointerId
+      );
 
-      }
+    }catch(_){}
 
 
-      if(micCancelado){
+    atualizarVisualMic();
 
-        micPointerId =
-          null;
+
+    /*
+      IMPORTANTE:
+
+      Esta chamada acontece diretamente
+      dentro do pointerdown do usuário.
+    */
+
+    iniciarMicrofoneCompleto();
+
+  },
+  {
+    passive:false
+  }
+);
+
+
+/* =========================================================
+   POINTER MOVE
+========================================================= */
+
+btnMic.addEventListener(
+  'pointermove',
+  event => {
+
+    if(
+      micPointerId === null ||
+      event.pointerId !== micPointerId ||
+      !micPressionado
+    ){
+
+      return;
+
+    }
+
+    event.preventDefault();
+
+    ultimoX =
+      event.clientX;
+
+    movimentoHorizontal =
+      ultimoX - inicioX;
+
+
+    if(
+      Math.abs(movimentoHorizontal) >=
+      DISTANCIA_CANCELAMENTO
+    ){
+
+      if(!micCancelado){
 
         cancelarMicrofone();
 
-        return;
-
       }
 
+    }
+
+  },
+  {
+    passive:false
+  }
+);
+
+
+/* =========================================================
+   POINTER UP
+========================================================= */
+
+btnMic.addEventListener(
+  'pointerup',
+  event => {
+
+    event.preventDefault();
+
+    if(
+      micPointerId !== null &&
+      event.pointerId !== micPointerId
+    ){
+
+      return;
+
+    }
+
+
+    if(micCancelado){
 
       micPointerId =
         null;
 
-
-      /*
-        Mesmo se ainda estiver iniciando,
-        soltar significa encerrar.
-      */
-
-      pararTudo();
+      return;
 
     }
+
+
+    micPointerId =
+      null;
+
+    micPressionado =
+      false;
+
+
+    /*
+      Não abortamos imediatamente.
+
+      Se o SpeechRecognition ainda estiver
+      processando o último resultado, deixamos
+      o evento onend consolidar a fala.
+    */
+
+    wantStopRecognition();
+
+  },
+  {
+    passive:false
+  }
+);
+
+
+/* =========================================================
+   PARAR RECONHECIMENTO
+========================================================= */
+
+function wantStopRecognition(){
+
+  clearTimeout(
+    retryRecognitionTimer
   );
 
 
-  /* =======================================================
-     POINTERCANCEL
-  ======================================================= */
+  if(recognition){
 
-  btnMic.addEventListener(
-    'pointercancel',
-    event => {
+    try{
 
-      event.preventDefault();
+      recognition.stop();
 
+    }catch(_){}
 
-      if(
-        micPointerId !== null &&
-        event.pointerId !== micPointerId
-      ){
-
-        return;
-
-      }
+  }
 
 
-      micPointerId =
-        null;
+  if(!reconhecimentoAtivo){
 
-      cancelarMicrofone();
+    clearTimeout(
+      finalizacaoTimer
+    );
 
-    }
-  );
+    finalizacaoTimer =
+      setTimeout(
+        finalizarMicrofone,
+        150
+      );
 
-
-  /* =======================================================
-     SEGURANÇA GLOBAL
-  ======================================================= */
-
-  window.addEventListener(
-    'pointerup',
-    event => {
-
-      if(
-        micPointerId === null ||
-        event.pointerId !== micPointerId
-      ){
-
-        return;
-
-      }
-
-
-      if(micCancelado){
-
-        micPointerId =
-          null;
-
-        cancelarMicrofone();
-
-        return;
-
-      }
-
-
-      micPointerId =
-        null;
-
-      pararTudo();
-
-    }
-  );
-
-
-  /* =======================================================
-     BLUR
-  ======================================================= */
-
-  window.addEventListener(
-    'blur',
-    () => {
-
-      if(
-        micPressionado ||
-        gravando ||
-        recognitionStarting
-      ){
-
-        micPointerId =
-          null;
-
-        cancelarMicrofone();
-
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     VISIBILIDADE
-  ======================================================= */
-
-  document.addEventListener(
-    'visibilitychange',
-    () => {
-
-      if(
-        document.visibilityState !== 'visible' &&
-        (
-          micPressionado ||
-          gravando ||
-          recognitionStarting
-        )
-      ){
-
-        micPointerId =
-          null;
-
-        cancelarMicrofone();
-
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     CONTEXT MENU
-  ======================================================= */
-
-  btnMic.addEventListener(
-    'contextmenu',
-    event => {
-
-      event.preventDefault();
-
-    }
-  );
-
-
-  btnMic.addEventListener(
-    'dragstart',
-    event => {
-
-      event.preventDefault();
-
-    }
-  );
+  }
 
 }
 
 
 /* =========================================================
-   IA UNIFICADA
+   POINTER CANCEL
 ========================================================= */
 
-function abrirIA(aba = 'chat'){
+btnMic.addEventListener(
+  'pointercancel',
+  event => {
 
-  const modal =
-    document.getElementById(
-      'modalFechamento'
-    );
+    event.preventDefault();
 
-  modal.classList.add('show');
+    if(
+      micPointerId !== null &&
+      event.pointerId !== micPointerId
+    ){
+
+      return;
+
+    }
+
+    micPointerId =
+      null;
+
+    cancelarMicrofone();
+
+  },
+  {
+    passive:false
+  }
+);
+
+
+/* =========================================================
+   GLOBAL POINTER UP
+========================================================= */
+
+window.addEventListener(
+  'pointerup',
+  event => {
+
+    if(
+      micPointerId === null ||
+      event.pointerId !== micPointerId
+    ){
+
+      return;
+
+    }
+
+    micPointerId =
+      null;
+
+    if(micCancelado){
+
+      cancelarMicrofone();
+
+      return;
+
+    }
+
+    micPressionado =
+      false;
+
+    wantStopRecognition();
+
+  }
+);
+
+
+/* =========================================================
+   BLUR
+========================================================= */
+
+window.addEventListener(
+  'blur',
+  () => {
+
+    if(
+      micPressionado ||
+      gravando ||
+      reconhecimentoIniciando
+    ){
+
+      cancelarMicrofone();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   VISIBILIDADE
+========================================================= */
+
+document.addEventListener(
+  'visibilitychange',
+  () => {
+
+    if(
+      document.visibilityState !== 'visible' &&
+      (
+        micPressionado ||
+        gravando ||
+        reconhecimentoIniciando
+      )
+    ){
+
+      cancelarMicrofone();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CONTEXT MENU
+========================================================= */
+
+btnMic.addEventListener(
+  'contextmenu',
+  event => {
+
+    event.preventDefault();
+
+  }
+);
+
+
+/* =========================================================
+   DRAG
+========================================================= */
+
+btnMic.addEventListener(
+  'dragstart',
+  event => {
+
+    event.preventDefault();
+
+  }
+);
+
+
+/* =========================================================
+   STATUS INICIAL
+========================================================= */
+
+if(!navigator.mediaDevices){
+
+  statusMic.innerText =
+    'Microfone não disponível neste navegador.';
+
+}else if(!SpeechRecognition){
+
+  statusMic.innerText =
+    'Reconhecimento de voz não suportado neste navegador.';
+
+}
+
+
+/* =========================================================
+   IA
+========================================================= */
+
+function abrirIA(aba='chat'){
+
+  document
+    .getElementById('modalFechamento')
+    .classList.add('show');
 
   selecionarPainelIA(aba);
 
@@ -4156,9 +3425,7 @@ function abrirIA(aba = 'chat'){
       () => {
 
         const input =
-          document.getElementById(
-            'chatInput'
-          );
+          document.getElementById('chatInput');
 
         if(input)
           input.focus();
@@ -4172,17 +3439,15 @@ function abrirIA(aba = 'chat'){
 }
 
 
-/* =========================================================
-   CHAT
-========================================================= */
-
 function abrirChat(){
   abrirIA('chat');
 }
 
+
 function fecharChat(){
   fecharModalFechamento();
 }
+
 
 function usarAtalho(texto){
 
@@ -4252,6 +3517,7 @@ async function enviarChat(){
   status.innerText =
     '🧠 Analisando o turno...';
 
+
   try{
 
     const data =
@@ -4292,14 +3558,8 @@ async function enviarChat(){
       content:resposta
     });
 
-    if(
-      historicoChat.length > 12
-    ){
-
-      historicoChat =
-        historicoChat.slice(-12);
-
-    }
+    historicoChat =
+      historicoChat.slice(-12);
 
     adicionarMensagemChat(
       'assistant',
@@ -4322,6 +3582,7 @@ async function enviarChat(){
 
   }
 
+
   chatEnviando =
     false;
 
@@ -4342,9 +3603,7 @@ function adicionarMensagemChat(
 ){
 
   const lista =
-    document.getElementById(
-      'chatLista'
-    );
+    document.getElementById('chatLista');
 
   const div =
     document.createElement('div');
@@ -4379,11 +3638,9 @@ document
   .getElementById('chatInput')
   .addEventListener(
     'keydown',
-    function(event){
+    event => {
 
-      if(
-        event.key === 'Enter'
-      ){
+      if(event.key === 'Enter'){
 
         event.preventDefault();
 
@@ -4454,6 +3711,7 @@ async function analisarTurno(){
     ocorrencias.length +
     ' ocorrência(s) sendo analisada(s).';
 
+
   try{
 
     const data =
@@ -4473,6 +3731,7 @@ async function analisarTurno(){
 
         }
       );
+
 
     fechamentoDados = {
 
@@ -4494,6 +3753,7 @@ async function analisarTurno(){
 
     };
 
+
     document.getElementById(
       'textoGerencial'
     ).classList.remove('loading-ia');
@@ -4501,6 +3761,7 @@ async function analisarTurno(){
     document.getElementById(
       'textoExecutivo'
     ).classList.remove('loading-ia');
+
 
     document.getElementById(
       'fechamentoInfo'
@@ -4513,12 +3774,11 @@ async function analisarTurno(){
       (
         data.frentes ||
         new Set(
-          ocorrencias.map(
-            o => o.frente
-          )
+          ocorrencias.map(o => o.frente)
         ).size
       ) +
       ' frente(s) analisada(s).';
+
 
     selecionarPainelIA(
       'gerencial'
@@ -4547,11 +3807,6 @@ async function analisarTurno(){
       'textoExecutivo'
     ).innerText =
       erro;
-
-    document.getElementById(
-      'fechamentoInfo'
-    ).innerText =
-      'Não foi possível concluir a análise.';
 
   }
 
@@ -4587,7 +3842,7 @@ function extrairGerencial(texto){
 
 
 /* =========================================================
-   SELECIONAR PAINEL
+   PAINÉIS IA
 ========================================================= */
 
 function selecionarPainelIA(tipo){
@@ -4605,6 +3860,7 @@ function selecionarPainelIA(tipo){
 
   }
 
+
   const mapaTabs = {
 
     chat:'tabChat',
@@ -4612,6 +3868,7 @@ function selecionarPainelIA(tipo){
     executivo:'tabExecutivo'
 
   };
+
 
   const mapaPaineis = {
 
@@ -4621,19 +3878,20 @@ function selecionarPainelIA(tipo){
 
   };
 
+
   document
     .querySelectorAll('.fechamento-tab')
     .forEach(
-      b =>
-        b.classList.remove('ativo')
+      b => b.classList.remove('ativo')
     );
+
 
   document
     .querySelectorAll('.painel-ia')
     .forEach(
-      p =>
-        p.classList.remove('ativo')
+      p => p.classList.remove('ativo')
     );
+
 
   const tab =
     document.getElementById(
@@ -4643,6 +3901,7 @@ function selecionarPainelIA(tipo){
   if(tab)
     tab.classList.add('ativo');
 
+
   const painel =
     document.getElementById(
       mapaPaineis[tipo]
@@ -4650,6 +3909,7 @@ function selecionarPainelIA(tipo){
 
   if(painel)
     painel.classList.add('ativo');
+
 
   if(
     tipo === 'gerencial' ||
@@ -4662,10 +3922,6 @@ function selecionarPainelIA(tipo){
 
 }
 
-
-/* =========================================================
-   COMPATIBILIDADE
-========================================================= */
 
 function selecionarFechamento(tipo){
 
@@ -4694,11 +3950,13 @@ function atualizarAbasFechamento(){
   if(botao)
     botao.classList.add('ativo');
 
+
   const conteudo =
     fechamentoDados[tipo];
 
   if(!conteudo)
     return;
+
 
   const textoId = {
 
@@ -4707,10 +3965,12 @@ function atualizarAbasFechamento(){
 
   };
 
+
   const texto =
     document.getElementById(
       textoId[tipo]
     );
+
 
   if(texto){
 
@@ -4727,7 +3987,7 @@ function atualizarAbasFechamento(){
 
 
 /* =========================================================
-   FORMATAÇÃO
+   NORMALIZAÇÃO
 ========================================================= */
 
 function normalizarTextoPublicacao(texto){
@@ -4802,40 +4062,12 @@ function copiarFechamentoAtual(){
 }
 
 
-/* =========================================================
-   FECHAR MODAL
-========================================================= */
-
-function fecharModalFechamento(){
-
-  document
-    .getElementById('modalFechamento')
-    .classList.remove('show');
-
-}
-
-
-/* =========================================================
-   COMPATIBILIDADE
-========================================================= */
-
-function organizar(){
-
-  analisarTurno();
-
-}
-
-
 function copiarTexto(){
 
   copiarFechamentoAtual();
 
 }
 
-
-/* =========================================================
-   COPIAR GENÉRICO
-========================================================= */
 
 function copiarGenerico(
   texto,
@@ -4850,21 +4082,14 @@ function copiarGenerico(
     navigator.clipboard
       .writeText(texto)
       .then(
-        () => {
-
-          alert(mensagem);
-
-        }
+        () => alert(mensagem)
       )
       .catch(
-        () => {
-
+        () =>
           copiarFallback(
             texto,
             mensagem
-          );
-
-        }
+          )
       );
 
   }else{
@@ -4879,13 +4104,9 @@ function copiarGenerico(
 }
 
 
-/* =========================================================
-   FALLBACK
-========================================================= */
-
 function copiarFallback(
   texto,
-  mensagem = 'Texto copiado com sucesso!'
+  mensagem='Texto copiado com sucesso!'
 ){
 
   const area =
@@ -4920,13 +4141,87 @@ function copiarFallback(
 
   }
 
-  document.body.removeChild(area);
+  document.body.removeChild(
+    area
+  );
 
 }
 
 
 /* =========================================================
-   ATUALIZAÇÃO AUTOMÁTICA
+   MODAL
+========================================================= */
+
+function fecharModalFechamento(){
+
+  document
+    .getElementById('modalFechamento')
+    .classList.remove('show');
+
+}
+
+
+function organizar(){
+
+  analisarTurno();
+
+}
+
+
+/* =========================================================
+   ESC
+========================================================= */
+
+document.addEventListener(
+  'keydown',
+  event => {
+
+    if(event.key !== 'Escape')
+      return;
+
+    document
+      .querySelectorAll('.modal.show')
+      .forEach(
+        modal =>
+          modal.classList.remove('show')
+      );
+
+  }
+);
+
+
+/* =========================================================
+   CLIQUE FORA
+========================================================= */
+
+document
+  .getElementById('modalFechamento')
+  .addEventListener(
+    'click',
+    function(event){
+
+      if(event.target === this)
+        fecharModalFechamento();
+
+    }
+  );
+
+
+document
+  .getElementById('modalEdit')
+  .addEventListener(
+    'click',
+    function(event){
+
+      if(event.target === this)
+        this.classList.remove('show');
+
+    }
+  );
+
+
+/* =========================================================
+   POLLING
 ========================================================= */
 
 function iniciarAtualizacao(){
@@ -4960,74 +4255,7 @@ function iniciarAtualizacao(){
 
 
 /* =========================================================
-   ESC
-========================================================= */
-
-document.addEventListener(
-  'keydown',
-  function(event){
-
-    if(
-      event.key !== 'Escape'
-    ){
-
-      return;
-
-    }
-
-    document
-      .querySelectorAll('.modal.show')
-      .forEach(
-        modal =>
-          modal.classList.remove('show')
-      );
-
-  }
-);
-
-
-/* =========================================================
-   CLICAR FORA DO MODAL
-========================================================= */
-
-document
-  .getElementById('modalFechamento')
-  .addEventListener(
-    'click',
-    function(event){
-
-      if(
-        event.target === this
-      ){
-
-        fecharModalFechamento();
-
-      }
-
-    }
-  );
-
-
-document
-  .getElementById('modalEdit')
-  .addEventListener(
-    'click',
-    function(event){
-
-      if(
-        event.target === this
-      ){
-
-        this.classList.remove('show');
-
-      }
-
-    }
-  );
-
-
-/* =========================================================
-   CARGA INICIAL
+   CARGA
 ========================================================= */
 
 loadSupa();

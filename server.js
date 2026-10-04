@@ -1632,7 +1632,7 @@ Não invente causa.
 Utilize exatamente esta estrutura:
 
 *📋 ANÁLISE GERENCIAL — MANDU*
-
+----------------------------------
 *VISÃO GERAL DO TURNO*
 - Faça uma leitura geral do comportamento operacional.
 - Destaque a principal condição observada.
@@ -1732,7 +1732,7 @@ Se houver vários problemas, selecione somente os mais críticos.
 Utilize:
 
 *⚡ RESUMO EXECUTIVO — MANDU*
-
+-----------------------------------
 *CRÍTICO*
 - Principal ponto do turno.
 

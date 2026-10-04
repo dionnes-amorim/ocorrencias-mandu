@@ -7,1012 +7,565 @@ import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
-// ======================================================
-// CAMINHOS
-// ======================================================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const __filename =
-fileURLToPath(import.meta.url);
+const app = express();
 
-const __dirname =
-path.dirname(__filename);
+app.disable('x-powered-by');
 
-// ======================================================
-// EXPRESS
-// ======================================================
+app.use(cors());
 
-const app =
-express();
-
-app.disable(
-'x-powered-by'
-);
-
-app.use(
-cors()
-);
-
-app.use(
-express.json({
+app.use(express.json({
 limit: '5mb'
-})
-);
+}));
 
-app.use(
-express.urlencoded({
+app.use(express.urlencoded({
 extended: false,
 limit: '1mb'
-})
-);
+}));
 
-app.use(
-express.static(
-__dirname,
-{
+app.use(express.static(__dirname, {
 maxAge: '1h'
-}
-)
-);
+}));
 
-// ======================================================
-// CONFIGURAÇÕES
-// ======================================================
+const PORT = process.env.PORT || 10000;
 
-const PORT =
-process.env.PORT ||
-10000;
-
-const SUPABASE_URL =
-process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL;
 
 const SUPABASE_KEY =
 process.env.SUPABASE_SECRET_KEY ||
 process.env.SUPABASE_PUBLISHABLE_KEY ||
 process.env.SUPABASE_ANON_KEY;
 
-const GEMINI_KEY =
-process.env.GEMINI_API_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
-const TABLE =
-'ocorrencias_mandu';
-
-// ======================================================
-// MODELOS GEMINI
-// ======================================================
-//
-// Ordem:
-// 1. Gemini 3.8 Flash = principal
-// 2. Flash Latest
-// 3. Gemini 2.5 Flash
-// 4. Flash Lite
-//
-// O sistema tenta o próximo caso o anterior
-// esteja indisponível.
-//
+const TABLE = 'ocorrencias_mandu';
 
 const MODELS = [
-
 'gemini-3.8-flash',
-
 'gemini-flash-latest',
-
 'gemini-2.5-flash',
-
 'gemini-2.5-flash-lite',
-
 'gemini-flash-lite-latest'
-
 ];
 
-// ======================================================
-// SUPABASE
-// ======================================================
+let supa = null;
 
-let supa =
-null;
-
-if (
-SUPABASE_URL &&
-SUPABASE_KEY
-) {
-
-supa =
-createClient(
+if (SUPABASE_URL && SUPABASE_KEY) {
+supa = createClient(
 SUPABASE_URL,
 SUPABASE_KEY,
 {
 auth: {
-persistSession:
-false,
-
-```
-      autoRefreshToken:
-        false,
-
-      detectSessionInUrl:
-        false
-    }
-  }
+persistSession: false,
+autoRefreshToken: false,
+detectSessionInUrl: false
+}
+}
 );
-```
-
 }
 
-// ======================================================
-// PÁGINA PRINCIPAL
-// ======================================================
-
-app.get(
-'/',
-(
-req,
-res
-) => {
-
-```
+app.get('/', (req, res) => {
 res.sendFile(
-  path.join(
-    __dirname,
-    'index.html'
-  )
+path.join(__dirname, 'index.html')
 );
-```
+});
 
-}
-);
-
-// ======================================================
-// FUNÇÕES AUXILIARES
-// ======================================================
-
-function textoSeguro(
-valor,
-limite = 10000
-) {
-
+function textoSeguro(valor, limite = 10000) {
 if (
 valor === undefined ||
 valor === null
 ) {
-
-```
 return '';
-```
-
 }
 
-return String(
-valor
-)
-.replace(
-/\u0000/g,
-''
-)
+return String(valor)
+.replace(/\u0000/g, '')
 .trim()
-.slice(
-0,
-limite
-);
-
+.slice(0, limite);
 }
 
-// ======================================================
-// FRENTE
-// ======================================================
-
-function frenteSegura(
-valor
-) {
-
-const frente =
-textoSeguro(
-valor,
-50
-);
-
-return (
-frente ||
-'GERAL'
-);
-
+function frenteSegura(valor) {
+const frente = textoSeguro(valor, 50);
+return frente || 'GERAL';
 }
-
-// ======================================================
-// TURNO
-// ======================================================
 
 function turnoAtual() {
+const hora = new Date().getHours();
 
-const hora =
-new Date()
-.getHours();
-
-if (
-hora >= 6 &&
-hora < 14
-) {
-
-```
+if (hora >= 6 && hora < 14) {
 return 'A';
-```
-
 }
 
-if (
-hora >= 14 &&
-hora < 22
-) {
-
-```
+if (hora >= 14 && hora < 22) {
 return 'B';
-```
-
 }
 
 return 'C';
-
 }
-
-// ======================================================
-// HORA
-// ======================================================
 
 function horaAtual() {
-
-return new Date()
-.toLocaleTimeString(
+return new Date().toLocaleTimeString(
 'pt-BR',
 {
-hour:
-'2-digit',
-
-```
-    minute:
-      '2-digit'
-  }
+hour: '2-digit',
+minute: '2-digit'
+}
 );
-```
-
 }
 
-// ======================================================
-// NORMALIZAR OCORRÊNCIA
-// ======================================================
-
-function normalizarOcorrencia(
-item
-) {
-
+function normalizarOcorrencia(item) {
 return {
+id: item?.id || null,
 
 ```
-id:
-  item?.id ||
-  null,
+hora: textoSeguro(
+  item?.hora,
+  20
+),
 
-hora:
-  textoSeguro(
-    item?.hora,
-    20
-  ),
+frente: frenteSegura(
+  item?.frente
+),
 
-frente:
-  frenteSegura(
-    item?.frente
-  ),
+texto: textoSeguro(
+  item?.texto,
+  10000
+),
 
-texto:
-  textoSeguro(
-    item?.texto,
-    10000
-  ),
-
-turno:
-  textoSeguro(
-    item?.turno,
-    20
-  ),
+turno: textoSeguro(
+  item?.turno,
+  20
+),
 
 unidade:
   textoSeguro(
     item?.unidade,
     50
-  ) ||
-  'MANDU',
+  ) || 'MANDU',
 
 created_at:
-  item?.created_at ||
-  null
+  item?.created_at || null
 ```
 
 };
-
 }
 
-// ======================================================
-// STATUS
-// ======================================================
+app.get('/api/status', async (req, res) => {
+res.json({
+ok: true,
+sistema: 'CTT Diário de Turno - MANDU',
+supabase: !!supa,
+gemini: !!GEMINI_KEY,
+modelos: MODELS,
+hora: horaAtual()
+});
+});
 
-app.get(
-'/api/status',
-async (
-req,
-res
-) => {
+app.get('/api/ocorrencias', async (req, res) => {
+try {
+if (!supa) {
+return res.status(500).json({
+error:
+'Supabase não configurado no Render.'
+});
+}
 
 ```
-res.json({
+const {
+  data,
+  error
+} = await supa
+  .from(TABLE)
+  .select('*')
+  .order(
+    'created_at',
+    {
+      ascending: false
+    }
+  );
 
-  ok:
-    true,
+if (error) {
+  console.error(
+    'ERRO SUPABASE GET:',
+    error
+  );
 
-  sistema:
-    'CTT Diário de Turno - MANDU',
+  return res.status(500).json({
+    error: error.message
+  });
+}
 
-  supabase:
-    !!supa,
+return res.json(
+  (data || []).map(
+    normalizarOcorrencia
+  )
+);
+```
 
-  gemini:
-    !!GEMINI_KEY,
+} catch (error) {
+console.error(
+'ERRO GET OCORRÊNCIAS:',
+error
+);
 
-  modelos:
-    MODELS,
-
-  hora:
-    horaAtual()
-
+```
+return res.status(500).json({
+  error:
+    'Erro ao carregar ocorrências.'
 });
 ```
 
 }
+});
+
+app.post('/api/ocorrencias', async (req, res) => {
+try {
+if (!supa) {
+return res.status(500).json({
+error:
+'Supabase não configurado no Render.'
+});
+}
+
+```
+const texto = textoSeguro(
+  req.body?.texto,
+  10000
 );
 
-// ======================================================
-// GET OCORRÊNCIAS
-// ======================================================
-
-app.get(
-'/api/ocorrencias',
-async (
-req,
-res
-) => {
-
-```
-try {
-
-  if (!supa) {
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          'Supabase não configurado no Render.'
-
-      });
-
-  }
-
-  const {
-    data,
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .select('*')
-      .order(
-        'created_at',
-        {
-          ascending:
-            false
-        }
-      );
-
-  if (error) {
-
-    console.error(
-      'ERRO SUPABASE GET:',
-      error
-    );
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          error.message
-
-      });
-
-  }
-
-  return res.json(
-
-    (data || [])
-      .map(
-        normalizarOcorrencia
-      )
-
-  );
-
-} catch (
-  error
-) {
-
-  console.error(
-    'ERRO GET OCORRÊNCIAS:',
-    error
-  );
-
-  return res
-    .status(500)
-    .json({
-
-      error:
-        'Erro ao carregar ocorrências.'
-
-    });
-
+if (!texto) {
+  return res.status(400).json({
+    error:
+      'Texto da ocorrência é obrigatório.'
+  });
 }
-```
 
-}
-);
-
-// ======================================================
-// POST OCORRÊNCIA
-// ======================================================
-
-app.post(
-'/api/ocorrencias',
-async (
-req,
-res
-) => {
-
-```
-try {
-
-  if (!supa) {
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          'Supabase não configurado no Render.'
-
-      });
-
-  }
-
-  const texto =
+const registro = {
+  hora:
     textoSeguro(
-      req.body?.texto,
+      req.body?.hora,
+      20
+    ) || horaAtual(),
+
+  frente:
+    frenteSegura(
+      req.body?.frente
+    ),
+
+  texto,
+
+  turno:
+    textoSeguro(
+      req.body?.turno,
+      20
+    ) || turnoAtual(),
+
+  unidade:
+    textoSeguro(
+      req.body?.unidade,
+      50
+    ) || 'MANDU'
+};
+
+const {
+  data,
+  error
+} = await supa
+  .from(TABLE)
+  .insert(registro)
+  .select()
+  .single();
+
+if (error) {
+  console.error(
+    'ERRO SUPABASE INSERT:',
+    error
+  );
+
+  return res.status(500).json({
+    error: error.message
+  });
+}
+
+return res
+  .status(201)
+  .json(
+    normalizarOcorrencia(data)
+  );
+```
+
+} catch (error) {
+console.error(
+'ERRO POST OCORRÊNCIA:',
+error
+);
+
+```
+return res.status(500).json({
+  error:
+    'Erro ao salvar ocorrência.'
+});
+```
+
+}
+});
+
+app.put('/api/ocorrencias/:id', async (req, res) => {
+try {
+if (!supa) {
+return res.status(500).json({
+error:
+'Supabase não configurado no Render.'
+});
+}
+
+```
+const id = textoSeguro(
+  req.params.id,
+  100
+);
+
+const atualizacao = {};
+
+if (
+  req.body?.texto !==
+  undefined
+) {
+  atualizacao.texto =
+    textoSeguro(
+      req.body.texto,
       10000
     );
+}
 
-  if (!texto) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Texto da ocorrência é obrigatório.'
-
-      });
-
-  }
-
-  const registro = {
-
-    hora:
-      textoSeguro(
-        req.body?.hora,
-        20
-      ) ||
-      horaAtual(),
-
-    frente:
-      frenteSegura(
-        req.body?.frente
-      ),
-
-    texto,
-
-    turno:
-      textoSeguro(
-        req.body?.turno,
-        20
-      ) ||
-      turnoAtual(),
-
-    unidade:
-      textoSeguro(
-        req.body?.unidade,
-        50
-      ) ||
-      'MANDU'
-
-  };
-
-  const {
-    data,
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .insert(
-        registro
-      )
-      .select()
-      .single();
-
-  if (error) {
-
-    console.error(
-      'ERRO SUPABASE INSERT:',
-      error
-    );
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          error.message
-
-      });
-
-  }
-
-  return res
-    .status(201)
-    .json(
-      normalizarOcorrencia(
-        data
-      )
-    );
-
-} catch (
-  error
+if (
+  req.body?.frente !==
+  undefined
 ) {
-
-  console.error(
-    'ERRO POST OCORRÊNCIA:',
-    error
-  );
-
-  return res
-    .status(500)
-    .json({
-
-      error:
-        'Erro ao salvar ocorrência.'
-
-    });
-
+  atualizacao.frente =
+    frenteSegura(
+      req.body.frente
+    );
 }
-```
 
-}
-);
-
-// ======================================================
-// PUT OCORRÊNCIA
-// ======================================================
-
-app.put(
-'/api/ocorrencias/:id',
-async (
-req,
-res
-) => {
-
-```
-try {
-
-  if (!supa) {
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          'Supabase não configurado no Render.'
-
-      });
-
-  }
-
-  const id =
+if (
+  req.body?.hora !==
+  undefined
+) {
+  atualizacao.hora =
     textoSeguro(
-      req.params.id,
-      100
+      req.body.hora,
+      20
     );
+}
 
-  const atualizacao =
-    {};
-
-  if (
-    req.body?.texto !==
-    undefined
-  ) {
-
-    atualizacao.texto =
-      textoSeguro(
-        req.body.texto,
-        10000
-      );
-
-  }
-
-  if (
-    req.body?.frente !==
-    undefined
-  ) {
-
-    atualizacao.frente =
-      frenteSegura(
-        req.body.frente
-      );
-
-  }
-
-  if (
-    req.body?.hora !==
-    undefined
-  ) {
-
-    atualizacao.hora =
-      textoSeguro(
-        req.body.hora,
-        20
-      );
-
-  }
-
-  if (
-    req.body?.turno !==
-    undefined
-  ) {
-
-    atualizacao.turno =
-      textoSeguro(
-        req.body.turno,
-        20
-      );
-
-  }
-
-  if (
-    req.body?.unidade !==
-    undefined
-  ) {
-
-    atualizacao.unidade =
-      textoSeguro(
-        req.body.unidade,
-        50
-      );
-
-  }
-
-  if (
-    !Object.keys(
-      atualizacao
-    ).length
-  ) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Nenhum campo para atualizar.'
-
-      });
-
-  }
-
-  const {
-    data,
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .update(
-        atualizacao
-      )
-      .eq(
-        'id',
-        id
-      )
-      .select()
-      .single();
-
-  if (error) {
-
-    console.error(
-      'ERRO SUPABASE UPDATE:',
-      error
-    );
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          error.message
-
-      });
-
-  }
-
-  return res.json(
-    normalizarOcorrencia(
-      data
-    )
-  );
-
-} catch (
-  error
+if (
+  req.body?.turno !==
+  undefined
 ) {
-
-  console.error(
-    'ERRO PUT OCORRÊNCIA:',
-    error
-  );
-
-  return res
-    .status(500)
-    .json({
-
-      error:
-        'Erro ao atualizar ocorrência.'
-
-    });
-
-}
-```
-
-}
-);
-
-// ======================================================
-// DELETE OCORRÊNCIA
-// ======================================================
-
-app.delete(
-'/api/ocorrencias/:id',
-async (
-req,
-res
-) => {
-
-```
-try {
-
-  if (!supa) {
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          'Supabase não configurado no Render.'
-
-      });
-
-  }
-
-  const id =
+  atualizacao.turno =
     textoSeguro(
-      req.params.id,
-      100
+      req.body.turno,
+      20
     );
+}
 
-  const {
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .delete()
-      .eq(
-        'id',
-        id
-      );
-
-  if (error) {
-
-    console.error(
-      'ERRO SUPABASE DELETE:',
-      error
-    );
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          error.message
-
-      });
-
-  }
-
-  return res.json({
-    ok:
-      true
-  });
-
-} catch (
-  error
+if (
+  req.body?.unidade !==
+  undefined
 ) {
+  atualizacao.unidade =
+    textoSeguro(
+      req.body.unidade,
+      50
+    );
+}
 
+if (
+  !Object.keys(
+    atualizacao
+  ).length
+) {
+  return res.status(400).json({
+    error:
+      'Nenhum campo para atualizar.'
+  });
+}
+
+const {
+  data,
+  error
+} = await supa
+  .from(TABLE)
+  .update(atualizacao)
+  .eq('id', id)
+  .select()
+  .single();
+
+if (error) {
   console.error(
-    'ERRO DELETE OCORRÊNCIA:',
+    'ERRO SUPABASE UPDATE:',
     error
   );
 
-  return res
-    .status(500)
-    .json({
-
-      error:
-        'Erro ao excluir ocorrência.'
-
-    });
-
+  return res.status(500).json({
+    error: error.message
+  });
 }
+
+return res.json(
+  normalizarOcorrencia(data)
+);
 ```
 
-}
+} catch (error) {
+console.error(
+'ERRO PUT OCORRÊNCIA:',
+error
 );
 
-// ======================================================
-// LIMPAR OCORRÊNCIAS
-// ======================================================
-
-app.delete(
-'/api/ocorrencias',
-async (
-req,
-res
-) => {
-
 ```
+return res.status(500).json({
+  error:
+    'Erro ao atualizar ocorrência.'
+});
+```
+
+}
+});
+
+app.delete('/api/ocorrencias/:id', async (req, res) => {
 try {
+if (!supa) {
+return res.status(500).json({
+error:
+'Supabase não configurado no Render.'
+});
+}
 
-  if (!supa) {
+```
+const id = textoSeguro(
+  req.params.id,
+  100
+);
 
-    return res
-      .status(500)
-      .json({
-
-        error:
-          'Supabase não configurado no Render.'
-
-      });
-
-  }
-
-  const {
-    error
-  } =
-    await supa
-      .from(TABLE)
-      .delete()
-      .not(
-        'id',
-        'is',
-        null
-      );
-
-  if (error) {
-
-    console.error(
-      'ERRO SUPABASE LIMPAR:',
-      error
-    );
-
-    return res
-      .status(500)
-      .json({
-
-        error:
-          error.message
-
-      });
-
-  }
-
-  return res.json({
-    ok:
-      true
-  });
-
-} catch (
+const {
   error
-) {
+} = await supa
+  .from(TABLE)
+  .delete()
+  .eq('id', id);
 
+if (error) {
   console.error(
-    'ERRO LIMPAR:',
+    'ERRO SUPABASE DELETE:',
     error
   );
 
-  return res
-    .status(500)
-    .json({
-
-      error:
-        'Erro ao limpar ocorrências.'
-
-    });
-
+  return res.status(500).json({
+    error: error.message
+  });
 }
+
+return res.json({
+  ok: true
+});
+```
+
+} catch (error) {
+console.error(
+'ERRO DELETE OCORRÊNCIA:',
+error
+);
+
+```
+return res.status(500).json({
+  error:
+    'Erro ao excluir ocorrência.'
+});
 ```
 
 }
+});
+
+app.delete('/api/ocorrencias', async (req, res) => {
+try {
+if (!supa) {
+return res.status(500).json({
+error:
+'Supabase não configurado no Render.'
+});
+}
+
+```
+const {
+  error
+} = await supa
+  .from(TABLE)
+  .delete()
+  .not(
+    'id',
+    'is',
+    null
+  );
+
+if (error) {
+  console.error(
+    'ERRO SUPABASE LIMPAR:',
+    error
+  );
+
+  return res.status(500).json({
+    error: error.message
+  });
+}
+
+return res.json({
+  ok: true
+});
+```
+
+} catch (error) {
+console.error(
+'ERRO LIMPAR:',
+error
 );
 
-// ======================================================
-// PREPARAR OCORRÊNCIAS PARA IA
-// ======================================================
+```
+return res.status(500).json({
+  error:
+    'Erro ao limpar ocorrências.'
+});
+```
+
+}
+});
 
 function prepararOcorrenciasIA(
 ocorrencias = []
 ) {
-
-return (
-ocorrencias || []
-)
-.map(
-normalizarOcorrencia
-)
-.filter(
-item =>
-item.texto
-);
-
+return (ocorrencias || [])
+.map(normalizarOcorrencia)
+.filter(item => item.texto);
 }
-
-// ======================================================
-// AGRUPAR POR FRENTE
-// ======================================================
 
 function agruparPorFrente(
 ocorrencias = []
 ) {
+const grupos = {};
 
-const grupos =
-{};
-
-for (
-const item
-of ocorrencias
-) {
+for (const item of ocorrencias) {
+const frente =
+item.frente || 'GERAL';
 
 ```
-const frente =
-  item.frente ||
-  'GERAL';
-
-if (
-  !grupos[frente]
-) {
-
-  grupos[frente] =
-    [];
-
+if (!grupos[frente]) {
+  grupos[frente] = [];
 }
 
-grupos[frente]
-  .push(
-    item
-  );
+grupos[frente].push(item);
 ```
 
 }
@@ -1020,72 +573,40 @@ grupos[frente]
 return grupos;
 }
 
-// ======================================================
-// CONTEXTO POR FRENTE
-// ======================================================
-
 function gerarContextoPorFrente(
 ocorrencias = []
 ) {
-
 const grupos =
 agruparPorFrente(
 ocorrencias
 );
 
 const frentes =
-Object.keys(
-grupos
-).sort();
+Object.keys(grupos).sort();
 
-if (
-!frentes.length
-) {
-
-```
-return (
-  'Nenhuma ocorrência registrada.'
-);
-```
-
+if (!frentes.length) {
+return 'Nenhuma ocorrência registrada.';
 }
 
 return frentes
+.map(frente => {
+const linhas =
+grupos[frente]
 .map(
-frente => {
+item =>
+`- ${item.hora || '--:--'} | ${item.texto}`
+)
+.join('\n');
 
 ```
-    const linhas =
-      grupos[frente]
-        .map(
-          item =>
-            `- ${item.hora || '--:--'} | ${item.texto}`
-        )
-        .join(
-          '\n'
-        );
-
-    return (
-      `FRENTE ${frente}\n${linhas}`
-    );
-
-  }
-)
-.join(
-  '\n\n'
-);
+  return `FRENTE ${frente}\n${linhas}`;
+})
+.join('\n\n');
 ```
 
 }
 
-// ======================================================
-// OBTER OCORRÊNCIAS
-// ======================================================
-
-async function obterOcorrenciasIA(
-req
-) {
-
+async function obterOcorrenciasIA(req) {
 console.log(
 'IA - obterOcorrenciasIA:',
 'usarBanco =',
@@ -1095,29 +616,24 @@ req.body?.usarBanco,
 );
 
 if (
-req.body?.usarBanco ===
-true &&
+req.body?.usarBanco === true &&
 supa
 ) {
+const {
+data,
+error
+} = await supa
+.from(TABLE)
+.select('*')
+.order(
+'created_at',
+{
+ascending: true
+}
+);
 
 ```
-const {
-  data,
-  error
-} =
-  await supa
-    .from(TABLE)
-    .select('*')
-    .order(
-      'created_at',
-      {
-        ascending:
-          true
-      }
-    );
-
 if (error) {
-
   console.error(
     'IA - ERRO SUPABASE:',
     error
@@ -1126,7 +642,6 @@ if (error) {
   throw new Error(
     `Erro ao consultar Supabase: ${error.message}`
   );
-
 }
 
 const resultado =
@@ -1146,8 +661,7 @@ return resultado;
 
 const resultado =
 prepararOcorrenciasIA(
-req.body?.ocorrencias ||
-[]
+req.body?.ocorrencias || []
 );
 
 console.log(
@@ -1158,22 +672,18 @@ resultado.length
 return resultado;
 }
 
-// ======================================================
-// SYSTEM IA
-// ======================================================
-
 const SYSTEM_IA = `
 Você é a inteligência operacional do CTT Diário de Turno da unidade MANDU.
 
-Você trabalha como um analista operacional sênior.
+Atue como um analista operacional sênior.
 
-Sua função é interpretar ocorrências de CTT, logística, colheita, frentes, caminhões, cavalos, carretas, manutenção, carregamento, descarga, pátio, moagem, tecnologia e demais eventos operacionais.
+Sua função é analisar ocorrências de CTT, logística, colheita, frentes, caminhões, cavalos, carretas, manutenção, carregamento, descarga, pátio, moagem, tecnologia e demais eventos operacionais.
 
 NÃO seja apenas um resumidor.
 
-Faça análise.
+Faça análise operacional.
 
-CRUZE as ocorrências quando houver relação evidente.
+Cruze ocorrências quando houver relação evidente.
 
 Procure:
 
@@ -1185,7 +695,7 @@ Procure:
 * risco de quebra operacional;
 * frentes que exigem atenção;
 * problemas que merecem cobrança;
-* ações que podem reduzir o impacto.
+* ações que podem reduzir impacto.
 
 REGRAS ABSOLUTAS:
 
@@ -1207,25 +717,22 @@ REGRAS ABSOLUTAS:
 
 FORMATAÇÃO:
 
-Títulos:
-*⚠️ PRINCIPAIS PROBLEMAS*
+Use títulos no formato:
+*TÍTULO*
 
-Tópicos:
+Use tópicos no formato:
 
-* Frente 501 apresenta...
+* informação
 
-Negrito:
+Use negrito no formato:
 *Frente 501*
 
-Recomendação:
+Use recomendação:
 *SUGESTÃO:* acompanhar...
 
 NUNCA use:
-
 **texto**
-
 ***texto***
-
 blocos de código.
 
 Use somente UM asterisco de cada lado para negrito.
@@ -1237,86 +744,66 @@ Não diga que você é uma IA.
 Não escreva introduções desnecessárias.
 `;
 
-// ======================================================
-// NORMALIZAR WHATSAPP
-// ======================================================
-
-function normalizarPublicacaoIA(
-texto
-) {
-
-let resultado =
-String(
+function normalizarPublicacaoIA(texto) {
+let resultado = String(
 texto || ''
 );
 
-resultado =
-resultado
-.replace(
-/\r\n/g,
-'\n'
-)
-.replace(
-/\r/g,
-'\n'
-);
+resultado = resultado
+.replace(/\r\n/g, '\n')
+.replace(/\r/g, '\n');
 
-// Remove Markdown code fences.
-resultado =
-resultado
-.replace(
-/`(?:javascript|js|text|markdown|md)?/gi,
-        ''
-      )
-      .replace(
-        /`/g,
+resultado = resultado.replace(
+/```(?:javascript|js|text|markdown|md)?/gi,
 ''
 );
 
-// Converte **texto** para *texto*.
-resultado =
-resultado.replace(
+resultado = resultado.replace(
+/```/g,
+''
+);
+
+resultado = resultado.replace(
 /**([^*\n]+)**/g,
 '*$1*'
 );
 
-// Remove asteriscos excessivos.
-resultado =
-resultado.replace(
+resultado = resultado.replace(
 /*{3,}/g,
 '*'
 );
 
-// Corrige espaços dentro de títulos.
-resultado =
-resultado.replace(
-/*\s+*/g,
-'*'
+resultado = resultado.replace(
+/*\s+([^*\n]+)\s+*/g,
+'*$1*'
 );
 
-// Remove separadores.
-resultado =
-resultado.replace(
+resultado = resultado.replace(
+/^#{1,6}\s*/gm,
+''
+);
+
+resultado = resultado.replace(
 /^={3,}.*$/gm,
 ''
 );
 
-resultado =
-resultado.replace(
+resultado = resultado.replace(
 /^-{5,}$/gm,
 ''
 );
 
-// Remove espaço antes de pontuação.
-resultado =
-resultado.replace(
+resultado = resultado.replace(
+/•/g,
+'-'
+);
+
+resultado = resultado.replace(
 / +([,.;:!?])/g,
 '$1'
 );
 
-// Evita excesso de linhas.
-resultado =
-resultado.replace(
+resultado = resultado.replace(
 /\n{3,}/g,
 '\n\n'
 );
@@ -1324,144 +811,71 @@ resultado.replace(
 return resultado.trim();
 }
 
-// ======================================================
-// CONFIGURAÇÃO DE THINKING
-// ======================================================
-
 function gerarThinkingConfig(
 modelo,
 nivel
 ) {
-
 const model =
 String(
 modelo || ''
 ).toLowerCase();
 
-/*
-
-* Gemini 3.x:
-* thinkingLevel = LOW / MEDIUM / HIGH
-*
-* Gemini 2.5:
-* thinkingLevel NÃO é suportado.
-* Para 2.5 usamos thinkingBudget.
-  */
-
 if (
-model.includes(
-'3.8'
-) ||
-model.includes(
-'3.7'
-) ||
-model.includes(
-'3.6'
-) ||
-model.includes(
-'3.5'
-) ||
-model.includes(
-'3.'
-)
+model.includes('3.8') ||
+model.includes('3.7') ||
+model.includes('3.6') ||
+model.includes('3.5') ||
+model.includes('3.')
 ) {
-
-```
 return {
-
-  thinkingConfig: {
-
-    thinkingLevel:
-      nivel
-
-  }
-
-};
-```
-
-}
-
-// Para Gemini 2.5.
-const budgets = {
-
-```
-low:
-  1024,
-
-medium:
-  4096,
-
-high:
-  8192
-```
-
-};
-
-return {
-
-```
 thinkingConfig: {
-
-  thinkingBudget:
-    budgets[nivel] ||
-    4096
-
+thinkingLevel:
+nivel
 }
-```
+};
+}
 
+const budgets = {
+low: 1024,
+medium: 4096,
+high: 8192
 };
 
+return {
+thinkingConfig: {
+thinkingBudget:
+budgets[nivel] || 4096
 }
-
-// ======================================================
-// CHAMAR GEMINI
-// ======================================================
+};
+}
 
 async function chamarGemini(
 prompt,
 options = {}
 ) {
-
 if (!GEMINI_KEY) {
-
-```
 throw new Error(
-  'GEMINI_API_KEY não configurada no Render.'
+'GEMINI_API_KEY não configurada no Render.'
 );
-```
-
 }
 
 const thinking =
-options.thinking ||
-'medium';
+options.thinking || 'medium';
 
 const maxOutputTokens =
-options.maxOutputTokens ||
-5000;
+options.maxOutputTokens || 5000;
 
-/*
-
-* 25 segundos:
-* suficientemente rápido para uso operacional,
-* mas permite raciocínio mais profundo.
-  */
-  const timeoutMs =
-  options.timeoutMs ||
-  25000;
+const timeoutMs =
+options.timeoutMs || 30000;
 
 let lastError =
 'nenhum modelo respondeu';
 
-for (
-const MODEL
-of MODELS
-) {
+for (const MODEL of MODELS) {
+const controller =
+new AbortController();
 
 ```
-const controller =
-  new AbortController();
-
 const timeout =
   setTimeout(
     () =>
@@ -1470,7 +884,6 @@ const timeout =
   );
 
 try {
-
   console.log(
     '--------------------------------------'
   );
@@ -1500,66 +913,44 @@ try {
     );
 
   const body = {
-
     contents: [
-
       {
-
         parts: [
-
           {
             text:
               `${SYSTEM_IA}\n\n${prompt}`
           }
-
         ]
-
       }
-
     ],
 
     generationConfig: {
-
-      temperature:
-        0.35,
-
+      temperature: 0.35,
       maxOutputTokens,
-
       ...thinkingConfig
-
     }
-
   };
 
   const r =
     await fetch(
       url,
       {
-
-        method:
-          'POST',
+        method: 'POST',
 
         headers: {
-
           'Content-Type':
             'application/json'
-
         },
 
         signal:
           controller.signal,
 
         body:
-          JSON.stringify(
-            body
-          )
-
+          JSON.stringify(body)
       }
     );
 
-  clearTimeout(
-    timeout
-  );
+  clearTimeout(timeout);
 
   const data =
     await r.json();
@@ -1570,26 +961,19 @@ try {
   );
 
   const candidate =
-    data
-      ?.candidates
-      ?.[0];
+    data?.candidates?.[0];
 
   const parts =
-    candidate
-      ?.content
-      ?.parts ||
+    candidate?.content?.parts ||
     [];
 
-  /*
-   * Pega somente partes que possuem texto.
-   * Não usamos thought como resposta.
-   */
   const textos =
     parts
       .filter(
         part =>
           typeof part?.text ===
-          'string'
+          'string' &&
+          part?.thought !== true
       )
       .map(
         part =>
@@ -1598,11 +982,10 @@ try {
 
   const text =
     textos
-      .join('')
+      .join('\n')
       .trim();
 
   if (r.ok && text) {
-
     console.log(
       'GEMINI FUNCIONOU:',
       MODEL
@@ -1615,37 +998,24 @@ try {
     );
 
     return {
-
-      texto:
-        text,
-
-      modelo_usado:
-        MODEL
-
+      texto: text,
+      modelo_usado: MODEL
     };
-
   }
 
   lastError =
-    data
-      ?.error
-      ?.message ||
-    candidate
-      ?.finishReason ||
+    data?.error?.message ||
+    candidate?.finishReason ||
     'sem resposta';
 
   console.log(
     `Falhou ${MODEL}: ${lastError}`
   );
 
-  /*
-   * Erros que não adianta trocar de modelo.
-   */
   const erroLower =
     String(
       lastError
-    )
-      .toLowerCase();
+    ).toLowerCase();
 
   if (
     erroLower.includes(
@@ -1661,31 +1031,22 @@ try {
       'invalid argument'
     )
   ) {
-
     break;
-
   }
 
-} catch (
-  e
-) {
-
-  clearTimeout(
-    timeout
-  );
+} catch (error) {
+  clearTimeout(timeout);
 
   lastError =
-    e.name ===
-    'AbortError'
-
-      ? `timeout ${Math.round(timeoutMs / 1000)}s`
-
-      : e.message;
+    error.name === 'AbortError'
+      ? `timeout ${Math.round(
+          timeoutMs / 1000
+        )}s`
+      : error.message;
 
   console.log(
     `Pulou ${MODEL}: ${lastError}`
   );
-
 }
 ```
 
@@ -1695,49 +1056,27 @@ throw new Error(
 'Todos os modelos Gemini falharam. Último erro: ' +
 lastError
 );
-
 }
 
-// ======================================================
-// ORGANIZAR TURNO
-// ======================================================
-
-app.post(
-'/organizar-ia',
-async (
-req,
-res
-) => {
+app.post('/organizar-ia', async (req, res) => {
+try {
+const ocorrencias =
+await obterOcorrenciasIA(req);
 
 ```
-try {
+if (!ocorrencias.length) {
+  return res.status(400).json({
+    error:
+      'Não existem ocorrências para organizar.'
+  });
+}
 
-  const ocorrencias =
-    await obterOcorrenciasIA(
-      req
-    );
+const contexto =
+  gerarContextoPorFrente(
+    ocorrencias
+  );
 
-  if (
-    !ocorrencias.length
-  ) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Não existem ocorrências para organizar.'
-
-      });
-
-  }
-
-  const contexto =
-    gerarContextoPorFrente(
-      ocorrencias
-    );
-
-  const prompt = `
+const prompt = `
 ```
 
 ORGANIZE O DIÁRIO DE TURNO DO CTT MANDU.
@@ -1758,27 +1097,27 @@ ESTRUTURA:
 
 *FRENTE 501*
 
-* ...
+* informações relevantes
 
 *FRENTE 502*
 
-* ...
+* informações relevantes
 
 *FRENTE 503*
 
-* ...
+* informações relevantes
 
 *FRENTE 504*
 
-* ...
+* informações relevantes
 
 *FRENTE 505*
 
-* ...
+* informações relevantes
 
 *FRENTE 506*
 
-* ...
+* informações relevantes
 
 Inclua somente frentes com informação relevante.
 
@@ -1786,15 +1125,15 @@ Depois:
 
 *⚠️ PONTOS DE ATENÇÃO*
 
-* ...
+* pontos relevantes
 
 *🚨 RISCOS / IMPACTOS*
 
-* ...
+* impactos sustentados pelos dados
 
 *🎯 AÇÕES / ACOMPANHAMENTOS*
 
-* ...
+* ações registradas ou recomendações
 
 Use *SUGESTÃO:* para recomendações.
 
@@ -1806,97 +1145,62 @@ ${contexto}
 `;
 
 ```
-  const resposta =
-    await chamarGemini(
-      prompt,
-      {
-
-        thinking:
-          'medium',
-
-        maxOutputTokens:
-          4500,
-
-        timeoutMs:
-          25000
-
-      }
-    );
-
-  return res.json({
-
-    texto:
-      normalizarPublicacaoIA(
-        resposta.texto
-      ),
-
-    total:
-      ocorrencias.length,
-
-    modelo_usado:
-      resposta.modelo_usado
-
-  });
-
-} catch (
-  error
-) {
-
-  console.error(
-    'ERRO ORGANIZAR IA:',
-    error
+const resposta =
+  await chamarGemini(
+    prompt,
+    {
+      thinking: 'medium',
+      maxOutputTokens: 5000,
+      timeoutMs: 30000
+    }
   );
 
-  return res
-    .status(500)
-    .json({
+return res.json({
+  texto:
+    normalizarPublicacaoIA(
+      resposta.texto
+    ),
 
-      error:
-        error.message
+  total:
+    ocorrencias.length,
 
-    });
+  modelo_usado:
+    resposta.modelo_usado
+});
+```
 
-}
+} catch (error) {
+console.error(
+'ERRO ORGANIZAR IA:',
+error
+);
+
+```
+return res.status(500).json({
+  error:
+    error.message
+});
 ```
 
 }
-);
-
-// ======================================================
-// RESUMO EXECUTIVO
-// ======================================================
+});
 
 app.post(
 [
 '/resumo-executivo-ia',
 '/api/resumo-executivo-ia'
 ],
-async (
-req,
-res
-) => {
+async (req, res) => {
+try {
+const ocorrencias =
+await obterOcorrenciasIA(req);
 
 ```
-try {
-
-  const ocorrencias =
-    await obterOcorrenciasIA(
-      req
-    );
-
-  if (
-    !ocorrencias.length
-  ) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Não existem ocorrências para gerar o resumo executivo.'
-
-      });
-
+  if (!ocorrencias.length) {
+    return res.status(400).json({
+      error:
+        'Não existem ocorrências para gerar o resumo executivo.'
+    });
   }
 
   const contexto =
@@ -1907,27 +1211,28 @@ try {
   const prompt = `
 ```
 
-FAÇA O RESUMO EXECUTIVO DO TURNO DO CTT MANDU.
+FAÇA O RESUMO EXECUTIVO FINAL DO TURNO DO CTT MANDU.
 
-ATENÇÃO:
-
-Este é um resumo para decisão da gestão.
+Este texto será enviado diretamente para a gestão.
 
 NÃO faça relatório.
 
 NÃO descreva todas as ocorrências.
 
-NÃO repita detalhes secundários.
+NÃO faça uma versão reduzida do relatório gerencial.
 
-O gestor precisa saber apenas:
+Faça uma síntese para DECISÃO.
 
-* qual foi o principal problema;
-* qual frente exige atenção;
-* qual foi o impacto;
-* o que precisa ser acompanhado ou decidido.
+Selecione somente aquilo que realmente importa.
 
-MÁXIMO:
-6 tópicos.
+PRIORIDADE:
+
+1. criticidade;
+2. impacto;
+3. frente crítica;
+4. decisão ou acompanhamento.
+
+MÁXIMO: 5 tópicos.
 
 ESTRUTURA:
 
@@ -1935,14 +1240,16 @@ ESTRUTURA:
 
 *CRÍTICO*
 
-* Principal ponto crítico.
-* Segundo ponto somente se relevante.
-* Terceiro somente se necessário.
+* principal ponto crítico
+* segundo ponto somente se realmente relevante
+
+*IMPACTO*
+
+* consequência operacional mais importante
 
 *DECISÃO / ATENÇÃO*
 
-* Acompanhamento ou cobrança necessária.
-* Ação recomendada, se houver.
+* o que exige acompanhamento, ação ou cobrança
 
 Se não houver criticidade:
 
@@ -1954,9 +1261,11 @@ Não faça introdução.
 
 Não faça conclusão.
 
-Não escreva frases genéricas.
+Não liste todas as frentes.
 
-*SUGESTÃO:* somente para recomendações.
+Não repita detalhes secundários.
+
+Use *SUGESTÃO:* somente para recomendações.
 
 DADOS:
 
@@ -1968,16 +1277,9 @@ ${contexto}
     await chamarGemini(
       prompt,
       {
-
-        thinking:
-          'medium',
-
-        maxOutputTokens:
-          1800,
-
-        timeoutMs:
-          25000
-
+        thinking: 'medium',
+        maxOutputTokens: 2500,
+        timeoutMs: 30000
       }
     );
 
@@ -1987,49 +1289,28 @@ ${contexto}
     );
 
   return res.json({
-
-    texto:
-      resultado,
-
-    executivo:
-      resultado,
-
-    total:
-      ocorrencias.length,
-
+    texto: resultado,
+    executivo: resultado,
+    total: ocorrencias.length,
     modelo_usado:
       resposta.modelo_usado
-
   });
 
-} catch (
-  error
-) {
-
+} catch (error) {
   console.error(
     'ERRO RESUMO EXECUTIVO:',
     error
   );
 
-  return res
-    .status(500)
-    .json({
-
-      error:
-        error.message
-
-    });
-
+  return res.status(500).json({
+    error:
+      error.message
+  });
 }
 ```
 
 }
 );
-
-// ======================================================
-// FECHAR TURNO
-// GERENCIAL + EXECUTIVO
-// ======================================================
 
 app.post(
 [
@@ -2038,42 +1319,23 @@ app.post(
 '/api/fechar-turno',
 '/api/fechar-turno-ia'
 ],
-async (
-req,
-res
-) => {
+async (req, res) => {
+try {
+const ocorrencias =
+await obterOcorrenciasIA(req);
 
 ```
-try {
-
-  const ocorrencias =
-    await obterOcorrenciasIA(
-      req
-    );
-
-  if (
-    !ocorrencias.length
-  ) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Não existem ocorrências para analisar o turno.'
-
-      });
-
+  if (!ocorrencias.length) {
+    return res.status(400).json({
+      error:
+        'Não existem ocorrências para analisar o turno.'
+    });
   }
 
   const contexto =
     gerarContextoPorFrente(
       ocorrencias
     );
-
-  // ==================================================
-  // GERENCIAL
-  // ==================================================
 
   const promptGerencial = `
 ```
@@ -2107,6 +1369,9 @@ O que foi registrado.
 IMPACTO:
 Consequência sustentada pelos registros.
 
+ANÁLISE:
+Interpretação técnica sustentada pelos dados.
+
 SUGESTÃO:
 Recomendação baseada na análise.
 
@@ -2116,34 +1381,33 @@ ESTRUTURA:
 
 *VISÃO GERAL DO TURNO*
 
-* Faça uma leitura analítica da operação.
+* leitura analítica da operação
 
 *FRENTES COM OCORRÊNCIAS*
 
-* Analise cada frente relevante.
-* Explique o que ocorreu.
-* Cruze ocorrências quando houver relação.
+* análise de cada frente relevante
+* cruzamento de ocorrências quando houver relação
 
 *PRINCIPAIS PROBLEMAS*
 
-* Priorize por relevância operacional.
+* priorizados por relevância operacional
 
 *PROBLEMAS RECORRENTES*
 
-* Identifique apenas recorrências reais.
+* somente recorrências reais
 
 *RISCOS / IMPACTOS*
 
-* Mostre os impactos sustentados pelos dados.
+* impactos sustentados pelos dados
 
 *PONTOS DE ATENÇÃO*
 
-* Mostre o que precisa continuar sendo acompanhado.
+* o que precisa continuar sendo acompanhado
 
 *AÇÕES / ACOMPANHAMENTOS*
 
-* Mostre ações registradas como realizadas somente quando isso estiver nos dados.
-* Novas recomendações devem usar *SUGESTÃO:*.
+* ações registradas como realizadas somente quando isso estiver nos dados
+* novas recomendações usando *SUGESTÃO:*
 
 SEJA DETALHADO.
 
@@ -2171,26 +1435,11 @@ ${contexto}
     await chamarGemini(
       promptGerencial,
       {
-
-        thinking:
-          'high',
-
-        /*
-         * Alto porque o gerencial é a análise
-         * mais profunda do sistema.
-         */
-        maxOutputTokens:
-          7000,
-
-        timeoutMs:
-          30000
-
+        thinking: 'high',
+        maxOutputTokens: 9000,
+        timeoutMs: 45000
       }
     );
-
-  // ==================================================
-  // EXECUTIVO
-  // ==================================================
 
   const promptExecutivo = `
 ```
@@ -2212,8 +1461,7 @@ PRIORIDADE:
 3. frente crítica;
 4. decisão ou acompanhamento.
 
-MÁXIMO:
-6 tópicos.
+MÁXIMO: 5 tópicos.
 
 ESTRUTURA:
 
@@ -2221,21 +1469,25 @@ ESTRUTURA:
 
 *CRÍTICO*
 
-* Principal ponto crítico.
-* Outro somente se realmente relevante.
+* principal ponto crítico
+* outro somente se realmente relevante
+
+*IMPACTO*
+
+* impacto operacional mais importante
 
 *DECISÃO / ATENÇÃO*
 
-* O que exige acompanhamento.
-* O que exige ação ou cobrança.
+* o que exige acompanhamento
+* o que exige ação ou cobrança
 
 Não faça introdução.
 
 Não faça conclusão.
 
-Não repita detalhes secundários.
-
 Não liste todas as frentes.
+
+Não repita detalhes secundários.
 
 Não transforme recomendação em fato.
 
@@ -2255,16 +1507,9 @@ ${contexto}
     await chamarGemini(
       promptExecutivo,
       {
-
-        thinking:
-          'medium',
-
-        maxOutputTokens:
-          1800,
-
-        timeoutMs:
-          25000
-
+        thinking: 'medium',
+        maxOutputTokens: 2500,
+        timeoutMs: 30000
       }
     );
 
@@ -2285,21 +1530,17 @@ ${contexto}
           item =>
             item.frente
         )
-        .filter(
-          Boolean
-        )
+        .filter(Boolean)
     );
 
   return res.json({
-
     gerencial:
       gerencialFinal,
 
     executivo:
       executivoFinal,
 
-    fechamento:
-      '',
+    fechamento: '',
 
     texto:
       gerencialFinal,
@@ -2315,88 +1556,54 @@ ${contexto}
 
     modeloExecutivo:
       executivo.modelo_usado
-
   });
 
-} catch (
-  error
-) {
-
+} catch (error) {
   console.error(
     'ERRO FECHAR TURNO:',
     error
   );
 
-  return res
-    .status(500)
-    .json({
-
-      error:
-        error.message ||
-        'Erro ao gerar análise do turno.'
-
-    });
-
+  return res.status(500).json({
+    error:
+      error.message ||
+      'Erro ao gerar análise do turno.'
+  });
 }
 ```
 
 }
 );
 
-// ======================================================
-// CHAT OPERACIONAL
-// ======================================================
-
 app.post(
 [
 '/chat-ia',
 '/api/chat-ia'
 ],
-async (
-req,
-res
-) => {
+async (req, res) => {
+try {
+const pergunta =
+textoSeguro(
+req.body?.pergunta,
+5000
+);
 
 ```
-try {
-
-  const pergunta =
-    textoSeguro(
-      req.body?.pergunta,
-      5000
-    );
-
   if (!pergunta) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Digite uma pergunta.'
-
-      });
-
+    return res.status(400).json({
+      error:
+        'Digite uma pergunta.'
+    });
   }
 
   const ocorrencias =
-    await obterOcorrenciasIA(
-      req
-    );
+    await obterOcorrenciasIA(req);
 
-  if (
-    !ocorrencias.length
-  ) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'Não existem ocorrências registradas para analisar.'
-
-      });
-
+  if (!ocorrencias.length) {
+    return res.status(400).json({
+      error:
+        'Não existem ocorrências registradas para analisar.'
+    });
   }
 
   const contexto =
@@ -2409,40 +1616,38 @@ try {
       req.body?.historico
     )
       ? req.body.historico
-          .slice(-6)
-          .map(
-            item => ({
+          .slice(-8)
+          .map(item => ({
+            role:
+              item?.role === 'user'
+                ? 'user'
+                : 'assistant',
 
-              role:
-                item?.role ===
-                'user'
-                  ? 'user'
-                  : 'assistant',
-
-              content:
-                textoSeguro(
-                  item?.content,
-                  4000
-                )
-
-            })
-          )
+            content:
+              textoSeguro(
+                item?.content,
+                4000
+              )
+          }))
       : [];
 
   const historicoTexto =
     historico.length
+      ? `
+```
 
-      ? `\nHISTÓRICO RECENTE:\n${historico
-          .map(
-            item =>
-              `${item.role.toUpperCase()}: ${item.content}`
-          )
-          .join(
-            '\n'
-          )}\n`
+HISTÓRICO RECENTE:
 
-      : '';
+${historico
+.map(
+item =>
+`${item.role.toUpperCase()}: ${item.content}`
+)
+.join('\n')}
+`
+: '';
 
+```
   const prompt = `
 ```
 
@@ -2465,10 +1670,10 @@ Responda SOMENTE o que foi perguntado.
 A resposta deve ter tamanho proporcional à pergunta.
 
 PERGUNTA SIMPLES:
-Resposta curta.
+Resposta curta, preferencialmente em 1 a 3 linhas.
 
 PERGUNTA COMPARATIVA:
-Mostre a comparação.
+Mostre somente a comparação solicitada.
 
 PERGUNTA "QUAL FRENTE":
 Informe a frente e o motivo objetivo.
@@ -2477,13 +1682,16 @@ PERGUNTA "POR QUÊ":
 Explique somente o que os dados sustentam.
 
 PERGUNTA "O QUE FAZER":
-Apresente recomendações práticas.
+Apresente recomendações práticas e priorizadas.
 
 PERGUNTA SOBRE RECORRÊNCIA:
 Mostre somente os problemas realmente recorrentes.
 
 PERGUNTA SOBRE PLANO DE VOO:
 Apresente ações práticas e priorizadas.
+
+PERGUNTA SOBRE RESUMO:
+Entregue um resumo curto e objetivo.
 
 NÃO faça resumo completo do turno se isso não foi solicitado.
 
@@ -2500,7 +1708,7 @@ NÃO invente.
 Use WhatsApp.
 
 Títulos:
-*ATENÇÃO*
+*TÍTULO*
 
 Tópicos:
 
@@ -2513,6 +1721,8 @@ Use somente UM asterisco de cada lado.
 
 Nunca use **.
 
+Nunca use ***.
+
 Nunca use blocos de código.
 
 A resposta precisa estar pronta para copiar e mandar no WhatsApp.
@@ -2523,21 +1733,13 @@ A resposta precisa estar pronta para copiar e mandar no WhatsApp.
     await chamarGemini(
       prompt,
       {
-
-        thinking:
-          'low',
-
-        maxOutputTokens:
-          1800,
-
-        timeoutMs:
-          20000
-
+        thinking: 'medium',
+        maxOutputTokens: 3500,
+        timeoutMs: 30000
       }
     );
 
   return res.json({
-
     resposta:
       normalizarPublicacaoIA(
         resposta.texto
@@ -2548,188 +1750,108 @@ A resposta precisa estar pronta para copiar e mandar no WhatsApp.
 
     modelo_usado:
       resposta.modelo_usado
-
   });
 
-} catch (
-  error
-) {
-
+} catch (error) {
   console.error(
     'ERRO CHAT IA:',
     error
   );
 
-  return res
-    .status(500)
-    .json({
-
-      error:
-        error.message ||
-        'Erro no chat operacional.'
-
-    });
-
-}
-```
-
-}
-);
-
-// ======================================================
-// CHAT COMPATÍVEL COM EXEMPLO
-// ======================================================
-//
-// Mantém também /api/chat caso seu frontend
-// novo esteja usando essa rota.
-//
-
-app.post(
-'/api/chat',
-async (
-req,
-res
-) => {
-
-```
-try {
-
-  const prompt =
-    textoSeguro(
-      req.body?.prompt,
-      12000
-    );
-
-  if (!prompt) {
-
-    return res
-      .status(400)
-      .json({
-
-        error:
-          'prompt vazio'
-
-      });
-
-  }
-
-  const resposta =
-    await chamarGemini(
-      prompt,
-      {
-
-        thinking:
-          'medium',
-
-        maxOutputTokens:
-          3000,
-
-        timeoutMs:
-          20000
-
-      }
-    );
-
-  return res.json({
-
-    resposta:
-      normalizarPublicacaoIA(
-        resposta.texto
-      ),
-
-    modelo_usado:
-      resposta.modelo_usado
-
-  });
-
-} catch (
-  error
-) {
-
-  console.error(
-    'ERRO /api/chat:',
-    error
-  );
-
-  return res
-    .status(503)
-    .json({
-
-      error:
-        error.message
-
-    });
-
-}
-```
-
-}
-);
-
-// ======================================================
-// 404 API
-// ======================================================
-
-app.use(
-'/api',
-(
-req,
-res
-) => {
-
-```
-console.error(
-  'API 404:',
-  req.method,
-  req.originalUrl
-);
-
-res
-  .status(404)
-  .json({
-
+  return res.status(500).json({
     error:
-      'Rota da API não encontrada.',
-
-    rota:
-      req.originalUrl
-
+      error.message ||
+      'Erro no chat operacional.'
   });
+}
 ```
 
 }
 );
 
-// ======================================================
-// 404 GERAL
-// ======================================================
-
-app.use(
-(
-req,
-res
-) => {
-
-```
-console.error(
-  '404:',
-  req.method,
-  req.originalUrl
+app.post('/api/chat', async (req, res) => {
+try {
+const prompt =
+textoSeguro(
+req.body?.prompt,
+12000
 );
 
-res
-  .status(404)
-  .send(
-    'Página não encontrada.'
+```
+if (!prompt) {
+  return res.status(400).json({
+    error:
+      'prompt vazio'
+  });
+}
+
+const resposta =
+  await chamarGemini(
+    prompt,
+    {
+      thinking: 'medium',
+      maxOutputTokens: 3500,
+      timeoutMs: 30000
+    }
   );
+
+return res.json({
+  resposta:
+    normalizarPublicacaoIA(
+      resposta.texto
+    ),
+
+  modelo_usado:
+    resposta.modelo_usado
+});
+```
+
+} catch (error) {
+console.error(
+'ERRO /api/chat:',
+error
+);
+
+```
+return res.status(503).json({
+  error:
+    error.message
+});
 ```
 
 }
+});
+
+app.use('/api', (req, res) => {
+console.error(
+'API 404:',
+req.method,
+req.originalUrl
 );
 
-// ======================================================
-// ERRO GLOBAL
-// ======================================================
+res.status(404).json({
+error:
+'Rota da API não encontrada.',
+
+```
+rota:
+  req.originalUrl
+```
+
+});
+});
+
+app.use((req, res) => {
+console.error(
+'404:',
+req.method,
+req.originalUrl
+);
+
+res.status(404).send(
+'Página não encontrada.'
+);
+});
 
 app.use(
 (
@@ -2738,50 +1860,34 @@ req,
 res,
 next
 ) => {
-
-```
 console.error(
-  'ERRO GLOBAL:',
-  error
+'ERRO GLOBAL:',
+error
 );
 
-if (
-  res.headersSent
-) {
-
-  return next(
-    error
-  );
-
+```
+if (res.headersSent) {
+  return next(error);
 }
 
-res
-  .status(500)
-  .json({
-
-    error:
-      error?.message ||
-      'Erro interno do servidor.'
-
-  });
+res.status(500).json({
+  error:
+    error?.message ||
+    'Erro interno do servidor.'
+});
 ```
 
 }
 );
-
-// ======================================================
-// START
-// ======================================================
 
 app.listen(
 PORT,
 () => {
-
-```
 console.log(
-  '======================================'
+'======================================'
 );
 
+```
 console.log(
   'CTT DIÁRIO DE TURNO — MANDU'
 );
@@ -2830,7 +1936,7 @@ console.log(
 );
 
 console.log(
-  'Chat: LOW'
+  'Chat: MEDIUM'
 );
 
 console.log(

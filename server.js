@@ -1632,7 +1632,8 @@ Não invente causa.
 Utilize exatamente esta estrutura:
 
 *📋 ANÁLISE GERENCIAL — MANDU*
-----------------------------------
+
+
 *VISÃO GERAL DO TURNO*
 - Faça uma leitura geral do comportamento operacional.
 - Destaque a principal condição observada.

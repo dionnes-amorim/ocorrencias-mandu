@@ -1,3 +1,5 @@
+:::writing{variant="document" id="58321" title="index.html completo"}
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -673,6 +675,22 @@ body::before{
   outline:none;
 }
 
+.edit-area input:focus,
+.edit-area select:focus,
+.edit-area textarea:focus{
+  border-color:#00e676 !important;
+}
+
+.edit-area input[type="time"]::-webkit-calendar-picker-indicator{
+  filter:invert(1);
+  opacity:.8;
+}
+
+.edit-area select option{
+  background:#121a32;
+  color:#fff;
+}
+
 .row2{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1051,20 +1069,145 @@ body::before{
 
     </h3>
 
+
+    <!-- HORA + FRENTE -->
+
+    <div
+      style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+        margin-top:14px;
+      "
+    >
+
+      <div>
+
+        <label
+          style="
+            display:block;
+            font-size:11px;
+            opacity:.55;
+            margin-bottom:6px;
+          "
+        >
+          HORA
+        </label>
+
+        <input
+          id="editHora"
+          type="time"
+          style="
+            width:100%;
+            background:#080c1a;
+            border:1px solid rgba(255,255,255,.12);
+            color:#fff;
+            padding:14px;
+            border-radius:14px;
+            font-size:15px;
+            outline:none;
+          "
+        >
+
+      </div>
+
+
+      <div>
+
+        <label
+          style="
+            display:block;
+            font-size:11px;
+            opacity:.55;
+            margin-bottom:6px;
+          "
+        >
+          FRENTE
+        </label>
+
+        <select
+          id="editFrente"
+          style="
+            width:100%;
+            background:#080c1a;
+            border:1px solid rgba(255,255,255,.12);
+            color:#fff;
+            padding:14px;
+            border-radius:14px;
+            font-size:15px;
+            outline:none;
+          "
+        >
+
+          <option value="GERAL">
+            GERAL
+          </option>
+
+          <option value="FRENTE 501">
+            501
+          </option>
+
+          <option value="FRENTE 502">
+            502
+          </option>
+
+          <option value="FRENTE 503">
+            503
+          </option>
+
+          <option value="FRENTE 504">
+            504
+          </option>
+
+          <option value="FRENTE 505">
+            505
+          </option>
+
+          <option value="FRENTE 506">
+            506
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- TEXTO -->
+
+    <label
+      style="
+        display:block;
+        font-size:11px;
+        opacity:.55;
+        margin-top:15px;
+        margin-bottom:6px;
+      "
+    >
+      OCORRÊNCIA
+    </label>
+
     <textarea id="editTexto"></textarea>
+
 
     <div class="row2">
 
       <button
         class="btn btn-s"
         onclick="salvarEdit()">
+
+        <i class="fa-solid fa-check"></i>
         Salvar
+
       </button>
 
       <button
         class="btn btn-c"
         onclick="document.getElementById('modalEdit').classList.remove('show')">
+
         Cancelar
+
       </button>
 
     </div>
@@ -1818,8 +1961,21 @@ function abrirEdit(id){
   if(!o)
     return;
 
+  /*
+    Preenche os três campos:
+    - hora
+    - frente
+    - texto
+  */
+
+  document.getElementById('editHora').value =
+    o.hora || '';
+
+  document.getElementById('editFrente').value =
+    o.frente || 'GERAL';
+
   document.getElementById('editTexto').value =
-    o.texto;
+    o.texto || '';
 
   document
     .getElementById('modalEdit')
@@ -1830,14 +1986,51 @@ function abrirEdit(id){
 
 async function salvarEdit(){
 
-  const v =
+  const texto =
     document
       .getElementById('editTexto')
       .value
       .trim();
 
-  if(!v)
+  const hora =
+    document
+      .getElementById('editHora')
+      .value;
+
+  const frente =
+    document
+      .getElementById('editFrente')
+      .value;
+
+  if(!hora){
+
+    alert(
+      'Informe a hora da ocorrência.'
+    );
+
     return;
+
+  }
+
+  if(!frente){
+
+    alert(
+      'Selecione a frente da ocorrência.'
+    );
+
+    return;
+
+  }
+
+  if(!texto){
+
+    alert(
+      'Digite a descrição da ocorrência.'
+    );
+
+    return;
+
+  }
 
   try{
 
@@ -1846,8 +2039,15 @@ async function salvarEdit(){
       encodeURIComponent(editId),
       {
         method:'PUT',
+
         body:JSON.stringify({
-          texto:correcaoLeve(v)
+
+          hora:hora,
+
+          frente:frente,
+
+          texto:correcaoLeve(texto)
+
         })
       }
     );
@@ -1966,9 +2166,7 @@ function render(){
 
 
 /* =========================================================
-   =========================================================
    MICROFONE — NOVA IMPLEMENTAÇÃO
-   =========================================================
 ========================================================= */
 
 const btnMic =
@@ -2149,8 +2347,8 @@ async function solicitarMicrofone(){
 
   if(
     !window.isSecureContext &&
-    location.hostname !== 'localhost' &&
-    location.hostname !== '127.0.0.1'
+    __cpLocation.hostname !== 'localhost' &&
+    __cpLocation.hostname !== '127.0.0.1'
   ){
 
     throw new Error(
@@ -2158,14 +2356,6 @@ async function solicitarMicrofone(){
     );
 
   }
-
-  /*
-    Aqui está uma das mudanças principais.
-
-    Primeiro abrimos o microfone REAL do navegador.
-    Isso força o Chrome/Edge a tratar a ação como
-    uma solicitação efetiva de acesso ao dispositivo.
-  */
 
   mediaStream =
     await navigator.mediaDevices.getUserMedia({
@@ -2312,12 +2502,6 @@ function iniciarSpeech(){
       error
     );
 
-    /*
-      Em alguns navegadores start()
-      pode retornar InvalidStateError.
-      Fazemos uma nova tentativa.
-    */
-
     if(
       error.name === 'InvalidStateError'
     ){
@@ -2343,10 +2527,6 @@ function iniciarSpeech(){
 
 function configurarEventosReconhecimento(r){
 
-  /* -------------------------------------------------------
-     START
-  ------------------------------------------------------- */
-
   r.onstart = () => {
 
     console.log(
@@ -2371,10 +2551,6 @@ function configurarEventosReconhecimento(r){
 
   };
 
-
-  /* -------------------------------------------------------
-     RESULT
-  ------------------------------------------------------- */
 
   r.onresult = event => {
 
@@ -2429,10 +2605,6 @@ function configurarEventosReconhecimento(r){
 
   };
 
-
-  /* -------------------------------------------------------
-     ERROR
-  ------------------------------------------------------- */
 
   r.onerror = event => {
 
@@ -2550,10 +2722,6 @@ function configurarEventosReconhecimento(r){
   };
 
 
-  /* -------------------------------------------------------
-     END
-  ------------------------------------------------------- */
-
   r.onend = () => {
 
     console.log(
@@ -2565,11 +2733,6 @@ function configurarEventosReconhecimento(r){
 
     reconhecimentoIniciando =
       false;
-
-    /*
-      Se ainda estiver segurando,
-      reinicia automaticamente.
-    */
 
     if(
       micPressionado &&
@@ -2588,10 +2751,6 @@ function configurarEventosReconhecimento(r){
 
     }
 
-
-    /*
-      Se soltou o botão, finaliza.
-    */
 
     if(
       !micPressionado &&
@@ -2613,10 +2772,6 @@ function configurarEventosReconhecimento(r){
 
   };
 
-
-  /* -------------------------------------------------------
-     NOMATCH
-  ------------------------------------------------------- */
 
   r.onnomatch = () => {
 
@@ -2692,10 +2847,6 @@ async function iniciarMicrofoneCompleto(){
 
   atualizarVisualMic();
 
-  /*
-    Primeiro testa/acessa o dispositivo físico.
-  */
-
   try{
 
     await solicitarMicrofone();
@@ -2748,11 +2899,6 @@ async function iniciarMicrofoneCompleto(){
   }
 
 
-  /*
-    O usuário pode ter soltado enquanto
-    o navegador mostrava a permissão.
-  */
-
   if(
     !micPressionado ||
     micCancelado
@@ -2764,10 +2910,6 @@ async function iniciarMicrofoneCompleto(){
 
   }
 
-
-  /*
-    Agora sim inicia SpeechRecognition.
-  */
 
   iniciarSpeech();
 
@@ -3088,13 +3230,6 @@ btnMic.addEventListener(
     atualizarVisualMic();
 
 
-    /*
-      IMPORTANTE:
-
-      Esta chamada acontece diretamente
-      dentro do pointerdown do usuário.
-    */
-
     iniciarMicrofoneCompleto();
 
   },
@@ -3187,14 +3322,6 @@ btnMic.addEventListener(
     micPressionado =
       false;
 
-
-    /*
-      Não abortamos imediatamente.
-
-      Se o SpeechRecognition ainda estiver
-      processando o último resultado, deixamos
-      o evento onend consolidar a fala.
-    */
 
     wantStopRecognition();
 

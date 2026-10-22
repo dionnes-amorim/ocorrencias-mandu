@@ -1635,8 +1635,7 @@ Não invente causa.
 Utilize exatamente esta estrutura, respeitando os títulos em cima e os tópicos por linha:
 
 *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
-(Aqui pula 01 linha)
-(Aqui pula 01 linha)
+(Aqui pula 01 linha e coloca 20 trações "-")
 *VISÃO GERAL DO TURNO* (Aqui pula 01 linha)
 - Faça uma leitura geral do comportamento operacional.
 - Destaque a principal condição observada.
@@ -1736,18 +1735,19 @@ Se houver vários problemas, selecione somente os mais críticos.
 
 Utilize:
 
-*⚡ RESUMO EXECUTIVO — MANDU*
+*⚡ RESUMO TURNO — MANDU*
+(Aqui pula 01 linha e coloca 20 trações "-")
 -----------------------------------
 *CRÍTICO*
 - Principal ponto do turno.
-
+(Aqui pula 01 linha)
 *IMPACTO*
 - Principal consequência operacional.
-
+(Aqui pula 01 linha)
 *DECISÃO / ACOMPANHAMENTO*
 - Principal decisão, cobrança ou acompanhamento necessário.
 - Use *SUGESTÃO:* somente quando for recomendação.
-
+(Aqui pula 01 linha)
 *FRENTE CRÍTICA*
 - Informe somente a frente que realmente merece atenção prioritária.
 - Se houver empate ou mais de uma frente crítica, informe somente as necessárias.
@@ -1765,6 +1765,7 @@ REGRAS:
 - Use somente *asteriscos simples*.
 - Use "-" para tópicos.
 - Não use bloco de código.
+- Cada título em blocos separados e cada tópico em uma linha, deixando tudo organizadinho.
 
 DADOS DO TURNO:
 

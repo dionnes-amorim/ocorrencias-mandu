@@ -33,43 +33,146 @@ function horaAtual(){ return new Date().toLocaleTimeString('pt-BR',{hour:'2-digi
 function normalizarOcorrencia(item){ return { id:item?.id||null, hora:textoSeguro(item?.hora,20), frente:frenteSegura(item?.frente), texto:textoSeguro(item?.texto,10000), turno:textoSeguro(item?.turno,20), unidade:textoSeguro(item?.unidade,50)||'MANDU', created_at:item?.created_at||null }; }
 
 // ======================================================
-// NORMALIZADOR DEFINITIVO - QUEBRA TUDO NA MARRA
+// CORREÇÃO DEFINITIVA - RECONSTRÓI O TEXTO BLOCO A BLOCO
 // ======================================================
-function normalizarPublicacaoIA(texto){
-  let t = String(texto||'')
-    .replace(/\r\n/g,'\n')
+const TRACOS = '------------------------------------------------------------------------------------------------';
+
+function limparBullet(l){
+  return String(l||'').replace(/^[ \t]*[-•●▪◦]+\s*/,'').replace(/\*{2,}/g,'').trim();
+}
+
+function extrairTopicos(textoBruto){
+  // Quebra tudo em linhas e transforma em tópicos
+  let t = String(textoBruto||'')
+    .replace(/\r/g,'\n')
+    .replace(/-{5,}/g,'\n')
     .replace(/```[\s\S]*?```/g,'')
-    .replace(/```/g,'')
-    .replace(/\*{2,}/g,'*');
+    .replace(/\*{2,}/g,'*')
+    .replace(/([^\n])\s*-\s+/g,'\n- ')
+    .replace(/;\s*/g,';\n- ')
+    .replace(/\n+/g,'\n');
 
-  // 1. Força 120 traços em linha isolada
-  t = t.replace(/-{5,}/g, '\n------------------------------------------------------------------------------------------------\n');
+  const linhas = t.split('\n').map(s=>s.trim()).filter(Boolean);
+  const topicos = [];
+  for(let linha of linhas){
+    // Ignora títulos soltos
+    if(/^\*.*\*$/.test(linha)) continue;
+    if(!linha) continue;
+    let b = limparBullet(linha);
+    if(b.length < 3) continue;
+    // Garante que começa com - 
+    if(!b.startsWith('*SUGESTÃO:*') && !b.startsWith('FRENTE') && b.length > 0){
+       // deixa passar
+    }
+    topicos.push(b);
+  }
+  // Transforma em lista com "- "
+  return topicos.map(b=>{
+    if(b.startsWith('FRENTE')) return `- ${b}`;
+    if(b.startsWith('*SUGESTÃO:*')) return `- ${b}`;
+    if(b.startsWith('FATO:') || b.startsWith('ANÁLISE:') || b.startsWith('Prioridade') || b.startsWith('Atendimento') || b.startsWith('Alocação') || b.startsWith('Agilização') || b.startsWith('Acompanhar') || b.startsWith('Monitoramento')){
+      return `- ${b}`;
+    }
+    return `- ${b}`;
+  });
+}
 
-  // 2. Força quebra antes de TODO título que começa com *
-  t = t.replace(/([^\n])\s*(\*📋[^\n]*\*|\*⚡[^\n]*\*|\*VISÃO[^\n]*\*|\*FRENTES[^\n]*\*|\*⚠️[^\n]*\*|\*🔁[^\n]*\*|\*🚨[^\n]*\*|\*🎯[^\n]*\*|\*AÇÕES[^\n]*\*|\*CRÍTICO\*|\*IMPACTO\*|\*DECISÃO[^\n]*\*|\*FRENTE CRÍTICA\*|\*PRIORIDADES[^\n]*\*)/gi, '$1\n\n$2');
+function reconstruirGerencial(textoBruto){
+  let txt = String(textoBruto||'');
+  
+  // Dicionário de blocos que queremos encontrar, na ordem
+  const mapa = [
+    { id: 'visao', nomes: ['VISÃO GERAL DO TURNO'], titulo: '*VISÃO GERAL DO TURNO*' },
+    { id: 'frentes', nomes: ['FRENTES COM OCORRÊNCIAS'], titulo: '*FRENTES COM OCORRÊNCIAS*' },
+    { id: 'principais', nomes: ['PRINCIPAIS PROBLEMAS'], titulo: '*⚠️ PRINCIPAIS PROBLEMAS*' },
+    { id: 'recorrentes', nomes: ['PROBLEMAS RECORRENTES'], titulo: '*🔁 PROBLEMAS RECORRENTES*' },
+    { id: 'riscos', nomes: ['RISCOS / IMPACTOS','RISCOS E IMPACTOS','RISCOS'], titulo: '*🚨 RISCOS / IMPACTOS*' },
+    { id: 'prioridades', nomes: ['PRIORIDADES DE ATUAÇÃO','PRIORIDADES'], titulo: '*🎯 PRIORIDADES DE ATUAÇÃO*' },
+    { id: 'acoes', nomes: ['AÇÕES / ACOMPANHAMENTOS','ACOES','ACOMPANHAMENTOS'], titulo: '*AÇÕES / ACOMPANHAMENTOS*' },
+  ];
 
-  // 3. Força quebra depois dos traços
-  t = t.replace(/------------------------------------------------------------------------------------------------\s*(\*[^\n]+\*)/g, '------------------------------------------------------------------------------------------------\n$1');
+  // Encontra índices de cada título no texto bruto
+  const lower = txt.toLowerCase();
+  let blocosEncontrados = [];
+  for(let m of mapa){
+    let idx = -1;
+    for(let nome of m.nomes){
+      let p = lower.indexOf(nome.toLowerCase());
+      if(p !== -1 && (idx === -1 || p < idx)) idx = p;
+    }
+    blocosEncontrados.push({ ...m, idx });
+  }
+  // Ordena por posição no texto
+  blocosEncontrados = blocosEncontrados.filter(b=>b.idx !== -1).sort((a,b)=>a.idx-b.idx);
+  
+  // Se não encontrou nada, tenta pelo menos quebrar por "-"
+  if(blocosEncontrados.length === 0){
+    const topicos = extrairTopicos(txt);
+    return `*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*\n${TRACOS}\n*VISÃO GERAL DO TURNO*\n${topicos.join('\n')}`;
+  }
 
-  // 4. Força quebra antes de cada tópico "-"
-  t = t.replace(/([^\n])\s*-\s+(FATO|ANÁLISE|FRENTE|Atendimento|Alocação|Agilização|Monitoramento|Acompanhar|\d+\.|[A-ZÁÉÍÓÚ])/g, '$1\n- $2');
-  t = t.replace(/([^\n])\s*-\s+\*SUGESTÃO:/gi, '$1\n- *SUGESTÃO:*');
+  let saida = `*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*\n${TRACOS}`;
+  
+  for(let i=0;i<blocosEncontrados.length;i++){
+    const atual = blocosEncontrados[i];
+    const proximo = blocosEncontrados[i+1];
+    let conteudoBruto = '';
+    if(proximo){
+      conteudoBruto = txt.substring(atual.idx, proximo.idx);
+    }else{
+      conteudoBruto = txt.substring(atual.idx);
+    }
+    // Remove o próprio título do conteúdo
+    for(let n of atual.nomes){
+      conteudoBruto = conteudoBruto.replace(new RegExp(`\\*?[^\\n]*${n}[^\\n]*\\*?`,'gi'),'');
+    }
+    let topicos = extrairTopicos(conteudoBruto);
+    if(topicos.length === 0) continue;
+    
+    saida += `\n\n${atual.titulo}\n${topicos.join('\n')}`;
+  }
+  return saida;
+}
 
-  // 5. Garante espaço após SUGESTÃO
-  t = t.replace(/\*SUGESTÃO:\*\s*/gi, '*SUGESTÃO:* ');
+function reconstruirExecutivo(textoBruto){
+  let txt = String(textoBruto||'');
+  const mapa = [
+    { nomes: ['CRÍTICO'], titulo: '*CRÍTICO*' },
+    { nomes: ['IMPACTO'], titulo: '*IMPACTO*' },
+    { nomes: ['DECISÃO','ACOMPANHAMENTO'], titulo: '*DECISÃO / ACOMPANHAMENTO*' },
+    { nomes: ['FRENTE CRÍTICA','FRENTE'], titulo: '*FRENTE CRÍTICA*' },
+  ];
+  const lower = txt.toLowerCase();
+  let blocos = [];
+  for(let m of mapa){
+    let idx = -1;
+    for(let nome of m.nomes){
+      let p = lower.indexOf(nome.toLowerCase());
+      if(p !== -1 && (idx === -1 || p < idx)) idx = p;
+    }
+    if(idx !== -1) blocos.push({ ...m, idx });
+  }
+  blocos = blocos.sort((a,b)=>a.idx-b.idx);
+  
+  let saida = `*⚡ RESUMO TURNO — MANDU*\n${TRACOS}`;
+  for(let i=0;i<blocos.length;i++){
+    const atual = blocos[i];
+    const prox = blocos[i+1];
+    let bruto = prox ? txt.substring(atual.idx, prox.idx) : txt.substring(atual.idx);
+    for(let n of atual.nomes) bruto = bruto.replace(new RegExp(`\\*?[^\\n]*${n}[^\\n]*\\*?`,'gi'),'');
+    let topicos = extrairTopicos(bruto);
+    if(topicos.length===0) continue;
+    saida += `\n\n${atual.titulo}\n${topicos.join('\n')}`;
+  }
+  return saida;
+}
 
-  // 6. Limpa 3+ quebras
-  t = t.replace(/\n{3,}/g, '\n\n');
-
-  // 7. REGRA DE OURO DO PADRÃO QUE VOCÊ QUER:
-  // Título grudado no tópico: *VISÃO*\n-  (não *VISÃO*\n\n-)
-  t = t.replace(/(\*[A-ZÁÉÍÓÚÂÊÔÃÇ0-9 \/\-⚠️🚨🎯🔁📋⚡]+\*)\n\n+-\s*/g, '$1\n- ');
-
-  // 8. Remove linha vazia entre MANDU e traços e entre traços e próximo título
-  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)\n\n+------------------------------------------------------------------------------------------------/g, '$1\n------------------------------------------------------------------------------------------------');
-  t = t.replace(/------------------------------------------------------------------------------------------------\n\n+(\*)/g, '------------------------------------------------------------------------------------------------\n$1');
-
-  return t.trim();
+function normalizarPublicacaoIA(texto, tipo='gerencial'){
+  if(!texto) return '';
+  if(tipo === 'executivo' || String(texto).toUpperCase().includes('RESUMO TURNO') || String(texto).toUpperCase().includes('RESUMO EXECUTIVO') || String(texto).toUpperCase().includes('RESUMO DAS')){
+    return reconstruirExecutivo(texto);
+  }
+  return reconstruirGerencial(texto);
 }
 
 function prepararOcorrenciasIA(o=[]){ return (o||[]).map(normalizarOcorrencia).filter(i=>i.texto); }
@@ -85,22 +188,26 @@ async function obterOcorrenciasIA(req){
 }
 
 const SYSTEM_IA = `
-Você é um assistente da manutenção do COA CTT MANDU - Tereos.
-REGRAS INEGOCIÁVEIS:
-1. NUNCA invente dado, número, horário.
-2. MANTENHA horários (ex: 16:06, 17:30).
-3. Análise minuciosa, não corte informação.
-4. Saída PRONTA WhatsApp.
-5. Use só * simples. PROIBIDO **.
-6. Estrutura EXATA que for pedida, sem criar título.
-7. Depois de *...MANDU* pule linha e coloque: ------------------------------------------------------------------------------------------------
-8. Cada tópico em linha separada com "- ".
-9. 1 linha em branco ENTRE blocos. Dentro do bloco, sem linha em branco.
+Você é CTT MANDU - Tereos. Seja minucioso, detalhado, mantenha horários.
+REGRAS: Não invente. Português Brasil. Use * simples. Use "-" tópicos.
+ESTRUTURA OBRIGATÓRIA GERENCIAL:
+*VISÃO GERAL DO TURNO*
+*FRENTES COM OCORRÊNCIAS*
+*⚠️ PRINCIPAIS PROBLEMAS*
+*🔁 PROBLEMAS RECORRENTES*
+*🚨 RISCOS / IMPACTOS*
+*🎯 PRIORIDADES DE ATUAÇÃO*
+*AÇÕES / ACOMPANHAMENTOS*
+EXECUTIVO:
+*CRÍTICO*
+*IMPACTO*
+*DECISÃO / ACOMPANHAMENTO*
+*FRENTE CRÍTICA*
 `;
 
 function obterConfigPensamento(n){ if(n==='high') return {thinkingConfig:{thinkingBudget:4096}}; if(n==='low') return {thinkingConfig:{thinkingBudget:1024}}; return {thinkingConfig:{thinkingBudget:2048}}; }
 function extrairTextoGemini(d){ const p=d?.candidates?.[0]?.content?.parts||[]; return p.filter(x=>typeof x.text==='string'&&x.thought!==true).map(x=>x.text).join('\n').trim(); }
-async function chamarIA(prompt,opt={}){
+async function chamarIA(prompt,opt={}, tipo='gerencial'){
   if(!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY não configurada');
   const maxOutputTokens=opt.maxOutputTokens||4000; const timeoutMs=opt.timeoutMs||45000; const thinkingLevel=opt.thinkingLevel||'medium';
   let ultimo='Erro IA';
@@ -112,7 +219,7 @@ async function chamarIA(prompt,opt={}){
       const raw=await res.text(); let data; try{data=JSON.parse(raw);}catch{throw new Error(`JSON inválido ${modelo}`);}
       if(!res.ok){ const msg=data?.error?.message||raw.slice(0,800); if([400,401,403].includes(res.status)) throw new Error(msg); ultimo=`${modelo} HTTP ${res.status}: ${msg}`; continue; }
       const texto=extrairTextoGemini(data); if(!texto){ultimo=`${modelo} vazio`; continue;}
-      return {texto:normalizarPublicacaoIA(texto),modelo};
+      return {texto:normalizarPublicacaoIA(texto, tipo),modelo};
     }catch(e){ ultimo=e.name==='AbortError'?`Timeout ${modelo}`:e.message; if(String(ultimo).includes('API_KEY')||String(ultimo).includes('403')) throw new Error(ultimo); }
     finally{ clearTimeout(to); }
   }
@@ -130,22 +237,8 @@ app.post('/organizar-ia',async(req,res)=>{
   try{
     const ocorrencias=await obterOcorrenciasIA(req); if(!ocorrencias.length) return res.status(400).json({error:'Sem ocorrências'});
     const contexto=gerarContextoPorFrente(ocorrencias);
-    const prompt=`${SYSTEM_IA}
-MODO: DIÁRIO
-*📋 DIÁRIO DE TURNO — MANDU*
-
-*FRENTE XXX*
-- Resumo com horários
-*⚠️ PONTOS DE ATENÇÃO*
-- Ponto
-*🚨 RISCOS / IMPACTOS*
-- Risco
-*🎯 AÇÕES / ACOMPANHAMENTOS*
-- Ação
-- *SUGESTÃO:* Recomendação
-OCORRÊNCIAS:
-${contexto}`;
-    const r=await chamarIA(prompt,{maxOutputTokens:6000,timeoutMs:45000,thinkingLevel:'high',temperature:0.25});
+    const prompt=`${SYSTEM_IA}\nMODO: DIÁRIO - seja detalhado com horários\nOCORRÊNCIAS:\n${contexto}`;
+    const r=await chamarIA(prompt,{maxOutputTokens:6000,timeoutMs:45000,thinkingLevel:'high',temperature:0.25},'gerencial');
     res.json({texto:r.texto,total:ocorrencias.length,modelo:r.modelo});
   }catch(e){res.status(500).json({error:e.message});}
 });
@@ -154,22 +247,8 @@ app.post(['/resumo-executivo-ia','/api/resumo-executivo-ia'],async(req,res)=>{
   try{
     const ocorrencias=await obterOcorrenciasIA(req); if(!ocorrencias.length) return res.status(400).json({error:'Sem ocorrências'});
     const contexto=gerarContextoPorFrente(ocorrencias);
-    const prompt=`${SYSTEM_IA}
-MODO: RESUMO EXECUTIVO CURTO
-*⚡ RESUMO DAS MANUTENÇÕES/LOGÍSTICAS — MANDU*
-
-*CRÍTICO*
-- Principal problema com horário
-(Aqui pula 1 linha)
-*IMPACTO*
-- Consequência
-(Aqui pula 1 linha)
-*DECISÃO / ACOMPANHAMENTO*
-- Decisão
-- *SUGESTÃO:* Recomendação
-DADOS:
-${contexto}`;
-    const r=await chamarIA(prompt,{maxOutputTokens:3000,timeoutMs:40000,thinkingLevel:'medium',temperature:0.2});
+    const prompt=`${SYSTEM_IA}\nMODO: RESUMO EXECUTIVO\n${contexto}`;
+    const r=await chamarIA(prompt,{maxOutputTokens:3000,timeoutMs:40000,thinkingLevel:'medium',temperature:0.2},'executivo');
     res.json({texto:r.texto,executivo:r.texto,total:ocorrencias.length,modelo:r.modelo});
   }catch(e){res.status(500).json({error:e.message});}
 });
@@ -180,77 +259,35 @@ app.post(['/fechar-turno-ia','/api/fechar-turno-ia','/fechar-turno','/api/fechar
     const contexto=gerarContextoPorFrente(ocorrencias);
 
     const promptGerencial=`${SYSTEM_IA}
-MODO: ANÁLISE GERENCIAL MINUCIOSA - NÃO CORTE TEXTO, MANTENHA HORÁRIOS
+MODO: ANÁLISE GERENCIAL MINUCIOSA - MANTENHA HORÁRIOS, NÃO CORTE
 
-COPIE EXATAMENTE ESTA ESTRUTURA, SEM MUDAR UMA VÍRGULA OU COLAR OS TÓPICOS JUNTOS. PRESTE ATENÇÃO NOS ESPAÇAMENTO, NO FORMATO, NAS PULADAS DE LINHA E NÃO ERRE:
-
-*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
-
-(Aqui pula 1 linha e coloque nessa linha 120 traços "-")
-
-*VISÃO GERAL DO TURNO*
-- FATO: Leitura geral com condição principal e horários relevantes.
-(Aqui pula 1 linha)
-
-*FRENTES COM OCORRÊNCIAS*
-- FRENTE 501: Descreva com horários ex: 16:00, 16:06 etc e impacto.
-- FRENTE 502: Idem.
-(Aqui pula 1 linha)
-
+Gere nos blocos exatos, na ordem:
+*VISÃO GERAL DO TURNO* - com horários
+*FRENTES COM OCORRÊNCIAS* - cada frente com horários ex: Às 16:00, Às 16:06
 *⚠️ PRINCIPAIS PROBLEMAS*
-- FATO: Problema detalhado com horário e frente.
-- ANÁLISE: Impacto com evidência.
-(Aqui pula 1 linha)
-
 *🔁 PROBLEMAS RECORRENTES*
-- FATO: Problemas repetidos. Se não houver, não precisa .
-(Aqui pula 1 linha)
-
 *🚨 RISCOS / IMPACTOS*
-- FATO/ANÁLISE: Riscos sustentados.
-(Aqui pula 1 linha)
-
 *🎯 PRIORIDADES DE ATUAÇÃO*
-- Prioridade 1 ordenada por criticidade.
-(Aqui pula 1 linha)
+*AÇÕES / ACOMPANHAMENTOS* com *SUGESTÃO:*
 
-*AÇÕES / ACOMPANHAMENTOS* (Tudo separadinho em tópicos se sobrepor um ao outro)
-- Ação necessária.
-- *SUGESTÃO:* Recomendação em linha separada.
-
-REGRAS WHATSAPP:
-- Depois de *MANDU* sempre 96 traços na linha de baixo.
-- 1 linha em branco ENTRE blocos.
-- DENTRO do bloco sem linha em branco.
-- Manter todos horários.
+Não deixe blocos grudados. Cada bloco separado. Cada tópico em linha separada com "- ".
 
 DADOS COM HORÁRIOS:
 ${contexto}`;
 
-    const gerencial=await chamarIA(promptGerencial,{maxOutputTokens:12000,timeoutMs:60000,thinkingLevel:'high',temperature:0.25});
+    const gerencial=await chamarIA(promptGerencial,{maxOutputTokens:12000,timeoutMs:60000,thinkingLevel:'high',temperature:0.25},'gerencial');
 
     const promptExecutivo=`${SYSTEM_IA}
 MODO: RESUMO EXECUTIVO FINAL CURTO
-
-*⚡ RESUMO TURNO — MANDU*
-
+Blocos:
 *CRÍTICO*
-- Principal ponto com horário.
-
 *IMPACTO*
-- Principal consequência.
-
 *DECISÃO / ACOMPANHAMENTO*
-- Decisão.
-- *SUGESTÃO:* Recomendação em linha separada.
-
 *FRENTE CRÍTICA*
-- Frente crítica.
-
 DADOS:
 ${contexto}`;
 
-    const executivo=await chamarIA(promptExecutivo,{maxOutputTokens:3500,timeoutMs:45000,thinkingLevel:'medium',temperature:0.2});
+    const executivo=await chamarIA(promptExecutivo,{maxOutputTokens:3500,timeoutMs:45000,thinkingLevel:'medium',temperature:0.2},'executivo');
 
     res.json({gerencial:gerencial.texto,executivo:executivo.texto,texto:gerencial.texto,total:ocorrencias.length,frentes:new Set(ocorrencias.map(o=>o.frente)).size,modelo_gerencial:gerencial.modelo,modelo_executivo:executivo.modelo});
   }catch(e){res.status(500).json({error:e.message});}
@@ -262,7 +299,7 @@ app.post(['/chat-ia','/api/chat-ia'],async(req,res)=>{
     const ocorrencias=await obterOcorrenciasIA(req); if(!ocorrencias.length) return res.status(400).json({error:'Sem ocorrências'});
     const contexto=gerarContextoPorFrente(ocorrencias);
     const prompt=`${SYSTEM_IA}\nMODO: CHAT\nPERGUNTA: ${pergunta}\nDADOS:\n${contexto}`;
-    const r=await chamarIA(prompt,{maxOutputTokens:4000,timeoutMs:45000,thinkingLevel:'medium',temperature:0.25});
+    const r=await chamarIA(prompt,{maxOutputTokens:4000,timeoutMs:45000,thinkingLevel:'medium',temperature:0.25},'gerencial');
     res.json({resposta:r.texto,total:ocorrencias.length,modelo:r.modelo});
   }catch(e){res.status(500).json({error:e.message});}
 });

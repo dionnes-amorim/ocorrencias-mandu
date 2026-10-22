@@ -870,6 +870,7 @@ REGRAS ABSOLUTAS:
 24. Se a pergunta for simples, responda de forma simples.
 25. Se a análise for gerencial, aprofunde a análise.
 26. Se for executivo, priorize decisão e criticidade.
+27. Nas instruções, siga examente o que estiver pedindo, sem inventar e sem burlar, senão terá punição. Deve ser conforme pontuei em cada uma, quando é para pular linha e os espaçamentos que pedi. Tudo será utilizado para copiar para Whatsapp. Não tem opção de não seguir as regras dos textos que mostrei abaixo do jeito que pontuei.
 `;
 
 // ======================================================

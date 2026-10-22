@@ -42,7 +42,7 @@ function normalizarPublicacaoIA(texto){
     .replace(/```/g,'')
     .replace(/\*{2,}/g,'*');
 
-  // 1. Força 96 traços em linha isolada
+  // 1. Força 120 traços em linha isolada
   t = t.replace(/-{5,}/g, '\n------------------------------------------------------------------------------------------------\n');
 
   // 2. Força quebra antes de TODO título que começa com *
@@ -85,7 +85,7 @@ async function obterOcorrenciasIA(req){
 }
 
 const SYSTEM_IA = `
-Você é CTT MANDU - Tereos.
+Você é um assistente da manutenção do COA CTT MANDU - Tereos.
 REGRAS INEGOCIÁVEIS:
 1. NUNCA invente dado, número, horário.
 2. MANTENHA horários (ex: 16:06, 17:30).
@@ -160,8 +160,10 @@ MODO: RESUMO EXECUTIVO CURTO
 
 *CRÍTICO*
 - Principal problema com horário
+(Aqui pula 1 linha)
 *IMPACTO*
 - Consequência
+(Aqui pula 1 linha)
 *DECISÃO / ACOMPANHAMENTO*
 - Decisão
 - *SUGESTÃO:* Recomendação
@@ -180,31 +182,39 @@ app.post(['/fechar-turno-ia','/api/fechar-turno-ia','/fechar-turno','/api/fechar
     const promptGerencial=`${SYSTEM_IA}
 MODO: ANÁLISE GERENCIAL MINUCIOSA - NÃO CORTE TEXTO, MANTENHA HORÁRIOS
 
-COPIE EXATAMENTE ESTA ESTRUTURA:
+COPIE EXATAMENTE ESTA ESTRUTURA, SEM MUDAR UMA VÍRGULA OU COLAR OS TÓPICOS JUNTOS. PRESTE ATENÇÃO NOS ESPAÇAMENTO, NO FORMATO, NAS PULADAS DE LINHA E NÃO ERRE:
 
 *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
 
+(Aqui pula 1 linha e coloque nessa linha 120 traços "-")
+
 *VISÃO GERAL DO TURNO*
 - FATO: Leitura geral com condição principal e horários relevantes.
+(Aqui pula 1 linha)
 
 *FRENTES COM OCORRÊNCIAS*
 - FRENTE 501: Descreva com horários ex: 16:00, 16:06 etc e impacto.
 - FRENTE 502: Idem.
+(Aqui pula 1 linha)
 
 *⚠️ PRINCIPAIS PROBLEMAS*
 - FATO: Problema detalhado com horário e frente.
 - ANÁLISE: Impacto com evidência.
+(Aqui pula 1 linha)
 
 *🔁 PROBLEMAS RECORRENTES*
-- FATO: Problemas repetidos. Se não houver: - Não há recorrência evidenciada nos registros.
+- FATO: Problemas repetidos. Se não houver, não precisa .
+(Aqui pula 1 linha)
 
 *🚨 RISCOS / IMPACTOS*
 - FATO/ANÁLISE: Riscos sustentados.
+(Aqui pula 1 linha)
 
 *🎯 PRIORIDADES DE ATUAÇÃO*
 - Prioridade 1 ordenada por criticidade.
+(Aqui pula 1 linha)
 
-*AÇÕES / ACOMPANHAMENTOS*
+*AÇÕES / ACOMPANHAMENTOS* (Tudo separadinho em tópicos se sobrepor um ao outro)
 - Ação necessária.
 - *SUGESTÃO:* Recomendação em linha separada.
 

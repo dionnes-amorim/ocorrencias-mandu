@@ -12,13 +12,12 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 // ======================================================
-// CONFIG
-// ======================================================
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const TABLE = 'ocorrencias_mandu';
 
+// MODELOS REAIS - NUNCA 3.8
 const GEMINI_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
@@ -41,8 +40,6 @@ app.use(express.static(__dirname, { maxAge: '1h' }));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ======================================================
-// HELPERS
-// ======================================================
 function textoSeguro(v, l = 10000) {
   if (v == null) return '';
   return String(v).replace(/\u0000/g, '').trim().slice(0, l);
@@ -55,7 +52,6 @@ function turnoAtual() {
   return 'C';
 }
 function horaAtual() { return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
-
 function normalizarOcorrencia(item) {
   return {
     id: item?.id || null,
@@ -69,7 +65,7 @@ function normalizarOcorrencia(item) {
 }
 
 // ======================================================
-// FORMATAÇÃO WHATSAPP - 100% CORRIGIDA
+// NORMALIZAÇÃO WHATSAPP - PADRÃO OURO
 // ======================================================
 function normalizarPublicacaoIA(texto) {
   let t = String(texto || '')
@@ -78,55 +74,46 @@ function normalizarPublicacaoIA(texto) {
     .replace(/```/g, '')
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/\*{2,}/g, '*')
+    .replace(/^={3,}.*$/gm, '')
     .replace(/^[ \t]*[•●▪◦]\s*/gm, '- ')
     .replace(/[ \t]+$/gm, '');
 
-  // Força 120 traços depois do título MANDU
-  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)[ \t]*\n*[ \t]*-*/gi, (m, titulo) => {
-    return `${titulo.trim()}\n----------------------------------------------------------------------------------------------------`;
-  });
-  // Se não tiver traço ainda, adiciona
-  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)(?!\n-{5,})/gi, '$1\n----------------------------------------------------------------------------------------------------');
+  // TRAVA 1: Garante titulo + traços na linha de baixo
+  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)[ \t]*\n*[ \t]*-*[ \t]*/gi, 
+    `$1\n------------------------------------------------------------------------------------------------\n`);
 
-  // Título sempre em linha nova
-  t = t.replace(/([^\n])\n*(\*[A-ZÁÉÍÓÚÂÊÔÃÇ0-9 \/\-⚠️🚨🎯🔁📋⚡]+\*)/g, '$1\n\n$2');
+  // TRAVA 2: Se vier grudado *MANDU**VISAO, separa
+  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)(\*[A-Z])/g, 
+    `$1\n------------------------------------------------------------------------------------------------\n$2`);
 
-  // SUGESTÃO sempre em linha nova com espaço
+  // TRAVA 3: Garante 1 linha em branco ENTRE blocos, mas NÃO dentro do bloco
+  // Primeiro normaliza 3+ quebras para 2
+  t = t.replace(/\n{3,}/g, '\n\n');
+  // Depois garante que de um tópico para o próximo título tenha quebra dupla
+  t = t.replace(/([^\n])\n(\*[⚠️🚨🎯🔁📋⚡A-Z])/g, '$1\n\n$2');
+
+  // TRAVA 4: SUGESTÃO sempre linha nova
   t = t.replace(/([^\n])\s*-\s*\*SUGESTÃO:\*/gi, '\n- *SUGESTÃO:*');
   t = t.replace(/\*SUGESTÃO:\*\s*/gi, '*SUGESTÃO:* ');
-  t = t.replace(/-\s*\*SUGESTÃO:\*([^\s])/gi, '- *SUGESTÃO:* $1');
-
-  // Tópico "-" sempre em linha nova
-  t = t.replace(/([^\n])\s+-\s+/g, '\n- ');
-
-  // Limpa 3+ quebras
-  t = t.replace(/\n{3,}/g, '\n\n');
-
-  // Dentro do mesmo bloco: título grudado no tópico (sem linha em branco)
+  
+  // TRAVA 5: Remove quebra dupla entre título e seu primeiro tópico
+  // *VISÃO GERAL DO TURNO*\n\n- FATO -> *VISÃO GERAL DO TURNO*\n- FATO
   t = t.replace(/(\*[A-ZÁÉÍÓÚÂÊÔÃÇ0-9 \/\-⚠️🚨🎯🔁📋⚡]+\*)\n\n+-\s*/g, '$1\n- ');
 
   return t.trim();
 }
 
-function prepararOcorrenciasIA(ocorrencias = []) {
-  return (ocorrencias || []).map(normalizarOcorrencia).filter(i => i.texto);
+function prepararOcorrenciasIA(o = []) { return (o || []).map(normalizarOcorrencia).filter(i => i.texto); }
+function agruparPorFrente(o = []) {
+  const g = {}; for (const i of o) { const f = i.frente || 'GERAL'; if (!g[f]) g[f] = []; g[f].push(i); } return g;
 }
-function agruparPorFrente(ocorrencias = []) {
-  const g = {};
-  for (const item of ocorrencias) {
-    const f = item.frente || 'GERAL';
-    if (!g[f]) g[f] = [];
-    g[f].push(item);
-  }
-  return g;
-}
-function gerarContextoPorFrente(ocorrencias = []) {
-  const grupos = agruparPorFrente(ocorrencias);
+function gerarContextoPorFrente(o = []) {
+  const grupos = agruparPorFrente(o);
   const frentes = Object.keys(grupos).sort();
   if (!frentes.length) return 'Nenhuma ocorrência registrada.';
-  return frentes.map(frente => {
-    const linhas = grupos[frente].map(i => `- ${i.hora || '--:--'} | ${i.texto}`).join('\n');
-    return `FRENTE ${frente}\n${linhas}`;
+  return frentes.map(f => {
+    const linhas = grupos[f].map(i => `- ${i.hora || '--:--'} | ${i.texto}`).join('\n');
+    return `FRENTE ${f}\n${linhas}`;
   }).join('\n\n');
 }
 async function obterOcorrenciasIA(req) {
@@ -139,17 +126,24 @@ async function obterOcorrenciasIA(req) {
 }
 
 // ======================================================
-// GEMINI
-// ======================================================
 const SYSTEM_IA = `
 Você é o assistente operacional do CTT Diário de Turno MANDU - Tereos.
-REGRAS: Não invente dados. Português Brasil, técnico e direto.
-Saída PRONTA PARA WHATSAPP. Use apenas *um asterisco* para negrito. Nunca **.
-Use "-" para tópicos, cada tópico em linha separada.
-Deixe 1 linha em branco ENTRE blocos. Dentro do bloco, título grudado no tópico.
-Nunca use bloco de código, # ou =====.
-Quando não houver evidência, diga "Não há evidência suficiente nos registros".
-Siga EXATAMENTE a estrutura pedida.
+OBJETIVO: Transformar registros em informação útil.
+REGRAS ABSOLUTAS E INEGOCIÁVEIS:
+1. NUNCA invente ocorrência, número, horário, causa, resultado.
+2. NUNCA corte informação relevante ou horário.
+3. MANTENHA os horários informados nas ocorrências (ex: 08:15, 14:30).
+4. Diferencie FATO, ANÁLISE e *SUGESTÃO:*.
+5. Português Brasil, técnico, natural e operacional.
+6. Resultado PRONTO PARA WHATSAPP - copie e cole.
+7. Use SOMENTE *um asterisco* para negrito: *TEXTO*. PROIBIDO **.
+8. Use "-" para tópicos, cada tópico em uma linha.
+9. PADRÃO DE BLOCO: *TÍTULO* na linha, quebra, "- tópico". Sem linha em branco dentro do bloco.
+10. PADRÃO ENTRE BLOCOS: 1 linha em branco separando blocos.
+11. PADRÃO MANDU: Depois de *...MANDU* SEMPRE pular linha e colocar 96 traços: ------------------------------------------------------------------------------------------------
+12. NÃO use bloco de código, # ou =====.
+13. Seja minucioso e detalhado na análise gerencial, não resuma demais.
+14. Siga EXATAMENTE a estrutura que for pedida, sem criar títulos novos.
 `;
 
 function obterConfigPensamento(nivel) {
@@ -173,8 +167,7 @@ async function chamarIA(prompt, options = {}) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${GEMINI_API_KEY}`;
       const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: options.temperature ?? 0.25, maxOutputTokens, ...obterConfigPensamento(thinkingLevel) }
@@ -186,8 +179,7 @@ async function chamarIA(prompt, options = {}) {
       if (!res.ok) {
         const msg = data?.error?.message || raw.slice(0, 800);
         if ([400, 401, 403].includes(res.status)) throw new Error(msg);
-        ultimoErro = `${modelo} HTTP ${res.status}: ${msg}`;
-        continue;
+        ultimoErro = `${modelo} HTTP ${res.status}: ${msg}`; continue;
       }
       const texto = extrairTextoGemini(data);
       if (!texto) { ultimoErro = `${modelo} vazio`; continue; }
@@ -201,12 +193,9 @@ async function chamarIA(prompt, options = {}) {
 }
 
 // ======================================================
-// ROTAS
-// ======================================================
 app.get('/api/status', (req, res) => {
   res.json({ ok: true, sistema: 'CTT Diário de Turno - MANDU', supabase: !!supa, gemini: !!GEMINI_API_KEY, modelos: GEMINI_MODELS, modelo_principal: GEMINI_MODELS[0], hora: horaAtual() });
 });
-
 app.get('/api/ocorrencias', async (req, res) => {
   try {
     if (!supa) return res.status(500).json({ error: 'Supabase não configurado' });
@@ -215,7 +204,6 @@ app.get('/api/ocorrencias', async (req, res) => {
     res.json((data || []).map(normalizarOcorrencia));
   } catch { res.status(500).json({ error: 'Erro ao carregar' }); }
 });
-
 app.delete('/api/ocorrencias', async (req, res) => {
   try {
     if (!supa) return res.status(500).json({ error: 'Supabase não configurado' });
@@ -224,25 +212,17 @@ app.delete('/api/ocorrencias', async (req, res) => {
     res.json({ ok: true });
   } catch { res.status(500).json({ error: 'Erro ao limpar' }); }
 });
-
 app.post('/api/ocorrencias', async (req, res) => {
   try {
     if (!supa) return res.status(500).json({ error: 'Supabase não configurado' });
     const texto = textoSeguro(req.body?.texto, 10000);
     if (!texto) return res.status(400).json({ error: 'Texto obrigatório' });
-    const registro = {
-      hora: textoSeguro(req.body?.hora, 20) || horaAtual(),
-      frente: frenteSegura(req.body?.frente),
-      texto,
-      turno: textoSeguro(req.body?.turno, 20) || turnoAtual(),
-      unidade: textoSeguro(req.body?.unidade, 50) || 'MANDU'
-    };
+    const registro = { hora: textoSeguro(req.body?.hora, 20) || horaAtual(), frente: frenteSegura(req.body?.frente), texto, turno: textoSeguro(req.body?.turno, 20) || turnoAtual(), unidade: textoSeguro(req.body?.unidade, 50) || 'MANDU' };
     const { data, error } = await supa.from(TABLE).insert(registro).select().single();
     if (error) return res.status(500).json({ error: error.message });
     res.status(201).json(normalizarOcorrencia(data));
   } catch { res.status(500).json({ error: 'Erro ao salvar' }); }
 });
-
 app.put('/api/ocorrencias/:id', async (req, res) => {
   try {
     if (!supa) return res.status(500).json({ error: 'Supabase não configurado' });
@@ -259,7 +239,6 @@ app.put('/api/ocorrencias/:id', async (req, res) => {
     res.json(normalizarOcorrencia(data));
   } catch { res.status(500).json({ error: 'Erro ao atualizar' }); }
 });
-
 app.delete('/api/ocorrencias/:id', async (req, res) => {
   try {
     if (!supa) return res.status(500).json({ error: 'Supabase não configurado' });
@@ -271,7 +250,7 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 });
 
 // ======================================================
-// IA
+// IA - PROMPTS COM PADRÃO TRAVADO
 // ======================================================
 app.post('/organizar-ia', async (req, res) => {
   try {
@@ -280,26 +259,22 @@ app.post('/organizar-ia', async (req, res) => {
     const contexto = gerarContextoPorFrente(ocorrencias);
     const prompt = `${SYSTEM_IA}
 MODO: ORGANIZAÇÃO DO TURNO.
-
-ESTRUTURA OBRIGATÓRIA:
-
+Estrutura OBRIGATÓRIA - copie exatamente os títulos:
 *📋 DIÁRIO DE TURNO — MANDU*
 
 *FRENTE XXX*
-- Resumo objetivo e impacto
+- Resumo com horários e impacto
 
 *⚠️ PONTOS DE ATENÇÃO*
-- Somente o que exige atenção
+- Ponto 1
 
 *🚨 RISCOS / IMPACTOS*
-- Somente riscos sustentados
+- Risco 1
 
 *🎯 AÇÕES / ACOMPANHAMENTOS*
-- Ação
+- Ação 1
 - *SUGESTÃO:* Recomendação em linha separada
-
-FORMATAÇÃO: 1 linha em branco ENTRE blocos. Dentro do bloco sem linha em branco. Só * simples.
-
+REGRAS: Mantenha horários. Não invente. Não corte texto importante.
 OCORRÊNCIAS:
 ${contexto}`;
     const r = await chamarIA(prompt, { maxOutputTokens: 6000, timeoutMs: 45000, thinkingLevel: 'high', temperature: 0.25 });
@@ -314,23 +289,19 @@ app.post(['/resumo-executivo-ia', '/api/resumo-executivo-ia'], async (req, res) 
     const contexto = gerarContextoPorFrente(ocorrencias);
     const prompt = `${SYSTEM_IA}
 MODO: RESUMO EXECUTIVO CURTO
-
-ESTRUTURA:
-
+Estrutura EXATA:
 *⚡ RESUMO DAS MANUTENÇÕES/LOGÍSTICAS — MANDU*
 
 *CRÍTICO*
-- Principal problema
+- Principal problema com horário se houver
 
 *IMPACTO*
 - Consequência
 
 *DECISÃO / ACOMPANHAMENTO*
-- O que acompanhar
+- Decisão
 - *SUGESTÃO:* Recomendação em linha separada
-
-Max 8 linhas.
-
+Max 8 linhas mas sem cortar informação crítica.
 DADOS:
 ${contexto}`;
     const r = await chamarIA(prompt, { maxOutputTokens: 3000, timeoutMs: 40000, thinkingLevel: 'medium', temperature: 0.2 });
@@ -345,68 +316,80 @@ app.post(['/fechar-turno-ia', '/api/fechar-turno-ia', '/fechar-turno', '/api/fec
     const contexto = gerarContextoPorFrente(ocorrencias);
 
     const promptGerencial = `${SYSTEM_IA}
-MODO: ANÁLISE GERENCIAL DETALHADA
+MODO: ANÁLISE GERENCIAL MINUCIOSA E DETALHADA - NÃO CORTE TEXTO
 
-COPIE EXATAMENTE ESTA ESTRUTURA, LINHA A LINHA:
+COPIE EXATAMENTE ESTA ESTRUTURA, NA ORDEM, SEM MUDAR NADA:
 
 *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
 
 *VISÃO GERAL DO TURNO*
-- Leitura geral do turno
+- FATO: Leitura geral do turno com condição principal observada, citando horários quando relevante.
 
 *FRENTES COM OCORRÊNCIAS*
-- Frente XXX com ocorrência e efeito
+- FRENTE 501: Descreva ocorrências com horários (ex: 08:15 colhedora X parada...), impacto operacional.
+- FRENTE 503: Idem, mantenha horários e detalhes técnicos.
 
 *⚠️ PRINCIPAIS PROBLEMAS*
-- Problema 1
-- Problema 2
+- FATO: Problema detalhado com horário e frente.
+- ANÁLISE: Explique impacto quando houver evidência.
 
 *🔁 PROBLEMAS RECORRENTES*
-- Se houver recorrência liste, se não: - Não há recorrência evidenciada nos registros
+- Liste somente problemas repetidos em mais de uma frente ou horário. Se não houver: - Não há recorrência evidenciada nos registros.
 
 *🚨 RISCOS / IMPACTOS*
-- Risco 1
+- FATO/ANÁLISE: Riscos sustentados pelos registros, com horário se houver.
 
 *🎯 PRIORIDADES DE ATUAÇÃO*
-- Prioridade 1
+- Prioridade ordenada por criticidade e impacto.
 
 *AÇÕES / ACOMPANHAMENTOS*
-- Ação 1
-- *SUGESTÃO:* Recomendação sempre em linha separada
+- Ação de acompanhamento necessário.
+- *SUGESTÃO:* Recomendação sempre em linha separada, nunca grudada no texto anterior.
 
-REGRA: Título MANDU + linha de 120 traços na linha de baixo. 1 linha em branco ENTRE blocos. Dentro do bloco sem linha em branco.
+REGRAS RÍGIDAS DE FORMATAÇÃO WHATSAPP:
+- Depois de *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU* SEMPRE tem 96 traços na linha de baixo.
+- 1 linha em branco ENTRE blocos (de *AÇÕES* para *RISCOS*).
+- DENTRO do bloco: Título grudado no primeiro tópico, sem linha em branco. Ex:
+*VISÃO GERAL DO TURNO*
+- FATO: ...
+- NÃO:
+*VISÃO GERAL DO TURNO*
 
-DADOS:
+- FATO: ...
+- Cada tópico em linha separada começando com "- ".
+- Manter TODOS os horários informados nas ocorrências.
+- Análise minuciosa, não resuma em excesso.
+
+DADOS DO TURNO COM HORÁRIOS:
 ${contexto}`;
 
-    const gerencial = await chamarIA(promptGerencial, { maxOutputTokens: 10000, timeoutMs: 60000, thinkingLevel: 'high', temperature: 0.25 });
+    const gerencial = await chamarIA(promptGerencial, { maxOutputTokens: 12000, timeoutMs: 60000, thinkingLevel: 'high', temperature: 0.25 });
 
     const promptExecutivo = `${SYSTEM_IA}
-MODO: RESUMO EXECUTIVO FINAL CURTO
+MODO: RESUMO EXECUTIVO FINAL - MUITO CURTO MAS SEM ERRO DE FORMATAÇÃO
 
-ESTRUTURA EXATA:
+COPIE EXATAMENTE ESTA ESTRUTURA:
 
 *⚡ RESUMO TURNO — MANDU*
 
 *CRÍTICO*
-- Principal ponto
+- Principal ponto do turno com horário se relevante.
 
 *IMPACTO*
-- Principal consequência
+- Principal consequência operacional.
 
 *DECISÃO / ACOMPANHAMENTO*
-- Decisão
-- *SUGESTÃO:* Recomendação em linha separada
+- Principal decisão ou acompanhamento.
+- *SUGESTÃO:* Recomendação sempre em linha separada.
 
 *FRENTE CRÍTICA*
-- Frente crítica
+- Frente que merece atenção prioritária.
 
-Max 8 tópicos.
-
+REGRAS: Max 6 a 8 tópicos, mas sem cortar horário crítico. Mesma lógica de quebra do gerencial.
 DADOS:
 ${contexto}`;
 
-    const executivo = await chamarIA(promptExecutivo, { maxOutputTokens: 3000, timeoutMs: 40000, thinkingLevel: 'medium', temperature: 0.2 });
+    const executivo = await chamarIA(promptExecutivo, { maxOutputTokens: 3500, timeoutMs: 45000, thinkingLevel: 'medium', temperature: 0.2 });
 
     res.json({
       gerencial: gerencial.texto,
@@ -429,7 +412,7 @@ app.post(['/chat-ia', '/api/chat-ia'], async (req, res) => {
     const contexto = gerarContextoPorFrente(ocorrencias);
     const historico = Array.isArray(req.body?.historico) ? req.body.historico.slice(-8).map(i => `${i.role === 'user' ? 'USUÁRIO' : 'ASSISTENTE'}: ${textoSeguro(i.content, 3000)}`).join('\n') : 'Sem histórico';
     const prompt = `${SYSTEM_IA}
-MODO: CHAT OPERACIONAL
+MODO: CHAT OPERACIONAL - Responda só o perguntado, proporcional, mantenha horários se relevante.
 PERGUNTA: ${pergunta}
 HISTÓRICO: ${historico}
 DADOS:
@@ -441,6 +424,10 @@ ${contexto}`;
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Rota API não encontrada', rota: req.originalUrl }));
 app.use((req, res) => res.status(404).send('Página não encontrada'));
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  res.status(500).json({ error: error?.message || 'Erro interno' });
+});
 
 app.listen(PORT, () => {
   console.log(`CTT MANDU na porta ${PORT} | Supabase: ${!!supa ? 'OK' : 'OFF'} | Gemini: ${!!GEMINI_API_KEY ? 'OK' : 'OFF'} | Principal: ${GEMINI_MODELS[0]}`);

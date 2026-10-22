@@ -33,143 +33,150 @@ function horaAtual(){ return new Date().toLocaleTimeString('pt-BR',{hour:'2-digi
 function normalizarOcorrencia(item){ return { id:item?.id||null, hora:textoSeguro(item?.hora,20), frente:frenteSegura(item?.frente), texto:textoSeguro(item?.texto,10000), turno:textoSeguro(item?.turno,20), unidade:textoSeguro(item?.unidade,50)||'MANDU', created_at:item?.created_at||null }; }
 
 // ======================================================
-// CORREÇÃO DEFINITIVA - RECONSTRÓI O TEXTO BLOCO A BLOCO
+// RECONSTRUÇÃO DEFINITIVA - NÃO DEIXA EMBolar
 // ======================================================
 const TRACOS = '------------------------------------------------------------------------------------------------';
 
-function limparBullet(l){
-  return String(l||'').replace(/^[ \t]*[-•●▪◦]+\s*/,'').replace(/\*{2,}/g,'').trim();
-}
-
-function extrairTopicos(textoBruto){
-  // Quebra tudo em linhas e transforma em tópicos
-  let t = String(textoBruto||'')
-    .replace(/\r/g,'\n')
-    .replace(/-{5,}/g,'\n')
-    .replace(/```[\s\S]*?```/g,'')
-    .replace(/\*{2,}/g,'*')
-    .replace(/([^\n])\s*-\s+/g,'\n- ')
-    .replace(/;\s*/g,';\n- ')
-    .replace(/\n+/g,'\n');
-
-  const linhas = t.split('\n').map(s=>s.trim()).filter(Boolean);
-  const topicos = [];
-  for(let linha of linhas){
-    // Ignora títulos soltos
-    if(/^\*.*\*$/.test(linha)) continue;
-    if(!linha) continue;
-    let b = limparBullet(linha);
-    if(b.length < 3) continue;
-    // Garante que começa com - 
-    if(!b.startsWith('*SUGESTÃO:*') && !b.startsWith('FRENTE') && b.length > 0){
-       // deixa passar
-    }
-    topicos.push(b);
-  }
-  // Transforma em lista com "- "
-  return topicos.map(b=>{
-    if(b.startsWith('FRENTE')) return `- ${b}`;
-    if(b.startsWith('*SUGESTÃO:*')) return `- ${b}`;
-    if(b.startsWith('FATO:') || b.startsWith('ANÁLISE:') || b.startsWith('Prioridade') || b.startsWith('Atendimento') || b.startsWith('Alocação') || b.startsWith('Agilização') || b.startsWith('Acompanhar') || b.startsWith('Monitoramento')){
-      return `- ${b}`;
-    }
-    return `- ${b}`;
-  });
+function limparLinha(l){
+  let s = String(l||'').trim();
+  if(!s) return '';
+  // Remove lixo tipo "* *⚠️" ou "* *🔁" ou "*"
+  if(/^\*+\s*[⚠️🚨🎯🔁📋⚡]*\s*\*+$/.test(s)) return '';
+  if(/^\*+\s*[⚠️🚨🎯🔁📋⚡]\s*$/.test(s)) return '';
+  if(/^\*+$/.test(s)) return '';
+  s = s.replace(/^\*+\s*/,'').replace(/\s*\*+$/,''); // tira asterisco sobrando no começo/fim
+  s = s.replace(/^[•●▪◦]\s*/,'').replace(/^\-\s*/,'').trim();
+  s = s.replace(/\*{2,}/g,'').trim();
+  if(s.length < 3) return '';
+  return s;
 }
 
 function reconstruirGerencial(textoBruto){
-  let txt = String(textoBruto||'');
-  
-  // Dicionário de blocos que queremos encontrar, na ordem
-  const mapa = [
-    { id: 'visao', nomes: ['VISÃO GERAL DO TURNO'], titulo: '*VISÃO GERAL DO TURNO*' },
-    { id: 'frentes', nomes: ['FRENTES COM OCORRÊNCIAS'], titulo: '*FRENTES COM OCORRÊNCIAS*' },
-    { id: 'principais', nomes: ['PRINCIPAIS PROBLEMAS'], titulo: '*⚠️ PRINCIPAIS PROBLEMAS*' },
-    { id: 'recorrentes', nomes: ['PROBLEMAS RECORRENTES'], titulo: '*🔁 PROBLEMAS RECORRENTES*' },
-    { id: 'riscos', nomes: ['RISCOS / IMPACTOS','RISCOS E IMPACTOS','RISCOS'], titulo: '*🚨 RISCOS / IMPACTOS*' },
-    { id: 'prioridades', nomes: ['PRIORIDADES DE ATUAÇÃO','PRIORIDADES'], titulo: '*🎯 PRIORIDADES DE ATUAÇÃO*' },
-    { id: 'acoes', nomes: ['AÇÕES / ACOMPANHAMENTOS','ACOES','ACOMPANHAMENTOS'], titulo: '*AÇÕES / ACOMPANHAMENTOS*' },
-  ];
+  let raw = String(textoBruto||'')
+    .replace(/\r/g,'\n')
+    .replace(/-{5,}/g,'\n')
+    .replace(/```[\s\S]*?```/g,'');
 
-  // Encontra índices de cada título no texto bruto
-  const lower = txt.toLowerCase();
-  let blocosEncontrados = [];
-  for(let m of mapa){
-    let idx = -1;
-    for(let nome of m.nomes){
-      let p = lower.indexOf(nome.toLowerCase());
-      if(p !== -1 && (idx === -1 || p < idx)) idx = p;
+  // Força quebra em todo título conhecido
+  raw = raw.replace(/\*?\s*📋[^\n]*MANDU[^\n]*\*?/gi, '\nCABECALHO_MANDU\n');
+  raw = raw.replace(/\*?\s*VISÃO GERAL DO TURNO[^\n]*\*?/gi, '\nTITULO_VISAO\n');
+  raw = raw.replace(/\*?\s*FRENTES COM OCORRÊNCIAS[^\n]*\*?/gi, '\nTITULO_FRENTES\n');
+  raw = raw.replace(/\*?\s*⚠️?\s*PRINCIPAIS PROBLEMAS[^\n]*\*?/gi, '\nTITULO_PRINCIPAIS\n');
+  raw = raw.replace(/\*?\s*🔁?\s*PROBLEMAS RECORRENTES[^\n]*\*?/gi, '\nTITULO_RECORRENTES\n');
+  raw = raw.replace(/\*?\s*🚨?\s*RISCOS\s*\/\s*IMPACTOS[^\n]*\*?/gi, '\nTITULO_RISCOS\n');
+  raw = raw.replace(/\*?\s*🎯?\s*PRIORIDADES DE ATUAÇÃO[^\n]*\*?/gi, '\nTITULO_PRIORIDADES\n');
+  raw = raw.replace(/\*?\s*AÇÕES\s*\/\s*ACOMPANHAMENTOS[^\n]*\*?/gi, '\nTITULO_ACOES\n');
+  // Executivos que vieram grudados no final
+  raw = raw.replace(/\*?\s*CRÍTICO[^\n]*\*?/gi, '\nTITULO_CRITICO_EXEC\n');
+  raw = raw.replace(/\*?\s*IMPACTO[^\n]*\*?/gi, '\nTITULO_IMPACTO_EXEC\n');
+  raw = raw.replace(/\*?\s*FRENTE CRÍTICA[^\n]*\*?/gi, '\nTITULO_FRENTE_CRITICA_EXEC\n');
+
+  const partes = raw.split('\n');
+  const blocos = {
+    visao: [], frentes: [], principais: [], recorrentes: [], riscos: [], prioridades: [], acoes: []
+  };
+  let atual = null;
+
+  for(let linha of partes){
+    let l = linha.trim();
+    if(!l) continue;
+    if(l === 'CABECALHO_MANDU'){ atual = null; continue; }
+    if(l === 'TITULO_VISAO'){ atual = 'visao'; continue; }
+    if(l === 'TITULO_FRENTES'){ atual = 'frentes'; continue; }
+    if(l === 'TITULO_PRINCIPAIS'){ atual = 'principais'; continue; }
+    if(l === 'TITULO_RECORRENTES'){ atual = 'recorrentes'; continue; }
+    if(l === 'TITULO_RISCOS'){ atual = 'riscos'; continue; }
+    if(l === 'TITULO_PRIORIDADES'){ atual = 'prioridades'; continue; }
+    if(l === 'TITULO_ACOES'){ atual = 'acoes'; continue; }
+    if(l.startsWith('TITULO_')){ atual = null; continue; } // ignora executivo dentro do gerencial
+
+    let limpo = limparLinha(l);
+    if(!limpo) continue;
+    if(!atual){
+      // Se ainda não tem bloco, joga na visão
+      if(!blocos.visao.length) atual = 'visao';
+      else continue;
     }
-    blocosEncontrados.push({ ...m, idx });
-  }
-  // Ordena por posição no texto
-  blocosEncontrados = blocosEncontrados.filter(b=>b.idx !== -1).sort((a,b)=>a.idx-b.idx);
-  
-  // Se não encontrou nada, tenta pelo menos quebrar por "-"
-  if(blocosEncontrados.length === 0){
-    const topicos = extrairTopicos(txt);
-    return `*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*\n${TRACOS}\n*VISÃO GERAL DO TURNO*\n${topicos.join('\n')}`;
+    blocos[atual].push(limpo);
   }
 
-  let saida = `*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*\n${TRACOS}`;
+  // Monta saída no padrão que você exigiu
+  let out = `*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*\n${TRACOS}`;
   
-  for(let i=0;i<blocosEncontrados.length;i++){
-    const atual = blocosEncontrados[i];
-    const proximo = blocosEncontrados[i+1];
-    let conteudoBruto = '';
-    if(proximo){
-      conteudoBruto = txt.substring(atual.idx, proximo.idx);
-    }else{
-      conteudoBruto = txt.substring(atual.idx);
-    }
-    // Remove o próprio título do conteúdo
-    for(let n of atual.nomes){
-      conteudoBruto = conteudoBruto.replace(new RegExp(`\\*?[^\\n]*${n}[^\\n]*\\*?`,'gi'),'');
-    }
-    let topicos = extrairTopicos(conteudoBruto);
-    if(topicos.length === 0) continue;
-    
-    saida += `\n\n${atual.titulo}\n${topicos.join('\n')}`;
+  if(blocos.visao.length){
+    out += `\n*VISÃO GERAL DO TURNO*\n` + blocos.visao.map(b=>`- ${b}`).join('\n');
   }
-  return saida;
+  if(blocos.frentes.length){
+    out += `\n\n*FRENTES COM OCORRÊNCIAS*\n` + blocos.frentes.map(b=>{
+      if(b.toLowerCase().startsWith('frente')) return `- ${b}`;
+      return `- ${b}`;
+    }).join('\n');
+  }
+  if(blocos.principais.length){
+    out += `\n\n*⚠️ PRINCIPAIS PROBLEMAS*\n` + blocos.principais.map(b=>`- ${b}`).join('\n');
+  }
+  if(blocos.recorrentes.length){
+    out += `\n\n*🔁 PROBLEMAS RECORRENTES*\n` + blocos.recorrentes.map(b=>`- ${b}`).join('\n');
+  }else{
+    out += `\n\n*🔁 PROBLEMAS RECORRENTES*\n- Não há recorrência evidenciada nos registros.`;
+  }
+  if(blocos.riscos.length){
+    out += `\n\n*🚨 RISCOS / IMPACTOS*\n` + blocos.riscos.map(b=>`- ${b}`).join('\n');
+  }
+  if(blocos.prioridades.length){
+    out += `\n\n*🎯 PRIORIDADES DE ATUAÇÃO*\n` + blocos.prioridades.map(b=>`- ${b}`).join('\n');
+  }
+  if(blocos.acoes.length){
+    out += `\n\n*AÇÕES / ACOMPANHAMENTOS*\n` + blocos.acoes.map(b=>{
+      if(b.toLowerCase().startsWith('sugestão') || b.toLowerCase().startsWith('sugestao')) return `- *SUGESTÃO:* ${b.replace(/sugestão:\s*/i,'')}`;
+      if(b.includes('SUGESTÃO:') || b.includes('*SUGESTÃO:*')) return `- ${b.replace(/\*SUGESTÃO:\*\s*/,'*SUGESTÃO:* ')}`;
+      return `- ${b}`;
+    }).join('\n');
+  }
+
+  return out;
 }
 
 function reconstruirExecutivo(textoBruto){
-  let txt = String(textoBruto||'');
-  const mapa = [
-    { nomes: ['CRÍTICO'], titulo: '*CRÍTICO*' },
-    { nomes: ['IMPACTO'], titulo: '*IMPACTO*' },
-    { nomes: ['DECISÃO','ACOMPANHAMENTO'], titulo: '*DECISÃO / ACOMPANHAMENTO*' },
-    { nomes: ['FRENTE CRÍTICA','FRENTE'], titulo: '*FRENTE CRÍTICA*' },
-  ];
-  const lower = txt.toLowerCase();
-  let blocos = [];
-  for(let m of mapa){
-    let idx = -1;
-    for(let nome of m.nomes){
-      let p = lower.indexOf(nome.toLowerCase());
-      if(p !== -1 && (idx === -1 || p < idx)) idx = p;
-    }
-    if(idx !== -1) blocos.push({ ...m, idx });
+  let raw = String(textoBruto||'').replace(/\r/g,'\n').replace(/-{5,}/g,'\n').replace(/```[\s\S]*?```/g,'');
+  raw = raw.replace(/\*?\s*⚡[^\n]*MANDU[^\n]*\*?/gi, '\nCABECALHO_EXEC\n');
+  raw = raw.replace(/\*?\s*RESUMO TURNO[^\n]*\*?/gi, '\nCABECALHO_EXEC\n');
+  raw = raw.replace(/\*?\s*RESUMO[^\n]*MANDU[^\n]*\*?/gi, '\nCABECALHO_EXEC\n');
+  raw = raw.replace(/\*?\s*CRÍTICO[^\n]*\*?/gi, '\nTITULO_CRITICO\n');
+  raw = raw.replace(/\*?\s*IMPACTO[^\n]*\*?/gi, '\nTITULO_IMPACTO\n');
+  raw = raw.replace(/\*?\s*DECISÃO[^\n]*\*?/gi, '\nTITULO_DECISAO\n');
+  raw = raw.replace(/\*?\s*FRENTE CRÍTICA[^\n]*\*?/gi, '\nTITULO_FRENTE_CRITICA\n');
+
+  const partes = raw.split('\n');
+  const blocos = { critico: [], impacto: [], decisao: [], frente: [] };
+  let atual = null;
+  for(let linha of partes){
+    let l = linha.trim(); if(!l) continue;
+    if(l==='CABECALHO_EXEC'){ atual=null; continue; }
+    if(l==='TITULO_CRITICO'){ atual='critico'; continue; }
+    if(l==='TITULO_IMPACTO'){ atual='impacto'; continue; }
+    if(l==='TITULO_DECISAO'){ atual='decisao'; continue; }
+    if(l==='TITULO_FRENTE_CRITICA'){ atual='frente'; continue; }
+    let limpo = limparLinha(l); if(!limpo) continue;
+    if(!atual) continue;
+    blocos[atual].push(limpo);
   }
-  blocos = blocos.sort((a,b)=>a.idx-b.idx);
-  
-  let saida = `*⚡ RESUMO TURNO — MANDU*\n${TRACOS}`;
-  for(let i=0;i<blocos.length;i++){
-    const atual = blocos[i];
-    const prox = blocos[i+1];
-    let bruto = prox ? txt.substring(atual.idx, prox.idx) : txt.substring(atual.idx);
-    for(let n of atual.nomes) bruto = bruto.replace(new RegExp(`\\*?[^\\n]*${n}[^\\n]*\\*?`,'gi'),'');
-    let topicos = extrairTopicos(bruto);
-    if(topicos.length===0) continue;
-    saida += `\n\n${atual.titulo}\n${topicos.join('\n')}`;
-  }
-  return saida;
+
+  let out = `*⚡ RESUMO TURNO — MANDU*\n${TRACOS}`;
+  if(blocos.critico.length) out += `\n*CRÍTICO*\n` + blocos.critico.map(b=>`- ${b}`).join('\n');
+  if(blocos.impacto.length) out += `\n\n*IMPACTO*\n` + blocos.impacto.map(b=>`- ${b}`).join('\n');
+  if(blocos.decisao.length) out += `\n\n*DECISÃO / ACOMPANHAMENTO*\n` + blocos.decisao.map(b=>{
+    if(b.toLowerCase().includes('sugestão')) return `- *SUGESTÃO:* ${b.replace(/.*sugestão:\s*/i,'')}`;
+    return `- ${b}`;
+  }).join('\n');
+  if(blocos.frente.length) out += `\n\n*FRENTE CRÍTICA*\n` + blocos.frente.map(b=>`- ${b}`).join('\n');
+  return out;
 }
 
 function normalizarPublicacaoIA(texto, tipo='gerencial'){
   if(!texto) return '';
-  if(tipo === 'executivo' || String(texto).toUpperCase().includes('RESUMO TURNO') || String(texto).toUpperCase().includes('RESUMO EXECUTIVO') || String(texto).toUpperCase().includes('RESUMO DAS')){
+  const upper = String(texto).toUpperCase();
+  if(tipo==='executivo' || upper.includes('RESUMO TURNO') || (upper.includes('CRÍTICO') && upper.includes('IMPACTO') && upper.includes('DECISÃO'))){
     return reconstruirExecutivo(texto);
   }
   return reconstruirGerencial(texto);
@@ -189,20 +196,7 @@ async function obterOcorrenciasIA(req){
 
 const SYSTEM_IA = `
 Você é CTT MANDU - Tereos. Seja minucioso, detalhado, mantenha horários.
-REGRAS: Não invente. Português Brasil. Use * simples. Use "-" tópicos.
-ESTRUTURA OBRIGATÓRIA GERENCIAL:
-*VISÃO GERAL DO TURNO*
-*FRENTES COM OCORRÊNCIAS*
-*⚠️ PRINCIPAIS PROBLEMAS*
-*🔁 PROBLEMAS RECORRENTES*
-*🚨 RISCOS / IMPACTOS*
-*🎯 PRIORIDADES DE ATUAÇÃO*
-*AÇÕES / ACOMPANHAMENTOS*
-EXECUTIVO:
-*CRÍTICO*
-*IMPACTO*
-*DECISÃO / ACOMPANHAMENTO*
-*FRENTE CRÍTICA*
+REGRAS: Não invente. Use * simples. Use "-" tópicos.
 `;
 
 function obterConfigPensamento(n){ if(n==='high') return {thinkingConfig:{thinkingBudget:4096}}; if(n==='low') return {thinkingConfig:{thinkingBudget:1024}}; return {thinkingConfig:{thinkingBudget:2048}}; }
@@ -237,7 +231,7 @@ app.post('/organizar-ia',async(req,res)=>{
   try{
     const ocorrencias=await obterOcorrenciasIA(req); if(!ocorrencias.length) return res.status(400).json({error:'Sem ocorrências'});
     const contexto=gerarContextoPorFrente(ocorrencias);
-    const prompt=`${SYSTEM_IA}\nMODO: DIÁRIO - seja detalhado com horários\nOCORRÊNCIAS:\n${contexto}`;
+    const prompt=`${SYSTEM_IA}\nMODO: DIÁRIO\nOCORRÊNCIAS:\n${contexto}`;
     const r=await chamarIA(prompt,{maxOutputTokens:6000,timeoutMs:45000,thinkingLevel:'high',temperature:0.25},'gerencial');
     res.json({texto:r.texto,total:ocorrencias.length,modelo:r.modelo});
   }catch(e){res.status(500).json({error:e.message});}
@@ -259,31 +253,26 @@ app.post(['/fechar-turno-ia','/api/fechar-turno-ia','/fechar-turno','/api/fechar
     const contexto=gerarContextoPorFrente(ocorrencias);
 
     const promptGerencial=`${SYSTEM_IA}
-MODO: ANÁLISE GERENCIAL MINUCIOSA - MANTENHA HORÁRIOS, NÃO CORTE
+MODO: ANÁLISE GERENCIAL MINUCIOSA - MANTENHA HORÁRIOS
 
 Gere nos blocos exatos, na ordem:
-*VISÃO GERAL DO TURNO* - com horários
-*FRENTES COM OCORRÊNCIAS* - cada frente com horários ex: Às 16:00, Às 16:06
+*VISÃO GERAL DO TURNO*
+*FRENTES COM OCORRÊNCIAS*
 *⚠️ PRINCIPAIS PROBLEMAS*
 *🔁 PROBLEMAS RECORRENTES*
 *🚨 RISCOS / IMPACTOS*
 *🎯 PRIORIDADES DE ATUAÇÃO*
-*AÇÕES / ACOMPANHAMENTOS* com *SUGESTÃO:*
+*AÇÕES / ACOMPANHAMENTOS*
 
-Não deixe blocos grudados. Cada bloco separado. Cada tópico em linha separada com "- ".
-
-DADOS COM HORÁRIOS:
+Cada bloco com tópicos "- " separados, detalhado com horários.
+DADOS:
 ${contexto}`;
 
     const gerencial=await chamarIA(promptGerencial,{maxOutputTokens:12000,timeoutMs:60000,thinkingLevel:'high',temperature:0.25},'gerencial');
 
     const promptExecutivo=`${SYSTEM_IA}
-MODO: RESUMO EXECUTIVO FINAL CURTO
-Blocos:
-*CRÍTICO*
-*IMPACTO*
-*DECISÃO / ACOMPANHAMENTO*
-*FRENTE CRÍTICA*
+MODO: RESUMO EXECUTIVO FINAL
+Blocos: *CRÍTICO* *IMPACTO* *DECISÃO / ACOMPANHAMENTO* *FRENTE CRÍTICA*
 DADOS:
 ${contexto}`;
 

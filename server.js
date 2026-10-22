@@ -12,14 +12,13 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 // ======================================================
-// CONFIG - MODELOS REAIS QUE FUNCIONAM
+// CONFIG
 // ======================================================
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const TABLE = 'ocorrencias_mandu';
 
-// NUNCA use 3.8 - não existe. Ordem: melhor -> mais barato
 const GEMINI_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
@@ -35,7 +34,6 @@ if (SUPABASE_URL && SUPABASE_KEY) {
   });
 }
 
-// ======================================================
 app.disable('x-powered-by');
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
@@ -71,35 +69,45 @@ function normalizarOcorrencia(item) {
 }
 
 // ======================================================
-// FORMATAÇÃO WHATSAPP - CORRIGIDA
+// FORMATAÇÃO WHATSAPP - 100% CORRIGIDA
 // ======================================================
 function normalizarPublicacaoIA(texto) {
   let t = String(texto || '')
     .replace(/\r\n/g, '\n')
-    .replace(/```[\s\S]*?```/g, '') // remove bloco codigo inteiro
+    .replace(/```[\s\S]*?```/g, '')
     .replace(/```/g, '')
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/\*{2,}/g, '*')
     .replace(/^[ \t]*[•●▪◦]\s*/gm, '- ')
     .replace(/[ \t]+$/gm, '');
 
-  // Garante que título fique isolado
-  t = t.replace(/\n*(\*[^\n]+\*)\n*/g, '\n\n$1\n\n');
-  // Garante que cada tópico comece em linha nova
-  t = t.replace(/(?<!\n)- /g, '\n- ');
-  // Remove 3+ quebras
-  t = t.replace(/\n{3,}/g, '\n\n');
-  // Limpa inicio/fim
-  t = t.trim();
+  // Força 120 traços depois do título MANDU
+  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)[ \t]*\n*[ \t]*-*/gi, (m, titulo) => {
+    return `${titulo.trim()}\n----------------------------------------------------------------------------------------------------`;
+  });
+  // Se não tiver traço ainda, adiciona
+  t = t.replace(/(\*📋[^\n]*MANDU\*|\*⚡[^\n]*MANDU\*)(?!\n-{5,})/gi, '$1\n----------------------------------------------------------------------------------------------------');
 
-  // Força linha em branco entre blocos de títulos
-  const linhas = t.split('\n').map(l => l.trimEnd());
-  return linhas.join('\n').trim();
+  // Título sempre em linha nova
+  t = t.replace(/([^\n])\n*(\*[A-ZÁÉÍÓÚÂÊÔÃÇ0-9 \/\-⚠️🚨🎯🔁📋⚡]+\*)/g, '$1\n\n$2');
+
+  // SUGESTÃO sempre em linha nova com espaço
+  t = t.replace(/([^\n])\s*-\s*\*SUGESTÃO:\*/gi, '\n- *SUGESTÃO:*');
+  t = t.replace(/\*SUGESTÃO:\*\s*/gi, '*SUGESTÃO:* ');
+  t = t.replace(/-\s*\*SUGESTÃO:\*([^\s])/gi, '- *SUGESTÃO:* $1');
+
+  // Tópico "-" sempre em linha nova
+  t = t.replace(/([^\n])\s+-\s+/g, '\n- ');
+
+  // Limpa 3+ quebras
+  t = t.replace(/\n{3,}/g, '\n\n');
+
+  // Dentro do mesmo bloco: título grudado no tópico (sem linha em branco)
+  t = t.replace(/(\*[A-ZÁÉÍÓÚÂÊÔÃÇ0-9 \/\-⚠️🚨🎯🔁📋⚡]+\*)\n\n+-\s*/g, '$1\n- ');
+
+  return t.trim();
 }
 
-// ======================================================
-// OCORRENCIAS CORE
-// ======================================================
 function prepararOcorrenciasIA(ocorrencias = []) {
   return (ocorrencias || []).map(normalizarOcorrencia).filter(i => i.texto);
 }
@@ -131,41 +139,33 @@ async function obterOcorrenciasIA(req) {
 }
 
 // ======================================================
-// GEMINI - CONFIG CORRETA
+// GEMINI
 // ======================================================
 const SYSTEM_IA = `
 Você é o assistente operacional do CTT Diário de Turno MANDU - Tereos.
-
-REGRAS DURAS:
-1. Não invente ocorrência, número, horário, causa.
-2. Diferencie FATO, ANÁLISE e *SUGESTÃO:*.
-3. Português Brasil, técnico e direto.
-4. Saída PRONTA PARA WHATSAPP.
-5. Use apenas *um asterisco* para negrito. NUNCA **.
-6. Use "-" para tópicos, cada tópico em uma linha.
-7. Deixe 1 linha em branco entre blocos/títulos.
-8. Nunca use bloco de código, # ou =====.
-9. Se não houver evidência, diga "Não há evidência suficiente nos registros".
-10. Siga EXATAMENTE a estrutura que for pedida no prompt do usuário.
+REGRAS: Não invente dados. Português Brasil, técnico e direto.
+Saída PRONTA PARA WHATSAPP. Use apenas *um asterisco* para negrito. Nunca **.
+Use "-" para tópicos, cada tópico em linha separada.
+Deixe 1 linha em branco ENTRE blocos. Dentro do bloco, título grudado no tópico.
+Nunca use bloco de código, # ou =====.
+Quando não houver evidência, diga "Não há evidência suficiente nos registros".
+Siga EXATAMENTE a estrutura pedida.
 `;
 
 function obterConfigPensamento(nivel) {
   if (nivel === 'high') return { thinkingConfig: { thinkingBudget: 4096 } };
   if (nivel === 'low') return { thinkingConfig: { thinkingBudget: 1024 } };
-  return { thinkingConfig: { thinkingBudget: 2048 } }; // medium
+  return { thinkingConfig: { thinkingBudget: 2048 } };
 }
-
 function extrairTextoGemini(data) {
   const parts = data?.candidates?.[0]?.content?.parts || [];
   return parts.filter(p => typeof p.text === 'string' && p.thought !== true).map(p => p.text).join('\n').trim();
 }
-
 async function chamarIA(prompt, options = {}) {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY não configurada');
   const maxOutputTokens = options.maxOutputTokens || 4000;
   const timeoutMs = options.timeoutMs || 45000;
   const thinkingLevel = options.thinkingLevel || 'medium';
-
   let ultimoErro = 'Erro IA';
   for (const modelo of GEMINI_MODELS) {
     const controller = new AbortController();
@@ -177,11 +177,7 @@ async function chamarIA(prompt, options = {}) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: options.temperature ?? 0.25,
-            maxOutputTokens,
-            ...obterConfigPensamento(thinkingLevel)
-          }
+          generationConfig: { temperature: options.temperature ?? 0.25, maxOutputTokens, ...obterConfigPensamento(thinkingLevel) }
         }),
         signal: controller.signal
       });
@@ -198,14 +194,14 @@ async function chamarIA(prompt, options = {}) {
       return { texto: normalizarPublicacaoIA(texto), modelo };
     } catch (e) {
       ultimoErro = e.name === 'AbortError' ? `Timeout ${modelo}` : e.message;
-      if (String(ultimoErro).includes('API_KEY') || String(ultimoErro).includes('403') || String(ultimoErro).includes('400')) throw new Error(ultimoErro);
+      if (String(ultimoErro).includes('API_KEY') || String(ultimoErro).includes('403')) throw new Error(ultimoErro);
     } finally { clearTimeout(timeout); }
   }
   throw new Error(ultimoErro);
 }
 
 // ======================================================
-// ROTAS API
+// ROTAS
 // ======================================================
 app.get('/api/status', (req, res) => {
   res.json({ ok: true, sistema: 'CTT Diário de Turno - MANDU', supabase: !!supa, gemini: !!GEMINI_API_KEY, modelos: GEMINI_MODELS, modelo_principal: GEMINI_MODELS[0], hora: horaAtual() });
@@ -217,10 +213,9 @@ app.get('/api/ocorrencias', async (req, res) => {
     const { data, error } = await supa.from(TABLE).select('*').order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     res.json((data || []).map(normalizarOcorrencia));
-  } catch (e) { res.status(500).json({ error: 'Erro ao carregar' }); }
+  } catch { res.status(500).json({ error: 'Erro ao carregar' }); }
 });
 
-// IMPORTANTE: limpar ANTES da rota com :id para não conflitar
 app.delete('/api/ocorrencias', async (req, res) => {
   try {
     if (!supa) return res.status(500).json({ error: 'Supabase não configurado' });
@@ -276,9 +271,8 @@ app.delete('/api/ocorrencias/:id', async (req, res) => {
 });
 
 // ======================================================
-// IA - ROTAS UNIFICADAS
+// IA
 // ======================================================
-
 app.post('/organizar-ia', async (req, res) => {
   try {
     const ocorrencias = await obterOcorrenciasIA(req);
@@ -287,9 +281,7 @@ app.post('/organizar-ia', async (req, res) => {
     const prompt = `${SYSTEM_IA}
 MODO: ORGANIZAÇÃO DO TURNO.
 
-Organize em mensagem profissional para WhatsApp.
-
-ESTRUTURA OBRIGATÓRIA (respeite as quebras):
+ESTRUTURA OBRIGATÓRIA:
 
 *📋 DIÁRIO DE TURNO — MANDU*
 
@@ -303,18 +295,13 @@ ESTRUTURA OBRIGATÓRIA (respeite as quebras):
 - Somente riscos sustentados
 
 *🎯 AÇÕES / ACOMPANHAMENTOS*
-- Cada linha com ação
-- Recomendação use "- *SUGESTÃO:*"
+- Ação
+- *SUGESTÃO:* Recomendação em linha separada
 
-REGRAS FORMATAÇÃO WHATSAPP:
-- 1 linha em branco entre cada bloco
-- Cada tópico em linha separada
-- Não invente frente
-- Só *asterisco simples*
+FORMATAÇÃO: 1 linha em branco ENTRE blocos. Dentro do bloco sem linha em branco. Só * simples.
 
 OCORRÊNCIAS:
 ${contexto}`;
-
     const r = await chamarIA(prompt, { maxOutputTokens: 6000, timeoutMs: 45000, thinkingLevel: 'high', temperature: 0.25 });
     res.json({ texto: r.texto, total: ocorrencias.length, modelo: r.modelo });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -326,7 +313,9 @@ app.post(['/resumo-executivo-ia', '/api/resumo-executivo-ia'], async (req, res) 
     if (!ocorrencias.length) return res.status(400).json({ error: 'Sem ocorrências' });
     const contexto = gerarContextoPorFrente(ocorrencias);
     const prompt = `${SYSTEM_IA}
-MODO: RESUMO EXECUTIVO - MUITO CURTO.
+MODO: RESUMO EXECUTIVO CURTO
+
+ESTRUTURA:
 
 *⚡ RESUMO DAS MANUTENÇÕES/LOGÍSTICAS — MANDU*
 
@@ -338,9 +327,9 @@ MODO: RESUMO EXECUTIVO - MUITO CURTO.
 
 *DECISÃO / ACOMPANHAMENTO*
 - O que acompanhar
-- Use "- *SUGESTÃO:*" se for recomendação
+- *SUGESTÃO:* Recomendação em linha separada
 
-Seja curto, max 8 linhas. Sem lista por frente.
+Max 8 linhas.
 
 DADOS:
 ${contexto}`;
@@ -358,34 +347,34 @@ app.post(['/fechar-turno-ia', '/api/fechar-turno-ia', '/fechar-turno', '/api/fec
     const promptGerencial = `${SYSTEM_IA}
 MODO: ANÁLISE GERENCIAL DETALHADA
 
-ESTRUTURA FIXA:
+COPIE EXATAMENTE ESTA ESTRUTURA, LINHA A LINHA:
 
 *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
 
-
 *VISÃO GERAL DO TURNO*
-- Leitura geral
-- Condição principal
+- Leitura geral do turno
 
 *FRENTES COM OCORRÊNCIAS*
-- Cada frente relevante com efeito
+- Frente XXX com ocorrência e efeito
 
 *⚠️ PRINCIPAIS PROBLEMAS*
-- Problemas com impacto
+- Problema 1
+- Problema 2
 
 *🔁 PROBLEMAS RECORRENTES*
-- Só se repetiu, se não houver informe
+- Se houver recorrência liste, se não: - Não há recorrência evidenciada nos registros
 
 *🚨 RISCOS / IMPACTOS*
-- Impactos sustentados
+- Risco 1
 
 *🎯 PRIORIDADES DE ATUAÇÃO*
-- Ordenado por criticidade
+- Prioridade 1
 
 *AÇÕES / ACOMPANHAMENTOS*
-- Ações necessárias, *SUGESTÃO:* quando recomendação
+- Ação 1
+- *SUGESTÃO:* Recomendação sempre em linha separada
 
-FORMATAÇÃO: 1 linha em branco entre blocos, cada tópico em linha separada, só * simples.
+REGRA: Título MANDU + linha de 120 traços na linha de baixo. 1 linha em branco ENTRE blocos. Dentro do bloco sem linha em branco.
 
 DADOS:
 ${contexto}`;
@@ -393,10 +382,11 @@ ${contexto}`;
     const gerencial = await chamarIA(promptGerencial, { maxOutputTokens: 10000, timeoutMs: 60000, thinkingLevel: 'high', temperature: 0.25 });
 
     const promptExecutivo = `${SYSTEM_IA}
-MODO: RESUMO EXECUTIVO FINAL - CURTO
+MODO: RESUMO EXECUTIVO FINAL CURTO
+
+ESTRUTURA EXATA:
 
 *⚡ RESUMO TURNO — MANDU*
-
 
 *CRÍTICO*
 - Principal ponto
@@ -405,10 +395,11 @@ MODO: RESUMO EXECUTIVO FINAL - CURTO
 - Principal consequência
 
 *DECISÃO / ACOMPANHAMENTO*
-- Decisão necessária, *SUGESTÃO:* se recomendação
+- Decisão
+- *SUGESTÃO:* Recomendação em linha separada
 
 *FRENTE CRÍTICA*
-- Só a frente crítica
+- Frente crítica
 
 Max 8 tópicos.
 
@@ -437,18 +428,12 @@ app.post(['/chat-ia', '/api/chat-ia'], async (req, res) => {
     if (!ocorrencias.length) return res.status(400).json({ error: 'Sem ocorrências' });
     const contexto = gerarContextoPorFrente(ocorrencias);
     const historico = Array.isArray(req.body?.historico) ? req.body.historico.slice(-8).map(i => `${i.role === 'user' ? 'USUÁRIO' : 'ASSISTENTE'}: ${textoSeguro(i.content, 3000)}`).join('\n') : 'Sem histórico';
-
     const prompt = `${SYSTEM_IA}
-MODO: CHAT OPERACIONAL - Responda só o perguntado, proporcional.
-
+MODO: CHAT OPERACIONAL
 PERGUNTA: ${pergunta}
-
-HISTÓRICO:
-${historico}
-
+HISTÓRICO: ${historico}
 DADOS:
 ${contexto}`;
-
     const r = await chamarIA(prompt, { maxOutputTokens: 4000, timeoutMs: 45000, thinkingLevel: 'medium', temperature: 0.25 });
     res.json({ resposta: r.texto, total: ocorrencias.length, modelo: r.modelo });
   } catch (e) { res.status(500).json({ error: e.message }); }

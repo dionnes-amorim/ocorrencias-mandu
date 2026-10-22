@@ -835,7 +835,7 @@ async function obterOcorrenciasIA(
 // ======================================================
 
 const SYSTEM_IA = `
-Você é o assistente operacional do CTT Diário de Turno da unidade MANDU.
+Você é o assistente operacional do CTT Diário de Turno da unidade sucroenergética MANDU.
 
 Sua função é analisar exclusivamente as informações fornecidas.
 
@@ -1308,9 +1308,9 @@ Não repita a mesma ocorrência.
 Utilize esta estrutura:
 
 *📋 DIÁRIO DE TURNO — MANDU*
-
+(Aqui pula 01 linha)
 Para cada frente que realmente possuir ocorrências relevantes:
-
+(Aqui pula 01 linha)
 *FRENTE XXX*
 - Resumo objetivo das ocorrências e impacto operacional.
 
@@ -1318,13 +1318,14 @@ Depois:
 
 *⚠️ PONTOS DE ATENÇÃO*
 - Somente os pontos que exigem atenção operacional.
-
+(Aqui pula 01 linha)
 *🚨 RISCOS / IMPACTOS*
 - Somente riscos sustentados pelos dados.
-
+(Aqui pula 01 linha)
 *🎯 AÇÕES / ACOMPANHAMENTOS*
-- Acompanhamentos necessários.
-- Recomendações devem utilizar *SUGESTÃO:*.
+- Acompanhamentos necessários em cada linha.
+(Aqui pula 01 linha)
+- Recomendações devem utilizar "*-SUGESTÃO:*" em cada linha.
 
 REGRAS:
 - Não crie frentes sem ocorrência.
@@ -1335,6 +1336,7 @@ REGRAS:
 - Não use bloco de código.
 - Não coloque introdução ou conclusão fora da estrutura.
 - Mantenha linguagem natural e pronta para WhatsApp.
+- Cada título em blocos separados e cada tópico em uma linha, deixando tudo organizadinho.
 
 OCORRÊNCIAS:
 
@@ -1459,17 +1461,17 @@ Utilize no máximo 3 blocos principais.
 
 Estrutura:
 
-*⚡ RESUMO EXECUTIVO — MANDU*
+*⚡ RESUMO DAS MANUTENÇÕES/LOGÍSTICAS — MANDU*
 
 *CRÍTICO*
 - Principal fato ou problema do turno.
-
+(Aqui pula 01 linha)
 *IMPACTO*
 - Consequência operacional sustentada pelos dados.
-
+(Aqui pula 01 linha)
 *DECISÃO / ACOMPANHAMENTO*
 - O que precisa ser acompanhado ou decidido.
-- Se for recomendação, use *SUGESTÃO:*.
+- Se for recomendação, use "-*SUGESTÃO:*" em cada linha.
 
 Se não houver problema crítico, deixe isso claro.
 
@@ -1485,6 +1487,7 @@ REGRAS:
 - Use somente *asteriscos simples*.
 - Use "-" nos tópicos.
 - Não use bloco de código.
+- Cada título em blocos separados e cada tópico em uma linha, deixando tudo organizadinho.
 
 DADOS DO TURNO:
 
@@ -1629,34 +1632,34 @@ Quando não houver evidência suficiente, diga:
 
 Não invente causa.
 
-Utilize exatamente esta estrutura:
+Utilize exatamente esta estrutura, respeitando os títulos em cima e os tópicos por linha:
 
-*📋 ANÁLISE GERENCIAL — MANDU*
-
-
-*VISÃO GERAL DO TURNO*
+*📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
+(Aqui pula 01 linha)
+(Aqui pula 01 linha)
+*VISÃO GERAL DO TURNO* (Aqui pula 01 linha)
 - Faça uma leitura geral do comportamento operacional.
 - Destaque a principal condição observada.
-
+(Aqui pula 01 linha)
 *FRENTES COM OCORRÊNCIAS*
 - Analise cada frente relevante.
 - Explique o que ocorreu e o efeito operacional.
-
+(Aqui pula 01 linha)
 *⚠️ PRINCIPAIS PROBLEMAS*
 - Priorize os problemas mais relevantes.
 - Não apenas liste; explique o impacto quando houver evidência.
-
+(Aqui pula 01 linha)
 *🔁 PROBLEMAS RECORRENTES*
 - Liste somente problemas realmente repetidos.
 - Se não houver recorrência, informe isso.
-
+(Aqui pula 01 linha)
 *🚨 RISCOS / IMPACTOS*
 - Relacione os impactos operacionais sustentados pelos registros.
-
+(Aqui pula 01 linha)
 *🎯 PRIORIDADES DE ATUAÇÃO*
 - Ordene os pontos que merecem atenção.
 - Priorize pelo impacto e criticidade.
-
+(Aqui pula 01 linha)
 *AÇÕES / ACOMPANHAMENTOS*
 - Liste ações ou acompanhamentos necessários.
 - Não trate recomendação como ação realizada.
@@ -1673,6 +1676,7 @@ REGRAS DE FORMATAÇÃO:
 - Seja técnico e natural.
 - Não seja genérico.
 - Não invente informações.
+- Cada título em blocos separados e cada tópico em uma linha, deixando tudo organizadinho.
 
 DADOS DO TURNO:
 

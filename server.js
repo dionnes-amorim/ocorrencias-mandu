@@ -862,8 +862,9 @@ FORMATAÇÃO:
 ESTRUTURA:
 
 *📋 DIÁRIO DE TURNO — MANDU*
-------------------------------------------------------------------------------------------------
-
+(AQUI PULA 1 LINHA)
+(AQUI COLOQUE 120 TRAÇOS)------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
 Para cada frente com ocorrências:
 
 *FRENTE XXX*
@@ -883,6 +884,7 @@ Não crie frentes sem ocorrências.
 Não elimine horários relevantes.
 Não omita informações importantes.
 Não acrescente texto antes ou depois da estrutura.
+Dê uma resumidaem tudo e não seja tão formal.
 
 DADOS DO TURNO:
 
@@ -960,7 +962,9 @@ FORMATAÇÃO:
 ESTRUTURA:
 
 *⚡ RESUMO EXECUTIVO — MANDU*
-------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
+(AQUI COLOQUE 120 TRAÇOS)------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
 
 *CRÍTICO*
 - Principal fato ou problema do turno.
@@ -1056,7 +1060,9 @@ FORMATAÇÃO:
 - Primeira linha exatamente:
   *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
 - Segunda linha:
-  ------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
+(AQUI COLOQUE 120 TRAÇOS)------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
 - Deixe uma linha em branco após o separador.
 - Deixe uma linha em branco entre as seções.
 - Use somente asteriscos simples para negrito.
@@ -1064,11 +1070,15 @@ FORMATAÇÃO:
 - Não use blocos de código.
 - Não use títulos Markdown com #.
 - Não acrescente introduções ou conclusões fora da estrutura.
+- Dê uma resumidaem tudo e não seja tão formal.
+
 
 ESTRUTURA FIXA:
 
 *📋 ANÁLISE DE MANUTENÇÃO/LOGÍSTICA — MANDU*
-------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
+(AQUI COLOQUE 120 TRAÇOS)------------------------------------------------------------------------------------------------
+(AQUI PULA 1 LINHA)
 
 *VISÃO GERAL DO TURNO*
 - FATO: condição geral observada.
@@ -1101,7 +1111,7 @@ ESTRUTURA FIXA:
 - Explique a justificativa de cada prioridade.
 - Não invente urgências.
 
-*AÇÕES / ACOMPANHAMENTOS*
+*AÇÕES / ACOMPANHAMENTOS* (Pula 1 linha antes de começar os tópicos aqui)
 - Liste pendências e acompanhamentos necessários.
 - Não declare ações como realizadas sem evidência.
 - Toda recomendação deve utilizar *SUGESTÃO:*.
@@ -1111,6 +1121,8 @@ VERIFICAÇÃO FINAL:
 Antes de concluir, confira todas as seções, os horários,
 as frentes e a fidelidade às ocorrências.
 Não apresente resposta incompleta como se estivesse concluída.
+Dê uma resumidaem tudo e não seja tão formal.
+
 
 DADOS DO TURNO:
 
